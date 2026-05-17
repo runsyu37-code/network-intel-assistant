@@ -211,7 +211,44 @@ This is a **living log**, append-only (no deletes). It has three sections:
 
 ### Entries
 
-*(Append retrospectives here.)*
+---
+
+### RETRO-001 — data-sanitizer-agent v0.1 complete (STEPs 1–10)
+
+- **Date/time (ICT):** 2026-05-17 (evening)
+- **Milestone:** data-sanitizer-agent v0.1 shipped — regex-based sanitizer with 24 passing tests, fake samples, full README, LEARNING_LOG, and all commits pushed to private GitHub repo.
+- **Time spent (rough):** ~3–4 hours total, 1 session, home laptop.
+
+- **What went well:**
+  1. **24/24 tests passed on the first full run** — the test design (especially `TestNoLeakage`) caught real behavior correctly without needing a rewrite.
+  2. **Checkpoint protocol worked perfectly** — every STEP was committed and pushed. The session could have been interrupted at any point and resumed on another machine with zero lost work.
+  3. **Replacement ordering (locations → hostnames → MACs → IPs)** was designed correctly upfront — no false-positive bugs appeared during the end-to-end diff.
+
+- **What didn't go well:**
+  1. **git user identity not configured** (ERR-001) — blocked the very first commit and required a detour before STEP 2 could continue. Cost: ~3 minutes.
+  2. **GitHub CLI not in PATH after winget install** (ERR-002) — required locating the exe manually and using the full path for the rest of the session. A new terminal window would have fixed it instantly.
+  3. **255.255.255.0 subnet mask caught by IPV4_RE** (ERR-005) — not caught during design, only discovered at STEP 7 during the diff walkthrough. Should have been anticipated and noted in Limitations before writing the regex.
+
+- **What I'd do differently next time:**
+  1. Add `git config user.name` check to STEP 1's environment verification — run it right after `git --version`.
+  2. After any `winget install`, always open a new terminal before using the new tool — add this as a rule to `MACHINE_RULES.md` or `SESSION_PROTOCOL.md`.
+  3. Write the Limitations section of README *before* writing the sanitizer code — forces thinking about edge cases (subnet masks, base64, etc.) before the design is locked in.
+
+- **Knowledge gained:**
+  - Git workflow end-to-end: `init` → `add` → `commit` → `push` → `log` with real project context.
+  - Python regex: word boundaries (`\b`), `re.sub` with lambda callbacks, closure capture with default args (`k=kind`).
+  - GitHub CLI: `gh auth login`, `gh repo create --private --source=. --remote=origin`.
+  - Data privacy architecture: Phase A (fake data + AI) / Phase B (offline on real data) / Phase C (sanitized output to AI) — a reusable pattern for any sensitive-data project.
+  - Windows-specific gotchas: CP1252 encoding in terminal, PATH not refreshed after `winget install`.
+
+- **Portfolio value:**
+  - Working sanitizer (`sanitize.py` + `patterns.py`) with 24 unit tests — runnable by anyone who clones the repo.
+  - Professional README with ASCII architecture diagram, before/after sample, and honest Limitations section.
+  - LEARNING_LOG with 5 real errors and 4 improvements — shows engineering discipline, not just code.
+  - Clean git history with Conventional Commits (`chore:`, `feat:`, `checkpoint(stepN):`) — readable by employers.
+
+- **Top 1 action item for the next milestone:**
+  Copy `sanitize.py`, `patterns.py`, and `mappings.json` to the work machine (via USB or company-approved transfer). Run Phase B: `python sanitize.py real_switch_output.txt output_clean.txt`. Confirm that the script handles real data correctly offline. Only after Phase B passes is it safe to move to the next sub-agent (`network-inventory-agent`).
 
 ---
 
