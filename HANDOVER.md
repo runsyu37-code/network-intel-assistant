@@ -2,8 +2,8 @@
 
 **Project:** network-intel-assistant
 **Last checkpoint:** 2026-05-17 (ICT) — evening session
-**Last completed step:** STEP 7 — End-to-end run + diff walkthrough
-**Next step to do:** STEP 8 — Write README.md (full version, English, portfolio-ready)
+**Last completed step:** STEP 8 — README.md (full, English, portfolio-ready)
+**Next step to do:** STEP 9 — Final git commit sequence + git log explanation
 
 ## Machine info
 - This session: **Home laptop**
@@ -13,22 +13,20 @@
 - Work notebook path (when switching): `C:\ai-playground\network-intel-assistant`
 
 ## What's done so far
-- STEP 1-6: All complete ✅ (see previous entries)
-- STEP 7: End-to-end run on all 3 samples with --report ✅
-  - clean_01.txt: 0 IPs, 20 MACs, 1 hostname
-  - clean_02.txt: 18 IPs, 18 MACs, 1 hostname
-  - clean_03.txt: 3 IPs, 0 MACs, 14 hostnames
-  - report_03.json: full audit trail (IP/hostname/location mappings)
-  - Known minor issue: 255.255.255.0 (subnet mask) gets treated as a valid IP → replaced
-    with 10.0.0.2 — acceptable trade-off, output is still safe
+- STEP 1-7: All complete ✅
+- STEP 8: README.md rewritten — full portfolio-quality version ✅
+  - Problem statement (data-collection pain + cloud AI ban)
+  - Architecture diagram (Phase A / B / C — build / run / use)
+  - Sanitization table (9 types: IPv4, MAC x3, hostname, building/floor/room/rack)
+  - Quick start (4 commands, no pip install needed)
+  - Before/after sample snippet from fake_input_03.txt
+  - Limitations (5 items — honest, no oversell)
+  - Roadmap (Phase A complete, B/C/D planned)
+  - Background paragraph
 
 ## Open questions / decisions pending
-- STEP 8: Write full README.md (English, portfolio-ready)
-  - Problem statement paragraph
-  - Architecture summary (Phase A/B/C)
-  - Quick-start section
-  - Sample input/output snippet
-  - Limitations section
+- STEP 9: Explain git log in Thai so Ran understands commit history
+- STEP 10: Ask about GitHub repo visibility (public vs private), testing on real data
 
 ## Files the next session must re-read first
 1. ABOUT_ME.md
@@ -37,11 +35,9 @@
 4. This file (HANDOVER.md)
 
 ## Code state
-- Last commit: checkpoint(step7)
+- Last commit: checkpoint(step8)
 - Branch: master
 - Working tree: clean
-- output/ files (clean_*.txt, report_*.json) are gitignored — not pushed
 
 ## Anything strange / blocking
-- 255.255.255.0 treated as IP — document in README Limitations section
-- output/*.txt added to .gitignore so clean_*.txt stays local only
+- None — project is fully functional, documented, and tested
