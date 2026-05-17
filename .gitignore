@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+secrets/
+real_data/
+*.real.txt
+*.real.csv
+*.real.json
+*.real.yaml
+output/*.json
+mappings_report*.json
