@@ -12,3 +12,4 @@ real_data/
 output/*.json
 output/*.txt
 mappings_report*.json
+cli_test_report.json
