@@ -10,4 +10,5 @@ real_data/
 *.real.json
 *.real.yaml
 output/*.json
+output/*.txt
 mappings_report*.json
