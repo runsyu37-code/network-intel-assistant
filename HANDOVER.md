@@ -2,32 +2,41 @@
 
 **Project:** network-intel-assistant
 **Last checkpoint:** 2026-05-17 (ICT) — evening session
-**Last completed step:** STEP 2 — Teach git basics by doing
-**Next step to do:** STEP 2.5 — Set up GitHub sync
+**Last completed step:** STEP 2.5 — Set up GitHub sync
+**Next step to do:** STEP 3 — Create project structure
 
 ## Machine info
 - This session: **Home laptop**
+- GitHub account: `runsyu37-code`
+- GitHub repo: https://github.com/runsyu37-code/network-intel-assistant (PRIVATE)
 - Work notebook path (when switching): `C:\ai-playground\network-intel-assistant`
+- Home laptop path: `C:\1_Work_Local\AI_Agent\network-intel-assistant`
 
 ## What's done so far
 - STEP 1: Verified Python 3.13.13 ✅ and Git 2.54.0 ✅
-- STEP 2: Ran `git init`, created `.gitignore`, committed it, explained staging vs commit in Thai
-- git global config set: user.name = "Ran", user.email = "runsyu37@gmail.com"
+- STEP 2: `git init`, `.gitignore` created and committed, explained staging vs commit in Thai
+  - git global config: user.name = "Ran", user.email = "runsyu37@gmail.com"
+- STEP 2.5: GitHub CLI (`gh`) installed (v2.92.0), authenticated as `runsyu37-code`
+  - Created private repo: `runsyu37-code/network-intel-assistant`
+  - Linked as `origin` remote
+  - Pushed all commits to GitHub ✅
+  - Branch: `master` (not `main`)
 
 ## Open questions / decisions pending
-- STEP 2.5c: Is this the FIRST machine? → YES (home laptop, no GitHub repo exists yet)
-- Need to install GitHub CLI (`gh`) and authenticate before creating repo
+- None — ready to build project structure
 
 ## Files the next session must re-read first
 1. ABOUT_ME.md
 2. ROADMAP.md
-3. SESSION_PROTOCOL.md (checkpoint rules)
+3. SESSION_PROTOCOL.md
 4. This file (HANDOVER.md)
 
 ## Code state
-- Last commit: "chore: initial gitignore"
-- Files touched this session: .gitignore, HANDOVER.md (new)
-- Untracked (will be committed at checkpoint): ABOUT_ME.md, ROADMAP.md, MACHINE_RULES.md, SESSION_PROTOCOL.md, SANITIZER_PROMPT.md
+- Last commit: "checkpoint(step2): git basics complete — gitignore + project docs staged"
+- Pushed to: https://github.com/runsyu37-code/network-intel-assistant
+- Branch: master
+- Working tree: clean
 
 ## Anything strange / blocking
-- None so far
+- GitHub account logged in as `runsyu37-code` (ABOUT_ME.md mentions `runsyu37` — same person, different username)
+- `gh` PATH not available in bash shell — use full path `C:\Program Files\GitHub CLI\gh.exe` if needed in this session
