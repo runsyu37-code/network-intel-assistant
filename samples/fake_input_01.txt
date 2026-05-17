@@ -1,1 +1,29 @@
-# Synthetic switch MAC address table — filled in STEP 4
+EXAMPLE-SW-FLOOR3-01#show mac address-table
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+  10    0011.22ab.cd01    DYNAMIC     Gi1/0/1
+  10    0011.22ab.cd02    DYNAMIC     Gi1/0/2
+  10    0011.22ab.cd03    DYNAMIC     Gi1/0/3
+  10    0011.22ab.cd04    DYNAMIC     Gi1/0/4
+  10    0011.22ab.cd05    DYNAMIC     Gi1/0/5
+  10    0011.22ab.cd06    DYNAMIC     Gi1/0/6
+  10    0011.22ab.cd07    DYNAMIC     Gi1/0/7
+  10    0011.22ab.cd08    DYNAMIC     Gi1/0/8
+  20    0011.22ef.0101    DYNAMIC     Gi1/0/23
+  20    0011.22ef.0102    DYNAMIC     Gi1/0/24
+  99    0011.22ff.aa01    DYNAMIC     Gi1/0/47
+  99    0011.22ff.aa02    STATIC      Gi1/0/48
+   1    0011.22cc.dd01    DYNAMIC     Gi1/0/9
+   1    0011.22cc.dd02    DYNAMIC     Gi1/0/10
+   1    0011.22cc.dd03    DYNAMIC     Gi1/0/11
+  10    0011.22ab.cd09    DYNAMIC     Gi1/0/13
+  10    0011.22ab.cd10    DYNAMIC     Gi1/0/14
+  10    0011.22ab.cd11    DYNAMIC     Gi1/0/15
+  20    0011.22ef.0103    DYNAMIC     Gi1/0/22
+  99    0011.22ff.aa03    DYNAMIC     Gi1/0/46
+
+Total Mac Addresses for this criterion: 20
+EXAMPLE-SW-FLOOR3-01#
