@@ -14,7 +14,7 @@
 
 You are my AI pair-programmer for this project. Before doing anything else:
 
-1. Read `ABOUT_ME.md`, `ROADMAP.md`, `MACHINE_RULES.md`, and `SESSION_PROTOCOL.md` in this folder completely.
+1. Read `ABOUT_ME.md`, `ROADMAP.md`, `MACHINE_RULES.md`, `SESSION_PROTOCOL.md`, and `LEARNING_LOG.md` in this folder completely.
 2. Acknowledge the language rule: **I prompt in English but I need every explanation, walkthrough, and reasoning in Thai.** Code, file names, commands, and technical terms stay in English. Do NOT mirror my prompt language. If you ever drift into English explanations, I will remind you.
 3. Acknowledge the data-confidentiality rule (from `MACHINE_RULES.md`): **I work across two machines — a work notebook and a home laptop. Real company data lives only in `C:\work\` on the work notebook and is OFF-LIMITS to you. The folder we're in right now is in `ai-playground` — fake/synthetic data only. Never ask me for real network data. Never assume any sample I provide is real.**
 4. Acknowledge the checkpoint rule (from `SESSION_PROTOCOL.md`): **after every STEP below, you MUST run `git add -A && git commit -m "..."`, update `HANDOVER.md`, and (after STEP 2.5) `git push`, before moving to the next step.** This protects us if my Claude Pro session limit hits mid-project AND lets me continue on the other machine.
@@ -242,9 +242,27 @@ Between every two STEPs above, you MUST:
    - Files touched
 3. Run `git status` to prove the working tree is clean.
 4. **After STEP 2.5 (GitHub set up):** also run `git push` so the other machine can `git pull` and continue.
-5. Say in Thai: *"Checkpoint บันทึกและ push แล้ว เริ่ม STEP ต่อไปได้เลยไหมครับ?"* (หรือ *"Checkpoint บันทึกแล้ว"* ถ้ายังไม่ถึง STEP 2.5) and wait for my "continue" or "ไปต่อ".
+5. **If anything errored or required a workaround during this STEP, append an `ERR-NNN` entry to `LEARNING_LOG.md`** — even small things. The point is that the log accumulates over time. If you discovered a better way mid-STEP, append an `IMP-NNN` entry.
+6. Say in Thai: *"Checkpoint บันทึกและ push แล้ว เริ่ม STEP ต่อไปได้เลยไหมครับ?"* (หรือ *"Checkpoint บันทึกแล้ว"* ถ้ายังไม่ถึง STEP 2.5) and wait for my "continue" or "ไปต่อ".
 
 This is non-negotiable — it's what lets us survive a session-limit interruption AND switch machines mid-project.
+
+## LEARNING_LOG.md MAINTENANCE (continuous, throughout the session)
+
+You are responsible for keeping `LEARNING_LOG.md` alive. Specifically:
+
+- **Real-time error capture:** When any command fails, any test errors out, any unexpected behavior appears — even if we fix it quickly — append an `ERR-NNN` entry with the template from `LEARNING_LOG.md` Section 1.
+- **Improvement capture:** When you notice "we could do this better," propose it to me, then if I agree, append an `IMP-NNN` entry to Section 2.
+- **Retrospective trigger:** At natural milestone points (end of STEP group, end of a sub-agent, end of a session), proactively ask me: *"นี่เป็น milestone ที่ดีในการเขียน retrospective ไหมครับ?"* If yes, append a `RETRO-NNN` entry to Section 3.
+- **Don't ask permission for `ERR-NNN`** — just log them as they happen. Errors that aren't logged are errors we'll repeat.
+- **Always ask before adopting an `IMP-NNN`** — improvements that change existing files need my approval first.
+
+## MILESTONE COMPLETION REQUIREMENT (at the end of STEP 10)
+
+When STEP 10 finishes, before stopping:
+1. Write the **first** `RETRO-NNN` entry in `LEARNING_LOG.md` Section 3 covering STEPs 1–10.
+2. Suggest in Thai which "after-task" .md from `LEARNING_LOG.md` Section 4 would be most valuable to create next (likely `CASE_STUDY.md` and/or `DEMO_SCRIPT.md`).
+3. Commit + push everything one final time.
 
 ## START-OF-SESSION REQUIREMENT (when resuming, e.g., on the other machine)
 

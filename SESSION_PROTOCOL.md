@@ -2,7 +2,9 @@
 
 > **Purpose:** Avoid losing progress when Claude Pro's 5-hour message window runs out mid-task, AND maximize usable quota by spanning work between two machines.
 > **Audience:** Ran (and any future AI assistant resuming work).
-> **Companion file:** `MACHINE_RULES.md` (rules for the dual-machine setup — read it first).
+> **Companion files:**
+> - `MACHINE_RULES.md` — rules for the dual-machine setup (read first)
+> - `LEARNING_LOG.md` — continuous error/improvement/retrospective journal (update throughout sessions)
 
 ---
 
@@ -282,6 +284,34 @@ Before opening Claude Code, run through this 30-second checklist:
 - [ ] Is my prompt for this session already drafted (or ready to paste)?
 
 If all checked → start session.
+
+---
+
+## 13. Post-session checklist (run before closing)
+
+Before closing Claude Code at the end of a session:
+
+- [ ] All commits done? `git status` should be clean.
+- [ ] All commits pushed? `git push` should say "Everything up-to-date."
+- [ ] `HANDOVER.md` reflects the current state? (timestamp + machine + next STEP)
+- [ ] `LEARNING_LOG.md` has entries for every error this session? Even small ones?
+- [ ] Any improvement ideas captured as `IMP-NNN`?
+- [ ] If this was a milestone end: a `RETRO-NNN` written?
+
+If all checked → close cleanly.
+
+---
+
+## 14. Continuous improvement loop
+
+`LEARNING_LOG.md` is not optional — it's the difference between repeating mistakes and getting compounding skill. Treat it like a developer journal:
+
+- **During the session:** Claude Code logs `ERR-NNN` automatically as errors happen. Don't suppress this — let small errors be logged too. Patterns only emerge with quantity.
+- **End of session:** Skim the new entries. Anything surprising? Anything that suggests a permanent rule change to `MACHINE_RULES.md` or `SESSION_PROTOCOL.md`?
+- **End of milestone:** Write a `RETRO-NNN`. Read the last 2 retros to see if previous "what I'd do differently" items actually got done.
+- **End of internship (October 2026):** The full `LEARNING_LOG.md` becomes a portfolio artifact and the source material for a long-form write-up.
+
+The log compounds. Trust the process.
 
 ---
 
