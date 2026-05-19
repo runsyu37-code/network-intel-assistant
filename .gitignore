@@ -17,3 +17,9 @@ report_01.json
 report_02.json
 report_03.json
 demo_report.json
+
+# SSM — filled templates with real company data (never commit)
+MEGA/*_filled*.xlsx
+MEGA/*_real*.xlsx
+MEGA/*_prod*.xlsx
+import_report.csv
