@@ -265,5 +265,89 @@ class TestCLI(unittest.TestCase):
         self.assertGreater(len(data["ip_mappings"]), 0)
 
 
+# ── Excel support ─────────────────────────────────────────────────────────
+
+class TestExcel(unittest.TestCase):
+
+    def setUp(self):
+        try:
+            import openpyxl
+            self.openpyxl = openpyxl
+        except ImportError:
+            self.skipTest("openpyxl not installed")
+
+    def _make_workbook(self, cells: list[tuple]) -> Path:
+        """Write a temp .xlsx with given (row, col, value) tuples, return path."""
+        wb = self.openpyxl.Workbook()
+        ws = wb.active
+        for r, c, v in cells:
+            ws.cell(row=r, column=c, value=v)
+        p = _OUTPUT / "_test_input.xlsx"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        wb.save(p)
+        self.addCleanup(p.unlink, missing_ok=True)
+        return p
+
+    def _load_cells(self, path: Path) -> list[str]:
+        wb = self.openpyxl.load_workbook(path)
+        return [
+            cell.value
+            for ws in wb.worksheets
+            for row in ws.iter_rows()
+            for cell in row
+            if isinstance(cell.value, str)
+        ]
+
+    def test_excel_ip_replaced(self):
+        """Real IP in an Excel cell must not survive."""
+        inp = self._make_workbook([(1, 1, "Gateway: 203.0.113.1")])
+        out = _OUTPUT / "_test_out.xlsx"
+        self.addCleanup(out.unlink, missing_ok=True)
+        result = subprocess.run(
+            [sys.executable, str(_SCRIPT), str(inp), str(out)],
+            capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0)
+        values = self._load_cells(out)
+        self.assertFalse(any("203.0.113.1" in v for v in values), "Real IP leaked")
+        self.assertTrue(any("10.0.0." in v for v in values), "Fake IP not found")
+
+    def test_excel_mac_replaced(self):
+        """Real MAC in an Excel cell must not survive."""
+        inp = self._make_workbook([(1, 1, "MAC: aa:bb:cc:dd:ee:ff")])
+        out = _OUTPUT / "_test_out_mac.xlsx"
+        self.addCleanup(out.unlink, missing_ok=True)
+        subprocess.run([sys.executable, str(_SCRIPT), str(inp), str(out)])
+        values = self._load_cells(out)
+        self.assertFalse(any("aa:bb:cc:dd:ee:ff" in v for v in values))
+
+    def test_excel_non_string_cells_preserved(self):
+        """Numbers and None cells must be left untouched."""
+        inp = self._make_workbook([(1, 1, 42), (1, 2, 3.14), (2, 1, "10.1.2.3")])
+        out = _OUTPUT / "_test_out_num.xlsx"
+        self.addCleanup(out.unlink, missing_ok=True)
+        subprocess.run([sys.executable, str(_SCRIPT), str(inp), str(out)])
+        wb = self.openpyxl.load_workbook(out)
+        ws = wb.active
+        self.assertEqual(ws.cell(1, 1).value, 42)
+        self.assertAlmostEqual(ws.cell(1, 2).value, 3.14)
+
+    def test_excel_multiple_sheets(self):
+        """Cells across all sheets must be sanitized."""
+        wb = self.openpyxl.Workbook()
+        wb.active["A1"] = "IP: 203.0.113.5"
+        ws2 = wb.create_sheet("Sheet2")
+        ws2["A1"] = "IP: 203.0.113.6"
+        inp = _OUTPUT / "_test_multi_sheet.xlsx"
+        inp.parent.mkdir(parents=True, exist_ok=True)
+        wb.save(inp)
+        self.addCleanup(inp.unlink, missing_ok=True)
+        out = _OUTPUT / "_test_multi_sheet_out.xlsx"
+        self.addCleanup(out.unlink, missing_ok=True)
+        subprocess.run([sys.executable, str(_SCRIPT), str(inp), str(out)])
+        values = self._load_cells(out)
+        self.assertFalse(any("203.0.113" in v for v in values), "Real IP leaked from a sheet")
+
+
 if __name__ == "__main__":
     unittest.main()

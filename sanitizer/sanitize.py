@@ -6,6 +6,10 @@ Usage:
     python sanitize.py <input> <output>
     python sanitize.py <input> <output> --report report.json
     python sanitize.py <input> <output> --persist-mapping
+
+Supported formats:
+    Text / SQL / CSV  — processed as plain text (no extra dependencies)
+    Excel (.xlsx)     — requires openpyxl: pip install openpyxl
 """
 
 import argparse
@@ -160,6 +164,26 @@ class Sanitizer:
         return len(self._ip_map), len(self._mac_map), len(self._host_map)
 
 
+# ── Excel helper ─────────────────────────────────────────────────────────
+
+def _process_excel(s: "Sanitizer", inp: Path, out: Path) -> None:
+    """Sanitize every string cell in an .xlsx workbook, preserving structure."""
+    try:
+        import openpyxl
+    except ImportError:
+        print("Error: openpyxl not installed. Run: pip install openpyxl", file=sys.stderr)
+        sys.exit(1)
+
+    wb = openpyxl.load_workbook(inp)
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str) and cell.value:
+                    cell.value = s.sanitize(cell.value)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(out)
+
+
 # ── .gitignore helper ─────────────────────────────────────────────────────
 
 def _ensure_gitignored(report_path: Path) -> None:
@@ -203,11 +227,13 @@ def main() -> None:
         if saved:
             s.load(saved)
 
-    text = inp.read_text(encoding="utf-8", errors="replace")
-    clean = s.sanitize(text)
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(clean, encoding="utf-8")
+    if inp.suffix.lower() in (".xlsx", ".xlsm"):
+        _process_excel(s, inp, out)
+    else:
+        text = inp.read_text(encoding="utf-8", errors="replace")
+        clean = s.sanitize(text)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(clean, encoding="utf-8")
 
     ip_n, mac_n, host_n = s.counts()
     print(f"Sanitized {ip_n} IPs, {mac_n} MACs, {host_n} hostnames -> {out}")
