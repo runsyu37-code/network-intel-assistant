@@ -79,7 +79,7 @@ CREATE TABLE floors (
 GO
 
 CREATE TABLE rooms (
-    Room_ID       NVARCHAR(10)                          NOT NULL,
+    Room_ID       NVARCHAR(20)                          NOT NULL,
     Site_ID       NVARCHAR(10)                          NOT NULL,
     Building_ID   NVARCHAR(10)                          NOT NULL,
     Floor_ID      NVARCHAR(10)                          NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE racks (
     Site_ID       NVARCHAR(10)                          NOT NULL,
     Building_ID   NVARCHAR(10)                          NOT NULL,
     Floor_ID      NVARCHAR(10)                          NOT NULL,
-    Room_ID       NVARCHAR(10)                          NOT NULL,
+    Room_ID       NVARCHAR(20)                          NOT NULL,
     name          NVARCHAR(50)                          NOT NULL,
     total_units   INT          DEFAULT 42               NOT NULL,
     units_per_u   TINYINT      DEFAULT 3                NOT NULL,  -- micro-slots per U
@@ -153,7 +153,7 @@ CREATE TABLE poe_switches (
     Site_ID         NVARCHAR(10)               NOT NULL,
     Building_ID     NVARCHAR(10)               NOT NULL,
     Floor_ID        NVARCHAR(10)               NOT NULL,
-    Room_ID         NVARCHAR(10)               NOT NULL,
+    Room_ID         NVARCHAR(20)               NOT NULL,
     Rack_ID         NVARCHAR(20)               NOT NULL,
 
     -- rack position (D2)
@@ -192,8 +192,8 @@ CREATE TABLE poe_switches (
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_poe_switches    PRIMARY KEY CLUSTERED (SW_ID),
-    CONSTRAINT UQ_sw_serial       UNIQUE (serial_no),
-    CONSTRAINT UQ_sw_mac          UNIQUE (mac_address),
+    -- filtered indexes allow multiple NULLs (SQL Server UNIQUE constraint does not)
+    -- CONSTRAINT UQ_sw_serial / UQ_sw_mac created as filtered indexes after table creation
     CONSTRAINT UQ_sw_name         UNIQUE (device_name),
     CONSTRAINT CHK_sw_usubpos     CHECK  (u_subposition IS NULL OR u_subposition BETWEEN 1 AND 3),
     CONSTRAINT CHK_sw_status      CHECK  (status IN ('online','offline','warning','unknown')),
@@ -204,7 +204,7 @@ CREATE TABLE poe_switches (
     CONSTRAINT FK_sw_floor        FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID),
     CONSTRAINT FK_sw_room         FOREIGN KEY (Room_ID)     REFERENCES rooms(Room_ID),
     CONSTRAINT FK_sw_rack         FOREIGN KEY (Rack_ID)     REFERENCES racks(Rack_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE NO ACTION ON UPDATE CASCADE
 );
 GO
 
@@ -215,7 +215,7 @@ CREATE TABLE nvrs (
     Site_ID         NVARCHAR(10)               NOT NULL,
     Building_ID     NVARCHAR(10)               NOT NULL,
     Floor_ID        NVARCHAR(10)               NOT NULL,
-    Room_ID         NVARCHAR(10)               NOT NULL,
+    Room_ID         NVARCHAR(20)               NOT NULL,
     Rack_ID         NVARCHAR(20)               NOT NULL,
 
     u_position      INT                        NULL,
@@ -253,8 +253,8 @@ CREATE TABLE nvrs (
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_nvrs             PRIMARY KEY CLUSTERED (NVR_ID),
-    CONSTRAINT UQ_nvr_serial       UNIQUE (serial_no),
-    CONSTRAINT UQ_nvr_mac          UNIQUE (mac_address),
+    -- filtered indexes allow multiple NULLs (SQL Server UNIQUE constraint does not)
+    -- CONSTRAINT UQ_nvr_serial / UQ_nvr_mac created as filtered indexes after table creation
     CONSTRAINT UQ_nvr_name         UNIQUE (device_name),
     CONSTRAINT CHK_nvr_usubpos     CHECK  (u_subposition IS NULL OR u_subposition BETWEEN 1 AND 3),
     CONSTRAINT CHK_nvr_status      CHECK  (status IN ('online','offline','warning','unknown')),
@@ -266,7 +266,7 @@ CREATE TABLE nvrs (
     CONSTRAINT FK_nvr_floor        FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID),
     CONSTRAINT FK_nvr_room         FOREIGN KEY (Room_ID)     REFERENCES rooms(Room_ID),
     CONSTRAINT FK_nvr_rack         FOREIGN KEY (Rack_ID)     REFERENCES racks(Rack_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE NO ACTION ON UPDATE CASCADE
 );
 GO
 
@@ -315,9 +315,8 @@ CREATE TABLE cameras (
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_cameras     PRIMARY KEY CLUSTERED (id),
-    CONSTRAINT UQ_cam_nvr_ch  UNIQUE (NVR_CH),         -- natural alternate key from Excel
-    CONSTRAINT UQ_cam_serial  UNIQUE (serial_no),
-    CONSTRAINT UQ_cam_mac     UNIQUE (mac_address),
+    -- filtered indexes allow multiple NULLs (SQL Server UNIQUE constraint does not)
+    -- CONSTRAINT UQ_cam_nvr_ch / UQ_cam_serial / UQ_cam_mac created as filtered indexes after table creation
     CONSTRAINT UQ_cam_name    UNIQUE (device_name),
     CONSTRAINT CHK_cam_status CHECK (status IN ('online','offline','warning','unknown')),
     CONSTRAINT FK_cam_site       FOREIGN KEY (Site_ID)     REFERENCES sites(Site_ID),
@@ -325,9 +324,9 @@ CREATE TABLE cameras (
     CONSTRAINT FK_cam_floor      FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID)
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT FK_cam_poe_switch FOREIGN KEY (SW_ID)       REFERENCES poe_switches(SW_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE,
+        ON DELETE SET NULL ON UPDATE NO ACTION,
     CONSTRAINT FK_cam_nvr        FOREIGN KEY (NVR_ID)      REFERENCES nvrs(NVR_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE NO ACTION
 );
 GO
 
@@ -425,6 +424,20 @@ CREATE TABLE alert_logs (
     CONSTRAINT CHK_alert_atype    CHECK (alert_type IS NULL
                                       OR alert_type IN ('offline','hdd_warning','hdd_full','back_online'))
 );
+GO
+
+-- =============================================================================
+-- SECTION 3b : FILTERED UNIQUE INDEXES (nullable unique columns)
+-- SQL Server UNIQUE constraints reject multiple NULLs; filtered indexes do not.
+-- =============================================================================
+
+CREATE UNIQUE INDEX UQ_nvr_serial    ON nvrs         (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_nvr_mac       ON nvrs         (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_sw_serial     ON poe_switches (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_sw_mac        ON poe_switches (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_serial    ON cameras      (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_mac       ON cameras      (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_nvr_ch    ON cameras      (NVR_CH)       WHERE NVR_CH       IS NOT NULL;
 GO
 
 -- =============================================================================
