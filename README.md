@@ -1,194 +1,146 @@
-# Network Intelligence Assistant
+# SSM — Surveillance Smart-Monitor Toolchain
 
-**A privacy-first toolchain for network operations** — sanitize, parse, and analyze
-infrastructure data without sending sensitive information to cloud AI services.
-
----
-
-## Problem
-
-Network engineers collect device inventory daily: switch MAC tables, ARP entries, and
-port descriptions that link cameras to rack locations across buildings and floors. This
-data is operationally critical but too sensitive to process with cloud AI — real IPs,
-MAC addresses, and hostnames reveal physical topology and security boundaries.
-
-This project solves that constraint with a **local-only sanitizer** that replaces every
-sensitive value with a consistent, traceable placeholder *before* any AI ever sees the
-data. Once sanitized, the output flows safely to any cloud tool or public repository.
+เครื่องมือ Python สำหรับโปรเจกต์ระบบ monitor CCTV ในองค์กร  
+ทำงานแบบ local-only — ข้อมูลจริงไม่ออกนอกเครื่อง
 
 ---
 
-## Architecture: Three Phases
+## โครงสร้าง Folder
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│ Phase A — Build  (personal machine, fake data only)                 │
-│                                                                     │
-│   Claude Code + synthetic samples  →  sanitize.py  (regex-based)   │
-│   Real data never touches the AI.                                   │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │  copy script to work machine
-┌────────────────────────────▼────────────────────────────────────────┐
-│ Phase B — Run  (work machine, fully offline)                        │
-│                                                                     │
-│   real_config.txt  ──►  python sanitize.py  ──►  clean_config.txt  │
-│   No internet. No AI. No cloud call. Plain Python only.             │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │  sanitized file is now safe to share
-┌────────────────────────────▼────────────────────────────────────────┐
-│ Phase C — Use  (anywhere)                                           │
-│                                                                     │
-│   Paste clean_config.txt into Claude / ChatGPT / Gemini, or        │
-│   push it to a public GitHub repo as a documented sample.           │
-└─────────────────────────────────────────────────────────────────────┘
+network-intel-assistant/
+│
+├── sanitizer/                   ← Data Sanitizer tool
+│   ├── sanitize.py              ← ตัวหลัก — รันตรงนี้
+│   ├── patterns.py              ← regex patterns ทั้งหมด
+│   ├── mappings.json            ← persistent mapping (--persist-mapping)
+│   ├── SANITIZER_GUIDE.md       ← คู่มือใช้งาน sanitizer
+│   └── SANITIZER_PROMPT.md
+│
+├── scripts/                     ← SSM Importer tool
+│   ├── ssm_import.py            ← import Excel → SQL Server
+│   ├── SSM_IMPORT_GUIDE.md      ← คู่มือใช้งาน importer (ฉบับเต็ม)
+│   └── SSM_IMPORT_CHEATSHEET.md ← copy-paste commands
+│
+├── database/                    ← SQL Server schema
+│   ├── SSM_schema_v2.sql        ← schema จริง → สร้าง SSM_DB
+│   └── SSM_test_schema.sql      ← schema ทดสอบ → สร้าง SSM_TEST_DB
+│
+├── templates/                   ← Excel workbook templates
+│   ├── template_v3.xlsx         ← survey template (ข้อมูลปลอม)
+│   └── Fakeinfo_test.xlsx       ← template กรอกข้อมูลไว้แล้ว สำหรับทดสอบ
+│
+├── samples/                     ← ไฟล์ตัวอย่าง fake สำหรับทดสอบ sanitizer
+├── tests/                       ← unit tests (28 tests, all pass)
+├── output/                      ← ผลลัพธ์จาก sanitizer (git-ignored)
+│
+├── docs/                        ← เอกสารโปรเจกต์
+│   ├── me/                      ← ABOUT_ME.md (บริบทผู้ใช้)
+│   ├── plan/                    ← ROADMAP.md, MEGA_CONTEXT.md
+│   ├── workflow/                ← START_HERE, HANDOVER, SESSION_PROTOCOL ฯลฯ
+│   └── log/                     ← LEARNING_LOG.md
+│
+└── work_pack/                   ← ไฟล์ชุด backup ไปที่ทำงาน (7 ไฟล์)
+    ├── ssm_import.py
+    ├── SSM_schema_v2.sql
+    ├── template_v3.xlsx
+    ├── SSM_IMPORT_GUIDE.md
+    ├── SSM_IMPORT_CHEATSHEET.md
+    ├── MEGA_CONTEXT.md
+    └── START_HERE.md
 ```
-
----
-
-## What It Sanitizes
-
-| Sensitive value | Input example | Output placeholder |
-|---|---|---|
-| IPv4 address | `203.0.113.10` | `10.0.0.1` |
-| MAC — colon format | `aa:bb:cc:dd:ee:ff` | `fa:fe:00:00:00:01` |
-| MAC — hyphen format | `aa-bb-cc-dd-ee-ff` | `fa-fe-00-00-00-01` |
-| MAC — Cisco dot format | `0011.22ab.cd01` | `fafe.0000.0001` |
-| Hostname | `PROD-SW-FLOOR3-01` | `SW-001` |
-| Building | `Building EX-A` | `Building-A` |
-| Floor | `Floor 3` | `Floor-1` |
-| Room | `Room R-301` | `Room-001` |
-| Rack | `Rack RK-12` | `Rack-01` |
-
-Replacement is **consistent within a run**: the same real value always maps to the same
-placeholder, so topology relationships survive in the sanitized output.
 
 ---
 
 ## Quick Start
 
-No installation required. Requires **Python 3.11+** and the standard library only.
+### 1. ติดตั้ง dependencies
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/runsyu37-code/network-intel-assistant.git
-cd network-intel-assistant
+```powershell
+pip install openpyxl pyodbc bcrypt
+```
 
-# 2. Sanitize a file
+### 2. ทดสอบ sanitizer
+
+```powershell
 python sanitizer/sanitize.py samples/fake_input_01.txt output/clean_01.txt
-
-# 3. Sanitize with a full mapping audit report
-python sanitizer/sanitize.py samples/fake_input_02.txt output/clean_02.txt \
-    --report output/report_02.json
-
-# 4. Keep mappings stable across multiple files (same real IP → same fake IP every run)
-python sanitizer/sanitize.py samples/fake_input_03.txt output/clean_03.txt \
-    --persist-mapping
 ```
 
-**Expected output:**
-```
-Sanitized 18 IPs, 18 MACs, 1 hostnames -> output/clean_02.txt
-Mapping report written -> output/report_02.json
+### 3. ทดสอบ importer (ไม่แตะ DB)
+
+```powershell
+python scripts/ssm_import.py templates/Fakeinfo_test.xlsx --parse-only
 ```
 
-**Run tests:**
-```bash
+### 4. รัน unit tests
+
+```powershell
 python -m unittest discover tests -v
-# 24 tests, OK
 ```
 
 ---
 
-## Sample: Before and After
+## สิ่งที่ทำเสร็จแล้ว
 
-**Input** — `samples/fake_input_03.txt` (excerpt):
-```
-EXAMPLE-SW-FLOOR3-01#show running-config
-!
-hostname EXAMPLE-SW-FLOOR3-01
-!
-interface GigabitEthernet1/0/1
- description [Building EX-A][Floor 3][Room R-301] EXAMPLE-CAM-R301-01
- switchport access vlan 10
- spanning-tree portfast
-!
-interface GigabitEthernet1/0/47
- description [Building EX-A][Floor 3][Rack RK-12] UPLINK-TO-EXAMPLE-SW-FLOOR2-01
- switchport mode trunk
-```
-
-**Output** — `output/clean_03.txt` (same lines):
-```
-SW-001#show running-config
-!
-hostname SW-001
-!
-interface GigabitEthernet1/0/1
- description [Building-A][Floor-1][Room-001] CAM-001
- switchport access vlan 10
- spanning-tree portfast
-!
-interface GigabitEthernet1/0/47
- description [Building-A][Floor-1][Rack-01] SW-002
- switchport mode trunk
-```
-
-Interface numbers, VLAN IDs, and switch commands are preserved intact.
-Only the sensitive identifying values are replaced.
-
----
-
-## Project Structure
-
-```
-network-intel-assistant/
-├── sanitizer/
-│   ├── sanitize.py      # CLI entry point — Sanitizer class + argparse
-│   ├── patterns.py      # All regex patterns, separated for easy extension
-│   └── mappings.json    # Persistent hostname mapping (used with --persist-mapping)
-├── samples/             # Synthetic (fake) switch/ARP/config samples — safe to share
-├── tests/
-│   └── test_sanitize.py # 24 unit tests covering IPv4, MAC x3, consistency, no-leakage
-└── output/              # Sanitized output (git-ignored — stays local)
-```
-
----
-
-## Limitations
-
-- **Regex-based only.** The sanitizer uses pattern matching, not semantic understanding.
-  Values in unusual formats (decimal-encoded IPs, base64 strings) will not be detected.
-- **Subnet masks get replaced.** `255.255.255.0` is a valid IPv4 pattern and is
-  substituted with a placeholder. The output remains safe; the mask is just cosmetically
-  absent.
-- **Plain text only.** PDF reports, Excel spreadsheets, and Visio diagrams require
-  pre-conversion to text before sanitization.
-- **English location keywords.** Patterns for `Building`, `Floor`, `Room`, and `Rack`
-  are hardcoded in English. Sites using other languages need updates in `patterns.py`.
-- **Not a DLP product.** This tool is a workflow aid for a specific, well-understood
-  format (Cisco / Linux CLI text output). It is not a substitute for a formal
-  Data Loss Prevention system.
-
----
-
-## Roadmap
-
-| Phase | Agent | Status |
+| Tool | ไฟล์ | สถานะ |
 |---|---|---|
-| A | **`data-sanitizer-agent`** — this repo | ✅ Complete |
-| B | `network-inventory-agent` — MAC/ARP tables → structured JSON/CSV | Planned |
-| C | `topology-mapper-agent` — inventory JSON → Mermaid network diagram | Planned |
-| D | `alert-triage-agent` — CCTV failure + topology → likely-cause runbook | Planned |
+| Data Sanitizer | `sanitizer/sanitize.py` | Done — 28/28 tests pass |
+| SSM Importer | `scripts/ssm_import.py` | Done — parse-only tested |
+| SQL Schema | `database/SSM_schema_v2.sql` | Done — 13 tables, 5 views |
+| SQL Test Schema | `database/SSM_test_schema.sql` | Done — SSM_TEST_DB สำหรับทดสอบ |
+| Excel Template | `templates/template_v3.xlsx` | Done — 10 sheets |
+| Excel Test Data | `templates/Fakeinfo_test.xlsx` | Done — กรอกข้อมูลพร้อม import |
+| Backend API (C#) | branch `feature/backend-api` | Done — 13 controllers, Bruno collection |
 
 ---
 
-## Background
+## ทดสอบ pipeline เต็ม (ไม่แตะ production)
 
-Built during a network engineering internship (May–October 2026) to unblock a real
-data-collection bottleneck: mapping which CCTV camera connects to which switch port,
-NVR, building, and rack — manually, across dozens of devices. The sanitizer is the
-foundation layer that lets every downstream AI tool operate on safe, de-identified data.
+```powershell
+# 1. สร้าง test DB ใน SSMS ก่อน
+#    CREATE DATABASE SSM_TEST_DB;
+#    แล้วรัน database/SSM_test_schema.sql
+
+# 2. parse-only (ไม่แตะ DB เลย)
+python scripts/ssm_import.py templates/Fakeinfo_test.xlsx --parse-only
+
+# 3. dry-run (เชื่อม DB แต่ไม่ save)
+python scripts/ssm_import.py templates/Fakeinfo_test.xlsx --server localhost\SQLEXPRESS --db SSM_TEST_DB --auth windows --dry-run
+
+# 4. รันจริงเข้า test DB
+python scripts/ssm_import.py templates/Fakeinfo_test.xlsx --server localhost\SQLEXPRESS --db SSM_TEST_DB --auth windows
+```
 
 ---
 
-*Python 3.11+ · Standard library only · No external dependencies*
+## เตรียม backup ไปที่ทำงาน
+
+อัปเดต `work_pack/` ก่อน push ทุกครั้ง
+
+```powershell
+# copy ไฟล์ล่าสุดเข้า work_pack/
+Copy-Item scripts\ssm_import.py              work_pack\ -Force
+Copy-Item scripts\SSM_IMPORT_GUIDE.md        work_pack\ -Force
+Copy-Item scripts\SSM_IMPORT_CHEATSHEET.md   work_pack\ -Force
+Copy-Item database\SSM_schema_v2.sql         work_pack\ -Force
+Copy-Item templates\template_v3.xlsx         work_pack\ -Force
+Copy-Item docs\plan\MEGA_CONTEXT.md          work_pack\ -Force
+Copy-Item docs\workflow\START_HERE.md        work_pack\ -Force
+```
+
+---
+
+## คู่มือ
+
+| ต้องการอะไร | ดูที่ไหน |
+|---|---|
+| วิธี sanitize ข้อมูล | `sanitizer/SANITIZER_GUIDE.md` |
+| วิธี import Excel → SQL | `scripts/SSM_IMPORT_GUIDE.md` |
+| copy-paste commands | `scripts/SSM_IMPORT_CHEATSHEET.md` |
+| บริบทโปรเจกต์เต็ม | `docs/plan/MEGA_CONTEXT.md` |
+| แผนงาน | `docs/plan/ROADMAP.md` |
+| บันทึกการเรียนรู้ | `docs/log/LEARNING_LOG.md` |
+
+---
+
+*Python 3.11+ · Local-only · ข้อมูลจริงไม่ออกนอกเครื่อง*
