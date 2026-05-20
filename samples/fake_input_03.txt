@@ -1,0 +1,102 @@
+EXAMPLE-SW-FLOOR3-01#show running-config
+!
+hostname EXAMPLE-SW-FLOOR3-01
+!
+vlan 10
+ name CCTV-CAMERAS
+vlan 20
+ name NVR-MGMT
+vlan 99
+ name INFRASTRUCTURE
+!
+interface GigabitEthernet1/0/1
+ description [Building EX-A][Floor 3][Room R-301] EXAMPLE-CAM-R301-01
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/2
+ description [Building EX-A][Floor 3][Room R-301] EXAMPLE-CAM-R301-02
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/3
+ description [Building EX-A][Floor 3][Room R-302] EXAMPLE-CAM-R302-01
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/4
+ description [Building EX-A][Floor 3][Room R-302] EXAMPLE-CAM-R302-02
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/5
+ description [Building EX-A][Floor 3][Room R-303] EXAMPLE-CAM-R303-01
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/6
+ description [Building EX-A][Floor 3][Corridor C-3A] EXAMPLE-CAM-C3A-01
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/7
+ description [Building EX-A][Floor 3][Corridor C-3A] EXAMPLE-CAM-C3A-02
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/8
+ description [Building EX-A][Floor 3][Stairwell ST-3B] EXAMPLE-CAM-ST3B-01
+ switchport access vlan 10
+ switchport mode access
+ spanning-tree portfast
+ ip dhcp snooping limit rate 15
+!
+interface GigabitEthernet1/0/22
+ description [Building EX-A][Floor 3][Rack RK-12] UPLINK-TO-EXAMPLE-NVR-B1-01
+ switchport access vlan 20
+ switchport mode access
+!
+interface GigabitEthernet1/0/23
+ description [Building EX-A][Floor 3][Rack RK-12] EXAMPLE-NVR-B1-01
+ switchport access vlan 20
+ switchport mode access
+!
+interface GigabitEthernet1/0/24
+ description [Building EX-A][Floor 3][Rack RK-12] EXAMPLE-NVR-B1-02
+ switchport access vlan 20
+ switchport mode access
+!
+interface GigabitEthernet1/0/47
+ description [Building EX-A][Floor 3][Rack RK-12] UPLINK-TO-EXAMPLE-SW-FLOOR2-01
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 1,10,20,99
+!
+interface GigabitEthernet1/0/48
+ description [Building EX-A][Floor 3][Rack RK-12] UPLINK-TO-EXAMPLE-SW-CORE-01
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 1,10,20,99
+!
+interface Vlan99
+ description INFRASTRUCTURE-MGMT
+ ip address 203.0.113.12 255.255.255.0
+!
+ip default-gateway 203.0.113.1
+!
+end
+EXAMPLE-SW-FLOOR3-01#

@@ -1,0 +1,21 @@
+EXAMPLE-SW-FLOOR3-01#show arp
+Protocol  Address          Age (min)  Hardware Addr   Type   Interface
+Internet  203.0.113.1             -   0011.22ff.aa01  ARPA   Vlan99
+Internet  203.0.113.10           12   0011.22ab.cd01  ARPA   Vlan10
+Internet  203.0.113.11           45   0011.22ab.cd02  ARPA   Vlan10
+Internet  203.0.113.12            8   0011.22ab.cd03  ARPA   Vlan10
+Internet  203.0.113.13           31   0011.22ab.cd04  ARPA   Vlan10
+Internet  203.0.113.14            2   0011.22ab.cd05  ARPA   Vlan10
+Internet  203.0.113.15           19   0011.22ab.cd06  ARPA   Vlan10
+Internet  203.0.113.16           57   0011.22ab.cd07  ARPA   Vlan10
+Internet  203.0.113.17            4   0011.22ab.cd08  ARPA   Vlan10
+Internet  203.0.113.18           23   0011.22ab.cd09  ARPA   Vlan10
+Internet  203.0.113.19           11   0011.22ab.cd10  ARPA   Vlan10
+Internet  203.0.113.20           38   0011.22ab.cd11  ARPA   Vlan10
+Internet  203.0.113.50            -   0011.22ef.0101  ARPA   Vlan20
+Internet  203.0.113.51           14   0011.22ef.0102  ARPA   Vlan20
+Internet  203.0.113.52            9   0011.22ef.0103  ARPA   Vlan20
+Internet  203.0.113.100          27   0011.22cc.dd01  ARPA   Vlan1
+Internet  203.0.113.101          53   0011.22cc.dd02  ARPA   Vlan1
+Internet  203.0.113.102           6   0011.22cc.dd03  ARPA   Vlan1
+EXAMPLE-SW-FLOOR3-01#

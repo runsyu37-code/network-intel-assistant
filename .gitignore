@@ -12,3 +12,30 @@ BNO_Survei_MonitorAPI/packages/
 
 # Sensitive config — do NOT commit connection strings
 # Web.config is included but connection string "CN" should be set locally
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+secrets/
+real_data/
+*.real.txt
+*.real.csv
+*.real.json
+*.real.yaml
+output/*.json
+output/*.txt
+mappings_report*.json
+cli_test_report.json
+report_01.json
+report_02.json
+report_03.json
+demo_report.json
+
+# SSM — filled templates with real company data (never commit)
+MEGA/*_filled*.xlsx
+MEGA/*_real*.xlsx
+MEGA/*_prod*.xlsx
+import_report.csv
