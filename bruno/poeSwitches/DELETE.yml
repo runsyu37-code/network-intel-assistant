@@ -1,0 +1,15 @@
+info:
+  name: DELETE
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: https://localhost:44342/api/DeletepoeSwitches/%7BSW_ID%7D
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
