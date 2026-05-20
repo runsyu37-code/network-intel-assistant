@@ -62,7 +62,7 @@ SHEETS = [
     dict(sheet="8_Switch",   table="poe_switches", pk="SW_ID"),
     dict(sheet="7_NVR",      table="nvrs",         pk="NVR_ID"),
     dict(sheet="6_CCTV",     table="cameras",      pk=None),   # IDENTITY PK
-    dict(sheet="9_Users",    table="users",        pk=None),   # IDENTITY PK
+    # dict(sheet="9_Users",    table="users",        pk=None),   # skip: seeded by schema already
 ]
 
 # ── Header alias table (lowercase Excel header -> SQL column name) ─────────────
@@ -76,8 +76,10 @@ ALIAS: dict[str, str | None] = {
     "room_id (pk)":          "Room_ID",
     "rack_id (pk)":          "Rack_ID",
     "nvr_id (pk)":           "NVR_ID",
-    "sw_id (pk)":            "SW_ID",
-    "nvr_ch (pk)":           "NVR_CH",
+    "sw_id (pk)":            "SW_ID",           # v3
+    "sw_id(pk)":             "SW_ID",           # v4 (no space)
+    "nvr_ch (pk)":           "NVR_CH",          # v3
+    "id(pk)":                "NVR_CH",          # v4 CCTV
     "user_id (pk)":          None,           # IDENTITY — SQL Server assigns
     "site_id (fk)":          "Site_ID",
     "building_id (fk)":      "Building_ID",
@@ -110,12 +112,15 @@ ALIAS: dict[str, str | None] = {
     # device identity
     "brand":                 "brand",
     "model":                 "model",
-    "s/n":                   "serial_no",
-    "mac":                   "mac_address",
+    "s/n":                   "serial_no",       # v3
+    "serial no (s/n)":       "serial_no",       # v4
+    "mac":                   "mac_address",     # v3
+    "mac address":           "mac_address",     # v4
     "camera type":           "camera_type",
     "resolution":            "resolution",
     "switch type":           "switch_type",
-    "os/firmware":           "os_version",
+    "os/firmware":           "os_version",      # v3
+    "os / firmware":         "os_version",      # v4
     # network
     "ip address":            "ip_address",
     "ip (internet port)":    "ip_internet",
@@ -137,7 +142,9 @@ ALIAS: dict[str, str | None] = {
     "poe switch name":       "SW_ID",
     "switch port":           "poe_port_number",
     "nvr device name":       "NVR_ID",
+    "nvr":                   "NVR_ID",          # v4 short form
     "nvr channel":           "nvr_channel",
+    "ch(port)":              "nvr_channel",     # v4
     "install location":      "install_location",
     # nvr-specific
     "total channels":        "total_channels",
@@ -148,7 +155,8 @@ ALIAS: dict[str, str | None] = {
     "record status":         "record_status",
     # auth
     "username":              "username",
-    "password (plain)":      "_password",    # special: bcrypt before insert
+    "password (plain)":      "_password",    # v3
+    "password (plain → จะถูก hash)": "_password",  # v4
     "role":                  "role",
     "is active":             "is_active",
     # shared
@@ -159,7 +167,7 @@ ALIAS: dict[str, str | None] = {
     "created":               "created_at",
     "updated":               "updated_at",
     "image path":            "_image_path",  # special: base64 encode file
-    "#":                     None,           # row-number column — skip
+    "#":                     "__row_num",    # row-number column — used for e.g. detection, not inserted
 }
 
 # "note" column name differs by table
@@ -279,8 +287,8 @@ def _parse_row(ws_row, header_map: dict[int, str | None],
             continue
         raw[sql_col] = cell.value
 
-    # Skip example row
-    if _clean(raw.get("#")) in ("e.g.", "#"):
+    # Skip example row (check raw value before _clean strips "e.g." to None)
+    if str(raw.get("__row_num", "")).strip() == "e.g.":
         return None
 
     # Special columns
@@ -302,6 +310,9 @@ def _parse_row(ws_row, header_map: dict[int, str | None],
                 row["pw_hash"] = _hash_password(v)
             continue
 
+        if col.startswith("__"):
+            continue
+
         if col in ("created_at", "updated_at"):
             row[col] = None  # let DB fill with SYSUTCDATETIME()
             continue
@@ -317,19 +328,24 @@ def _parse_row(ws_row, header_map: dict[int, str | None],
 
 # ── Validation ────────────────────────────────────────────────────────────────
 
-def _validate_row(row: dict, table: str) -> list[str]:
-    """Return list of validation error strings (empty = OK)."""
+def _validate_row(row: dict, table: str) -> tuple[list[str], list[str]]:
+    """Return (hard_errors, warnings).
+    Warnings nullify the offending field and allow the row to insert.
+    Hard errors block the row entirely.
+    """
     errors: list[str] = []
-    try:
-        _validate_ip(row.get("ip_address"))
-        _validate_ip(row.get("ip_internet"))
-        _validate_ip(row.get("ip_cctv"))
-    except ValueError as e:
-        errors.append(str(e))
-    try:
-        _validate_mac(row.get("mac_address"))
-    except ValueError as e:
-        errors.append(str(e))
+    warnings: list[str] = []
+
+    for field in ("ip_address", "ip_internet", "ip_cctv"):
+        val = row.get(field)
+        if val and not IP_RE.match(str(val)):
+            warnings.append(f"Invalid IP in {field}: {val!r} -> NULL")
+            row[field] = None
+
+    val = row.get("mac_address")
+    if val and not MAC_RE.match(str(val)):
+        warnings.append(f"Invalid MAC: {val!r} -> NULL")
+        row["mac_address"] = None
 
     hdd = row.get("hdd_used_pct")
     if hdd is not None:
@@ -347,7 +363,7 @@ def _validate_row(row: dict, table: str) -> list[str]:
         except (TypeError, ValueError):
             errors.append(f"u_subposition not an integer: {usub}")
 
-    return errors
+    return errors, warnings
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────
@@ -374,14 +390,53 @@ def _insert(cursor, table: str, row: dict) -> None:
     placeholders = ", ".join("?" for _ in cols)
     col_str = ", ".join(f"[{c}]" for c in cols)
     sql = f"INSERT INTO {table} ({col_str}) VALUES ({placeholders})"
-    params = [row[c] for c in cols]
-    cursor.execute(sql, params)
+    cursor.execute(sql, [row[c] for c in cols])
+
+
+def _upsert(cursor, table: str, row: dict, pk: str | None) -> str:
+    """MERGE: INSERT ถ้าไม่มี, UPDATE ถ้ามีอยู่แล้ว. คืน 'inserted'|'updated'|'skipped'."""
+    cols = [c for c, v in row.items() if v is not None]
+    if not cols:
+        return "skipped"
+
+    # ถ้าไม่มี PK ธรรมชาติ (IDENTITY) → INSERT ธรรมดา
+    if not pk or pk not in row or not row[pk]:
+        _insert(cursor, table, row)
+        return "inserted"
+
+    update_cols = [c for c in cols if c != pk]
+    src_select  = ", ".join(f"? AS [{c}]" for c in cols)
+    ins_cols    = ", ".join(f"[{c}]" for c in cols)
+    ins_vals    = ", ".join(f"source.[{c}]" for c in cols)
+    upd_set     = ", ".join(f"target.[{c}] = source.[{c}]" for c in update_cols)
+
+    if update_cols:
+        sql = f"""
+        MERGE INTO [{table}] WITH (HOLDLOCK) AS target
+        USING (SELECT {src_select}) AS source
+        ON target.[{pk}] = source.[{pk}]
+        WHEN MATCHED THEN UPDATE SET {upd_set}
+        WHEN NOT MATCHED THEN INSERT ({ins_cols}) VALUES ({ins_vals})
+        OUTPUT $action;
+        """
+    else:
+        sql = f"""
+        MERGE INTO [{table}] WITH (HOLDLOCK) AS target
+        USING (SELECT {src_select}) AS source
+        ON target.[{pk}] = source.[{pk}]
+        WHEN NOT MATCHED THEN INSERT ({ins_cols}) VALUES ({ins_vals})
+        OUTPUT $action;
+        """
+
+    cursor.execute(sql, [row[c] for c in cols])
+    result = cursor.fetchone()
+    return result[0].lower() if result else "inserted"
 
 
 # ── Main import logic ─────────────────────────────────────────────────────────
 
 def _import_sheet(cursor, conf: dict, ws, xlsx_dir: Path,
-                  report_rows: list, parse_only: bool) -> int:
+                  report_rows: list, parse_only: bool, upsert: bool = False) -> int:
     table = conf["table"]
     pk    = conf["pk"]
 
@@ -407,7 +462,14 @@ def _import_sheet(cursor, conf: dict, ws, xlsx_dir: Path,
         if pk and not row.get(pk):
             continue
 
-        errors = _validate_row(row, table)
+        # cameras: auto-fill device_name from NVR_CH if blank
+        if table == "cameras" and not row.get("device_name"):
+            row["device_name"] = row.get("NVR_CH") or f"CAM_{inserted + 1}"
+        # switches: auto-fill device_name from SW_ID if blank
+        if table == "poe_switches" and not row.get("device_name"):
+            row["device_name"] = row.get("SW_ID") or f"SW_{inserted + 1}"
+
+        errors, warnings = _validate_row(row, table)
         pk_val = row.get(pk, "(auto)")
 
         if errors:
@@ -417,15 +479,24 @@ def _import_sheet(cursor, conf: dict, ws, xlsx_dir: Path,
                                  "result": "FAIL", "reason": msg})
             continue
 
+        for w in warnings:
+            print(f"  [WARN] {table} PK={pk_val}: {w}")
+
         if parse_only:
             print(f"  [DRY]  {table} PK={pk_val}  cols={list(row.keys())}")
             report_rows.append({"sheet": ws.title, "pk": pk_val,
-                                 "result": "DRY", "reason": ""})
+                                 "result": "DRY", "reason": "; ".join(warnings)})
+        elif upsert:
+            action = _upsert(cursor, table, row, pk)
+            label = "[NEW]" if action == "inserted" else "[UPD]"
+            print(f"  {label}  {table} PK={pk_val}")
+            report_rows.append({"sheet": ws.title, "pk": pk_val,
+                                 "result": action.upper(), "reason": "; ".join(warnings)})
         else:
             _insert(cursor, table, row)
             print(f"  [OK]   {table} PK={pk_val}")
             report_rows.append({"sheet": ws.title, "pk": pk_val,
-                                 "result": "OK", "reason": ""})
+                                 "result": "OK", "reason": "; ".join(warnings)})
         inserted += 1
 
     return inserted
@@ -462,7 +533,8 @@ def run(args) -> None:
         return
 
     # ── live or dry-run mode: needs DB ────────────────────────────────────────
-    print(f"Connecting to {args.server}/{args.db} ({args.auth} auth)...")
+    mode_label = "UPSERT" if args.upsert else "INSERT"
+    print(f"Connecting to {args.server}/{args.db} ({args.auth} auth)... [{mode_label} mode]")
     conn = _connect(args)
     cursor = conn.cursor()
 
@@ -475,9 +547,10 @@ def run(args) -> None:
                 continue
             print(f"Sheet: {sheet_name} -> {conf['table']}")
             n = _import_sheet(cursor, conf, ws, xlsx_dir, report_rows,
-                              parse_only=False)
+                              parse_only=False, upsert=args.upsert)
             total += n
-            print(f"  -> {n} rows inserted\n")
+            verb = "upserted" if args.upsert else "inserted"
+            print(f"  -> {n} rows {verb}\n")
 
         if args.dry_run:
             conn.rollback()
@@ -527,6 +600,8 @@ def main() -> None:
                    help="Connect + validate + insert in a transaction, then ROLL BACK")
     p.add_argument("--parse-only", action="store_true",
                    help="Read + validate Excel only -- no DB connection needed")
+    p.add_argument("--upsert",     action="store_true",
+                   help="MERGE: insert new rows, update existing rows (safe to re-run)")
     p.add_argument("--report",     default="import_report.csv",
                    help="Output CSV report path (default: import_report.csv)")
     args = p.parse_args()
