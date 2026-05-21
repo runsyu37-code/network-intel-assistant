@@ -1,7 +1,7 @@
 # MEGA CONTEXT — SSM Project (AI Briefing File)
 
 > **สำหรับ AI:** อ่านไฟล์นี้จบแล้วรู้ทุกอย่าง ไม่ต้องถามบริบทเพิ่ม
-> **อัปเดตล่าสุด:** 2026-05-20
+> **อัปเดตล่าสุด:** 2026-05-21
 
 ---
 
@@ -22,14 +22,18 @@
 ระบบ web app สำหรับ monitor CCTV, NVR, PoE Switch ในองค์กร
 ข้อมูลลำดับชั้น: **Site → Building → Floor → Room → Rack → Device**
 
-### pipeline ข้อมูล
+### pipeline ข้อมูล (updated 2026-05-21)
 
 ```
-template_v4.xlsx        Python importer        MS SQL Server
-(survey staff กรอก) ──► ssm_import.py    ──►  SSM_DB
-                                               ▲
-                                          SSM web app อ่านจากนี้
+template_v4.xlsx     copy-paste ใน SSMS     MS SQL Server
+(survey staff กรอก) ──► Edit Top 200 Rows ──►  SSM_DB
+                                                ▲
+                                           C# REST API (ASP.NET)
+                                                ▲
+                                           SSM web app (planned)
 ```
+
+> ssm_import.py ยกเลิกแล้ว — ดู `docs/workflow/IMPORT_DECISION.md`
 
 ---
 
@@ -50,8 +54,9 @@ network-intel-assistant/
 │   └── SSM_IMPORT_CHEATSHEET.md
 │
 ├── database/
-│   ├── SSM_schema_v2.sql        ← schema จริง → SSM_DB
-│   └── SSM_test_schema.sql      ← schema ทดสอบ → SSM_TEST_DB
+│   ├── SSM_schema_v2.sql        ← schema จริง → SSM_DB (column order ตรง Excel)
+│   ├── SSM_test_schema.sql      ← schema ทดสอบ → SSM_TEST_DB
+│   └── mock_data.sql            ← mock data 2 sites/buildings/floors/rooms/racks, 2 switches/NVRs, 3 cameras
 │
 ├── templates/
 │   ├── template_v4_empty.xlsx   ← template เปล่า (กรอกเอง)
@@ -62,8 +67,8 @@ network-intel-assistant/
 ├── docs/
 │   ├── me/       → ABOUT_ME.md
 │   ├── plan/     → ROADMAP.md, MEGA_CONTEXT.md (ไฟล์นี้)
-│   ├── workflow/ → START_HERE.md, HANDOVER.md, SESSION_PROTOCOL.md ฯลฯ
-│   └── log/      → LEARNING_LOG.md
+│   ├── workflow/ → START_HERE.md, HANDOVER.md, IMPORT_DECISION.md ฯลฯ
+│   └── log/      → LEARNING_LOG.md, BUG_LOG.md
 │
 └── work_pack/                   ← ชุดไฟล์พร้อม copy ไปที่ทำงาน
     ├── ssm_import.py
@@ -84,11 +89,13 @@ network-intel-assistant/
 | Tool | สถานะ | หมายเหตุ |
 |---|---|---|
 | Data Sanitizer | ✅ Done | 28/28 tests pass |
-| SSM Importer | ✅ Done | 111 rows parse-only ผ่าน, bug 5 จุดแก้แล้ว |
-| SQL Schema v2 | ✅ Done | 13 tables, 5 views, filtered indexes |
-| Excel Template v4 | ✅ Done | 10 sheets, dummy data ครบ |
-| Backend API (C#) | ✅ Done | 13 controllers, Bruno collection (branch: feature/backend-api) |
-| Folder structure | ✅ Done | จัดระเบียบใหม่ทั้งหมด 2026-05-20 |
+| SSM Importer | ✅ Retired | เก็บไว้เป็น portfolio — ไม่ใช้แล้ว |
+| SQL Schema v2 | ✅ Done | column order redesign ตรง Excel, DROP+CREATE survey tables |
+| Excel Template v4 | ✅ Done | 10 sheets, copy-paste เข้า SSMS ได้เลย |
+| Mock Data SQL | ✅ Done | `database/mock_data.sql` — รันแล้วใน SSM_DB ที่ทำงาน |
+| Backend API (C#) | ✅ Done | 13 controllers, Bruno bodies ครบ, HTTP methods ถูกต้องแล้ว |
+| Bruno Collection | ✅ Done | SAVE/UPDATE/DELETE มี body + method ถูก (branch: feature/backend-api) |
+| API Testing | ✅ Passed | ทดสอบผ่าน Bruno แล้ว (mock data) |
 
 ---
 
@@ -96,9 +103,9 @@ network-intel-assistant/
 
 | ลำดับ | งาน | สถานะ |
 |---|---|---|
-| 1 | Paste ข้อมูลจริงจาก survey staff เข้า SSM_DB | ⏳ รอทำ |
-| 2 | ตรวจ views ใน SSMS หลัง paste ครบ | ⏳ รอทำ |
-| 3 | SSM web app (React/FastAPI) | 📋 planned |
+| 1 | SSM Web App — Frontend (React) + connect API | 🔥 งานต่อไป |
+| 2 | Paste ข้อมูลจริงจาก survey staff เข้า SSM_DB | ⏳ รอข้อมูลจาก staff |
+| 3 | ตรวจ views ใน SSMS หลัง paste ครบ | ⏳ รอทำหลัง paste |
 
 > **หมายเหตุ:** ยกเลิก Python importer แล้ว — ดู `docs/workflow/IMPORT_DECISION.md`
 
@@ -138,15 +145,16 @@ Schema แก้: เปลี่ยน UNIQUE constraint → filtered index (`W
 
 ## 8. GitHub Branches
 
-| Branch | ใช้ทำอะไร |
-|---|---|
-| `master` | home laptop — พัฒนา/จัดระเบียบ |
-| `work-safe` | work notebook — ทำงานจริง |
-| `feature/backend-api` | C# backend API (เสร็จแล้ว) |
+| Branch | ใช้ทำอะไร | Path ที่ทำงาน |
+|---|---|---|
+| `master` | home laptop — พัฒนา/จัดระเบียบ | `C:\1_Work_Local\AI_Agent\...` |
+| `work-safe` | work notebook — schema, docs, mock data | `C:\ai-playground\Notebook_Work\FOR_WORK_NB` |
+| `feature/backend-api` | C# backend API + Bruno | `C:\ai-playground\API` |
 
 **กฎ GitHub:**
-- push จากที่บ้าน: `git push origin master`
-- sync ไปที่ทำงาน: `git push origin master:work-safe --force`
+- push docs/schema จากที่ทำงาน: `git push origin work-safe`
+- push API จากที่ทำงาน: `git push origin feature/backend-api` (จาก `C:\ai-playground\API`)
+- sync ไปที่บ้าน: pull จาก branch ที่ต้องการ
 
 ---
 
