@@ -96,11 +96,11 @@ network-intel-assistant/
 
 | ลำดับ | งาน | สถานะ |
 |---|---|---|
-| 1 | รัน `SSM_schema_v2.sql` สร้าง SSM_DB จริง | ⏳ รอทำ |
-| 2 | dry-run กับ SSM_DB จริงที่ทำงาน | ⏳ รอทำ |
-| 3 | import ข้อมูลจริงจาก survey staff | ⏳ รอข้อมูล |
-| 4 | ตรวจ views ใน SSMS | ⏳ รอทำ |
-| 5 | SSM web app (React/FastAPI) | 📋 planned |
+| 1 | Paste ข้อมูลจริงจาก survey staff เข้า SSM_DB | ⏳ รอทำ |
+| 2 | ตรวจ views ใน SSMS หลัง paste ครบ | ⏳ รอทำ |
+| 3 | SSM web app (React/FastAPI) | 📋 planned |
+
+> **หมายเหตุ:** ยกเลิก Python importer แล้ว — ดู `docs/workflow/IMPORT_DECISION.md`
 
 ---
 
@@ -121,21 +121,18 @@ Schema แก้: เปลี่ยน UNIQUE constraint → filtered index (`W
 
 ---
 
-## 7. วิธีรัน Importer (ไฟล์อยู่ folder เดียวกัน)
+## 7. วิธี Import ข้อมูลจริง (updated 2026-05-21)
 
-```powershell
-# Step 1 — parse-only (ไม่แตะ DB)
-python ssm_import.py Fakeinfo_test.xlsx --parse-only
+> **ssm_import.py ยกเลิกแล้ว** — ใช้ copy-paste จาก Excel เข้า SSMS โดยตรงแทน
 
-# Step 2 — dry-run (Windows Auth)
-python ssm_import.py Fakeinfo_test.xlsx --server localhost\SQLEXPRESS --db SSM_TEST_DB --auth windows --dry-run
-
-# Step 3 — import จริง (Windows Auth)
-python ssm_import.py Fakeinfo_test.xlsx --server localhost\SQLEXPRESS --db SSM_TEST_DB --auth windows
-
-# ที่ทำงาน (SQL Auth)
-python ssm_import.py Fakeinfo_test.xlsx --server SERVER_NAME\SQLEXPRESS --db SSM_DB --auth sql --user sa --password รหัส
 ```
+1. รัน database/SSM_schema_v2.sql ใน SSMS (F5) → reset survey tables
+2. เปิด templates/template_v4_empty.xlsx → กรอกข้อมูล
+3. Paste ทีละ sheet ตาม FK order:
+   1_Site → 2_Building → 3_Floor → 4_Room → 5_Rack → 8_Switch → 7_NVR → 6_CCTV
+```
+
+ดูรายละเอียดครบที่ `docs/workflow/IMPORT_DECISION.md`
 
 ---
 

@@ -150,6 +150,8 @@ ALIAS: dict[str, str | None] = {
     "total channels":        "total_channels",
     "active channels":       "active_channels",
     "hdd total (tb)":        "hdd_total_tb",
+    "hdd used (%)":          "hdd_used_pct",
+    "hdd used(%)":           "hdd_used_pct",
     "recording resolution":  "recording_res",
     "retention (days)":      "retention_days",
     "record status":         "record_status",
@@ -461,6 +463,10 @@ def _import_sheet(cursor, conf: dict, ws, xlsx_dir: Path,
         # Skip if PK is empty (mandatory)
         if pk and not row.get(pk):
             continue
+
+        # cameras: os/firmware header maps generically to os_version — remap to firmware_version
+        if table == "cameras" and "os_version" in row:
+            row["firmware_version"] = row.pop("os_version")
 
         # cameras: auto-fill device_name from NVR_CH if blank
         if table == "cameras" and not row.get("device_name"):

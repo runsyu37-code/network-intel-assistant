@@ -1,56 +1,87 @@
 -- =============================================================================
 -- SSM v1.0 — TEST Schema (SSM_TEST_DB)
--- File   : db/SSM_schema_v2.sql
--- Date   : 2026-05-19
--- Purpose: Single canonical schema, aligned with templates/template_v2.xlsx.
---          Replaces the SSMS-exported db/script.sql (which lacked views,
---          indexes, CHECK constraints, users / sync_logs / audit_logs).
+-- Date   : 2026-05-21
+-- Purpose: Drop + Recreate SSM_TEST_DB พร้อมตารางเปล่า
+--          Column order ตรงกับ template_v4_empty.xlsx เพื่อ copy-paste ได้เลย
 --
--- Run order : Run this ONCE against a fresh SSM_TEST_DB database.
---             Includes: tables + constraints + indexes + views + seed users.
+-- วิธีใช้: เปิดไฟล์นี้ใน SSMS แล้วกด F5 รันทีเดียว
+--
 -- =============================================================================
+-- วิธี Copy-Paste จาก Excel → SSMS (Edit Top 200 Rows)
+-- ─────────────────────────────────────────────────────
+-- 1. ใน SSMS: คลิกขวาที่ตาราง → Edit Top 200 Rows
+-- 2. ใน Excel: เลือก row ข้อมูล (ไม่รวม header) แล้ว Copy
+-- 3. ใน SSMS: คลิกที่ row ว่าง column แรก แล้ว Paste
+--
+-- คอลัมน์ที่ต้องเลือกจาก Excel (ไม่รวม # และ Created/Updated):
+--
+--   1_Site     → sites         : B–F   (5 cols)
+--   2_Building → buildings     : B–I   (8 cols รวม H ที่เป็น Image Path — paste cell ว่างได้)
+--   3_Floor    → floors        : B–J   (9 cols รวม I ที่เป็น Image Path — paste cell ว่างได้)
+--   4_Room     → rooms         : B–K   (10 cols รวม J ที่เป็น Image Path — paste cell ว่างได้)
+--   5_Rack     → racks         : B–J   (9 cols)
+--   8_Switch   → poe_switches  : B–Z   (25 cols)
+--   7_NVR      → nvrs          : B–AB  (27 cols)
+--   6_CCTV     → cameras       : B–R, U–W  (ข้าม col S-T ที่ซ้ำกัน)
+-- =============================================================================
+
+-- ── Drop + Recreate ──────────────────────────────────────────────────────────
+
+USE master;
+GO
+
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'SSM_TEST_DB')
+BEGIN
+    ALTER DATABASE SSM_TEST_DB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE SSM_TEST_DB;
+END
+GO
+
+CREATE DATABASE SSM_TEST_DB;
+GO
 
 USE SSM_TEST_DB;
 GO
 
 -- =============================================================================
 -- SECTION 1 : HIERARCHY TABLES
--- Natural-key PKs (NVARCHAR(10)) — keys are typed by survey staff in Excel.
---
--- IMPORTANT — Rooms table SCOPE
--- The `rooms` table holds ONLY rooms that contain a rack (e.g. Server Room,
--- Network Room, Comms Room). The web app exists to audit cameras and the
--- equipment that supports them; rooms without networking gear are not modeled.
--- This is intentional — keep the data set small and meaningful.
---
--- Cameras are NOT linked to a room — they live on a floor plan.
+-- Column order ตรงกับ Excel ทีละ sheet (ไม่รวม # / Image Path / Created / Updated)
+-- Auto-fill columns (image_data, image_type, created_at, updated_at) อยู่ท้ายสุด
 -- =============================================================================
 
+-- Sheet 1_Site — paste cols B–F
 CREATE TABLE sites (
-    Site_ID       NVARCHAR(10)                          NOT NULL,
-    name          NVARCHAR(100)                         NOT NULL,
-    code          NVARCHAR(20)                          NULL,
-    location      NVARCHAR(255)                         NULL,
-    description   NVARCHAR(500)                         NULL,
+    -- ── Excel columns (paste order) ──
+    Site_ID       NVARCHAR(10)                          NOT NULL,  -- col B
+    name          NVARCHAR(100)                         NOT NULL,  -- col C  Site Name
+    code          NVARCHAR(20)                          NULL,      -- col D  Site Code
+    location      NVARCHAR(255)                         NULL,      -- col E  Location / Address
+    description   NVARCHAR(500)                         NULL,      -- col F  Description
+    -- ── Auto-fill (DB only) ──
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
+
     CONSTRAINT PK_sites      PRIMARY KEY CLUSTERED (Site_ID),
     CONSTRAINT UQ_sites_code UNIQUE (code)
 );
 GO
 
+-- Sheet 2_Building — paste cols B–I (8 cols รวม cell ว่างของ Image Path)
 CREATE TABLE buildings (
-    Building_ID   NVARCHAR(10)                          NOT NULL,
-    Site_ID       NVARCHAR(10)                          NOT NULL,
-    name          NVARCHAR(100)                         NOT NULL,
-    code          NVARCHAR(20)                          NULL,
-    floor_count   INT          DEFAULT 1                NULL,
-    description   NVARCHAR(500)                         NULL,
-    image_data    NVARCHAR(MAX)                         NULL,
+    -- ── Excel columns (paste order) ──
+    Site_ID       NVARCHAR(10)                          NOT NULL,  -- col B  Site_ID (FK)
+    Building_ID   NVARCHAR(10)                          NOT NULL,  -- col C  Building_ID (PK)
+    name          NVARCHAR(100)                         NOT NULL,  -- col D  Building Name
+    code          NVARCHAR(20)                          NULL,      -- col E  Building Code
+    floor_count   INT          DEFAULT 1                NULL,      -- col F  Floor Count
+    description   NVARCHAR(500)                         NULL,      -- col G  Description
+    image_data    NVARCHAR(MAX)                         NULL,      -- col H  Image Path (paste cell ว่างได้)
+    note          NVARCHAR(500)                         NULL,      -- col I  Note
+    -- ── DB only ──
     image_type    NVARCHAR(50)                          NULL,
-    note          NVARCHAR(500)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
+
     CONSTRAINT PK_buildings           PRIMARY KEY CLUSTERED (Building_ID),
     CONSTRAINT FK_buildings_site      FOREIGN KEY (Site_ID) REFERENCES sites(Site_ID)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -58,19 +89,23 @@ CREATE TABLE buildings (
 );
 GO
 
+-- Sheet 3_Floor — paste cols B–J (9 cols รวม cell ว่างของ Image Path)
 CREATE TABLE floors (
-    Floor_ID      NVARCHAR(10)                          NOT NULL,
-    Site_ID       NVARCHAR(10)                          NOT NULL,
-    Building_ID   NVARCHAR(10)                          NOT NULL,
-    floor_number  INT                                   NULL,
-    name          NVARCHAR(50)                          NULL,
-    [function]    NVARCHAR(100)                         NULL,
-    has_cctv      BIT          DEFAULT 0                NULL,
-    image_data    NVARCHAR(MAX)                         NULL,
+    -- ── Excel columns (paste order) ──
+    Site_ID       NVARCHAR(10)                          NOT NULL,  -- col B  Site_ID (FK)
+    Building_ID   NVARCHAR(10)                          NOT NULL,  -- col C  Building_ID (FK)
+    Floor_ID      NVARCHAR(10)                          NOT NULL,  -- col D  Floor_ID (PK)
+    floor_number  INT                                   NULL,      -- col E  Floor Number
+    name          NVARCHAR(50)                          NULL,      -- col F  Floor Name
+    [function]    NVARCHAR(100)                         NULL,      -- col G  Main Function
+    has_cctv      BIT          DEFAULT 0                NULL,      -- col H  Has CCTV?
+    image_data    NVARCHAR(MAX)                         NULL,      -- col I  Image Path (paste cell ว่างได้)
+    note          NVARCHAR(500)                         NULL,      -- col J  Note
+    -- ── DB only ──
     image_type    NVARCHAR(50)                          NULL,
-    note          NVARCHAR(500)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
+
     CONSTRAINT PK_floors          PRIMARY KEY CLUSTERED (Floor_ID),
     CONSTRAINT FK_floors_site     FOREIGN KEY (Site_ID)     REFERENCES sites(Site_ID),
     CONSTRAINT FK_floors_building FOREIGN KEY (Building_ID) REFERENCES buildings(Building_ID)
@@ -78,28 +113,30 @@ CREATE TABLE floors (
 );
 GO
 
+-- Sheet 4_Room — paste cols B–K (10 cols รวม cell ว่างของ Image Path)
 CREATE TABLE rooms (
-    Room_ID       NVARCHAR(10)                          NOT NULL,
-    Site_ID       NVARCHAR(10)                          NOT NULL,
-    Building_ID   NVARCHAR(10)                          NOT NULL,
-    Floor_ID      NVARCHAR(10)                          NOT NULL,
-    name          NVARCHAR(100)                         NOT NULL,
-    type          NVARCHAR(50)                          NULL,
-    has_nvr       BIT          DEFAULT 0                NULL,
-    has_sw        BIT          DEFAULT 0                NULL,
-    -- physical dimensions (set by web later)
+    -- ── Excel columns (paste order) ──
+    Site_ID       NVARCHAR(10)                          NOT NULL,  -- col B  Site_ID (FK)
+    Building_ID   NVARCHAR(10)                          NOT NULL,  -- col C  Building_ID (FK)
+    Floor_ID      NVARCHAR(10)                          NOT NULL,  -- col D  Floor_ID (FK)
+    Room_ID       NVARCHAR(20)                          NOT NULL,  -- col E  Room_ID (PK)
+    name          NVARCHAR(100)                         NOT NULL,  -- col F  Room Name
+    type          NVARCHAR(50)                          NULL,      -- col G  Room Type
+    has_nvr       BIT          DEFAULT 0                NULL,      -- col H  Has NVR
+    has_sw        BIT          DEFAULT 0                NULL,      -- col I  Has SW
+    image_data    NVARCHAR(MAX)                         NULL,      -- col J  Image Path (paste cell ว่างได้)
+    note          NVARCHAR(500)                         NULL,      -- col K  Note
+    -- ── Web-only / DB only ──
+    image_type    NVARCHAR(50)                          NULL,
     width_m       DECIMAL(6,2)                          NULL,
     length_m      DECIMAL(6,2)                          NULL,
-    -- floor-plan SVG box (set by web drag-drop)
     x             INT          DEFAULT 0                NULL,
     y             INT          DEFAULT 0                NULL,
     w             INT          DEFAULT 100              NULL,
     h             INT          DEFAULT 100              NULL,
-    image_data    NVARCHAR(MAX)                         NULL,
-    image_type    NVARCHAR(50)                          NULL,
-    note          NVARCHAR(500)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
+
     CONSTRAINT PK_rooms          PRIMARY KEY CLUSTERED (Room_ID),
     CONSTRAINT FK_rooms_site     FOREIGN KEY (Site_ID)     REFERENCES sites(Site_ID),
     CONSTRAINT FK_rooms_building FOREIGN KEY (Building_ID) REFERENCES buildings(Building_ID),
@@ -110,25 +147,27 @@ CREATE TABLE rooms (
 );
 GO
 
--- Natural-key PK: Rack_ID is typed by survey staff (e.g. 'BLD_1_F1_R1').
--- Matches template_v3.xlsx 5_Rack column "Rack_ID (PK)".
+-- Sheet 5_Rack — paste cols B–J (9 cols)
 CREATE TABLE racks (
-    Rack_ID       NVARCHAR(20)                          NOT NULL,
-    Site_ID       NVARCHAR(10)                          NOT NULL,
-    Building_ID   NVARCHAR(10)                          NOT NULL,
-    Floor_ID      NVARCHAR(10)                          NOT NULL,
-    Room_ID       NVARCHAR(10)                          NOT NULL,
-    name          NVARCHAR(50)                          NOT NULL,
-    total_units   INT          DEFAULT 42               NOT NULL,
-    units_per_u   TINYINT      DEFAULT 3                NOT NULL,  -- micro-slots per U
+    -- ── Excel columns (paste order) ──
+    Site_ID       NVARCHAR(10)                          NOT NULL,  -- col B  Site_ID (FK)
+    Building_ID   NVARCHAR(10)                          NOT NULL,  -- col C  Building_ID (FK)
+    Floor_ID      NVARCHAR(10)                          NOT NULL,  -- col D  Floor_ID (FK)
+    Room_ID       NVARCHAR(20)                          NOT NULL,  -- col E  Room_ID (FK)
+    Rack_ID       NVARCHAR(20)                          NOT NULL,  -- col F  Rack_ID (PK)
+    name          NVARCHAR(50)                          NOT NULL,  -- col G  Rack Name
+    total_units   INT          DEFAULT 42               NOT NULL,  -- col H  Total U
+    units_per_u   TINYINT      DEFAULT 3                NOT NULL,  -- col I  Units per U (slots)
+    note          NVARCHAR(500)                         NULL,      -- col J  Note
+    -- ── Auto-fill / DB only ──
     brand         NVARCHAR(50)                          NULL,
     model         NVARCHAR(50)                          NULL,
     max_power_w   INT                                   NULL,
     image_data    NVARCHAR(MAX)                         NULL,
     image_type    NVARCHAR(50)                          NULL,
-    note          NVARCHAR(500)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
+
     CONSTRAINT PK_racks              PRIMARY KEY CLUSTERED (Rack_ID),
     CONSTRAINT FK_racks_site         FOREIGN KEY (Site_ID)     REFERENCES sites(Site_ID),
     CONSTRAINT FK_racks_building     FOREIGN KEY (Building_ID) REFERENCES buildings(Building_ID),
@@ -141,59 +180,50 @@ CREATE TABLE racks (
 GO
 
 -- =============================================================================
--- SECTION 2 : DEVICE TABLES (3-way split)
--- u_position + u_subposition: micro-slot precision (Susan D2)
--- u_size:                     how many U the device occupies (multi-U servers)
+-- SECTION 2 : DEVICE TABLES
 -- =============================================================================
 
--- Natural-key PK: SW_ID (e.g. 'BLD_1_F1_R1_SW01'). Rack_ID NOT NULL —
--- standalone (non-rack) switches are added via web app later, not via import.
+-- Sheet 8_Switch — paste cols B–Z (25 cols)
+-- Excel col order: Site_ID, Building_ID, Floor_ID, Room_ID, Rack_ID, SW_ID,
+--   U Position, U Sub-pos, Device Name, Switch Type, Brand, Model, S/N, MAC,
+--   OS/Firmware, VLAN, IP Address, Total Ports, PoE Ports, PoE Budget(W),
+--   PoE Used(W), Uplink Port, Status, Fail Count, Note
 CREATE TABLE poe_switches (
-    SW_ID           NVARCHAR(20)               NOT NULL,
-    Site_ID         NVARCHAR(10)               NOT NULL,
-    Building_ID     NVARCHAR(10)               NOT NULL,
-    Floor_ID        NVARCHAR(10)               NOT NULL,
-    Room_ID         NVARCHAR(10)               NOT NULL,
-    Rack_ID         NVARCHAR(20)               NOT NULL,
-
-    -- rack position (D2)
-    u_position      INT                        NULL,
-    u_subposition   TINYINT                    NULL,
-    u_size          TINYINT      DEFAULT 1     NULL,  -- height in U
-
-    -- identity
-    device_name     NVARCHAR(100)              NOT NULL,
-    switch_type     NVARCHAR(20)                NULL,  -- PoE / Non-PoE / Core / Aggregation
-    brand           NVARCHAR(100)               NULL,
-    model           NVARCHAR(100)               NULL,
-    serial_no       NVARCHAR(100)               NULL,
-    mac_address     NVARCHAR(20)                NULL,
-    os_version      NVARCHAR(50)                NULL,
-
-    -- network
-    ip_address      NVARCHAR(20)                NULL,
-    vlan_id         INT                         NULL,
-    subnet_mask     NVARCHAR(20)                NULL,
-    gateway         NVARCHAR(20)                NULL,
-
-    -- PoE spec
-    total_ports     INT                         NULL,
-    poe_ports       INT                         NULL,
-    poe_budget_w    INT                         NULL,
-    poe_used_w      INT                         NULL,
-    uplink_port     NVARCHAR(100)               NULL,
-
-    -- status
-    status          NVARCHAR(20)  DEFAULT N'unknown' NULL,
-    fail_count      INT          DEFAULT 0     NULL,
-    last_seen       DATETIME2(7)                NULL,
-    notes           NVARCHAR(MAX)              NULL,
+    -- ── Excel columns (paste order) ──
+    Site_ID         NVARCHAR(10)               NOT NULL,  -- col B
+    Building_ID     NVARCHAR(10)               NOT NULL,  -- col C
+    Floor_ID        NVARCHAR(10)               NOT NULL,  -- col D
+    Room_ID         NVARCHAR(20)               NOT NULL,  -- col E
+    Rack_ID         NVARCHAR(20)               NOT NULL,  -- col F
+    SW_ID           NVARCHAR(20)               NOT NULL,  -- col G  SW_ID(PK)
+    u_position      INT                        NULL,      -- col H  U Position
+    u_subposition   TINYINT                    NULL,      -- col I  U Sub-pos (1-3)
+    device_name     NVARCHAR(100)              NOT NULL,  -- col J  Device Name
+    switch_type     NVARCHAR(20)               NULL,      -- col K  Switch Type
+    brand           NVARCHAR(100)              NULL,      -- col L
+    model           NVARCHAR(100)              NULL,      -- col M
+    serial_no       NVARCHAR(100)              NULL,      -- col N  Serial No (S/N)
+    mac_address     NVARCHAR(20)               NULL,      -- col O  MAC Address
+    os_version      NVARCHAR(50)               NULL,      -- col P  OS / Firmware
+    vlan_id         INT                        NULL,      -- col Q  VLAN
+    ip_address      NVARCHAR(20)               NULL,      -- col R  IP Address
+    total_ports     INT                        NULL,      -- col S  Total Ports
+    poe_ports       INT                        NULL,      -- col T  PoE Ports
+    poe_budget_w    INT                        NULL,      -- col U  PoE Budget (W)
+    poe_used_w      INT                        NULL,      -- col V  PoE Used (W)
+    uplink_port     NVARCHAR(100)              NULL,      -- col W  Uplink Port
+    status          NVARCHAR(20) DEFAULT N'unknown' NULL, -- col X  Status
+    fail_count      INT          DEFAULT 0     NULL,      -- col Y  Fail Count
+    notes           NVARCHAR(MAX)              NULL,      -- col Z  Note
+    -- ── DB only (not in Excel template_v4) ──
+    u_size          TINYINT      DEFAULT 1     NULL,
+    subnet_mask     NVARCHAR(20)               NULL,
+    gateway         NVARCHAR(20)               NULL,
+    last_seen       DATETIME2(7)               NULL,
     created_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_poe_switches    PRIMARY KEY CLUSTERED (SW_ID),
-    CONSTRAINT UQ_sw_serial       UNIQUE (serial_no),
-    CONSTRAINT UQ_sw_mac          UNIQUE (mac_address),
     CONSTRAINT UQ_sw_name         UNIQUE (device_name),
     CONSTRAINT CHK_sw_usubpos     CHECK  (u_subposition IS NULL OR u_subposition BETWEEN 1 AND 3),
     CONSTRAINT CHK_sw_status      CHECK  (status IN ('online','offline','warning','unknown')),
@@ -204,57 +234,53 @@ CREATE TABLE poe_switches (
     CONSTRAINT FK_sw_floor        FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID),
     CONSTRAINT FK_sw_room         FOREIGN KEY (Room_ID)     REFERENCES rooms(Room_ID),
     CONSTRAINT FK_sw_rack         FOREIGN KEY (Rack_ID)     REFERENCES racks(Rack_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE NO ACTION ON UPDATE CASCADE
 );
 GO
 
--- Natural-key PK: NVR_ID (e.g. 'BLD_1_F1_R1_NVR01'). Rack_ID NOT NULL.
--- Standalone (non-rack) NVRs are added via web app later.
+-- Sheet 7_NVR — paste cols B–AB (27 cols)
+-- Excel col order: Site_ID, Building_ID, Floor_ID, Room_ID, Rack_ID, NVR_ID,
+--   U Position, U Sub-pos, U-Size, Device Name, Brand, Model, S/N, MAC,
+--   OS/Firmware, VLAN, IP(Internet), IP(CCTV), Total CH, Active CH, HDD Total(TB),
+--   Rec Resolution, Retention(days), Record Status, Status, Fail Count, Note
 CREATE TABLE nvrs (
-    NVR_ID          NVARCHAR(20)               NOT NULL,
-    Site_ID         NVARCHAR(10)               NOT NULL,
-    Building_ID     NVARCHAR(10)               NOT NULL,
-    Floor_ID        NVARCHAR(10)               NOT NULL,
-    Room_ID         NVARCHAR(10)               NOT NULL,
-    Rack_ID         NVARCHAR(20)               NOT NULL,
-
-    u_position      INT                        NULL,
-    u_subposition   TINYINT                    NULL,
-    u_size          TINYINT      DEFAULT 1     NULL,
-
-    device_name     NVARCHAR(100)              NOT NULL,
-    brand           NVARCHAR(100)              NULL,
-    model           NVARCHAR(100)              NULL,
-    serial_no       NVARCHAR(100)              NULL,
-    mac_address     NVARCHAR(20)               NULL,
-    os_version      NVARCHAR(50)               NULL,    -- aka firmware
-
-    -- NVR has 2 IPs: uplink + CCTV LAN
-    ip_internet     NVARCHAR(20)               NULL,
-    ip_cctv         NVARCHAR(20)               NULL,
-    vlan_id         INT                        NULL,
+    -- ── Excel columns (paste order) ──
+    Site_ID         NVARCHAR(10)               NOT NULL,  -- col B
+    Building_ID     NVARCHAR(10)               NOT NULL,  -- col C
+    Floor_ID        NVARCHAR(10)               NOT NULL,  -- col D
+    Room_ID         NVARCHAR(20)               NOT NULL,  -- col E
+    Rack_ID         NVARCHAR(20)               NOT NULL,  -- col F
+    NVR_ID          NVARCHAR(20)               NOT NULL,  -- col G  NVR_ID (PK)
+    u_position      INT                        NULL,      -- col H  U Position
+    u_subposition   TINYINT                    NULL,      -- col I  U Sub-pos (1-3)
+    u_size          TINYINT      DEFAULT 1     NULL,      -- col J  U-Size
+    device_name     NVARCHAR(100)              NOT NULL,  -- col K  Device Name
+    brand           NVARCHAR(100)              NULL,      -- col L
+    model           NVARCHAR(100)              NULL,      -- col M
+    serial_no       NVARCHAR(100)              NULL,      -- col N  Serial No (S/N)
+    mac_address     NVARCHAR(20)               NULL,      -- col O  MAC Address
+    os_version      NVARCHAR(50)               NULL,      -- col P  OS / Firmware (firmware)
+    vlan_id         INT                        NULL,      -- col Q  VLAN
+    ip_internet     NVARCHAR(20)               NULL,      -- col R  IP (Internet Port)
+    ip_cctv         NVARCHAR(20)               NULL,      -- col S  IP (CCTV Port)
+    total_channels  INT                        NULL,      -- col T  Total Channels
+    active_channels INT                        NULL,      -- col U  Active Channels
+    hdd_total_tb    DECIMAL(6,2)               NULL,      -- col V  HDD Total (TB)
+    recording_res   NVARCHAR(20)               NULL,      -- col W  Recording Resolution
+    retention_days  INT                        NULL,      -- col X  Retention (days)
+    record_status   NVARCHAR(20)               NULL,      -- col Y  Record Status
+    status          NVARCHAR(20) DEFAULT N'unknown' NULL, -- col Z  Status
+    fail_count      INT          DEFAULT 0     NULL,      -- col AA Fail Count
+    notes           NVARCHAR(MAX)              NULL,      -- col AB Note
+    -- ── DB only (not in Excel template_v4) ──
+    hdd_used_pct    DECIMAL(5,2)               NULL,
     subnet_mask     NVARCHAR(20)               NULL,
     gateway         NVARCHAR(20)               NULL,
-
-    -- recording spec
-    total_channels  INT                        NULL,
-    active_channels INT                        NULL,
-    hdd_total_tb    DECIMAL(6,2)               NULL,
-    hdd_used_pct    DECIMAL(5,2)               NULL,
-    recording_res   NVARCHAR(20)               NULL,
-    retention_days  INT                        NULL,
-    record_status   NVARCHAR(20)               NULL,
-
-    status          NVARCHAR(20) DEFAULT N'unknown' NULL,
-    fail_count      INT          DEFAULT 0     NULL,
     last_seen       DATETIME2(7)               NULL,
-    notes           NVARCHAR(MAX)              NULL,
     created_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_nvrs             PRIMARY KEY CLUSTERED (NVR_ID),
-    CONSTRAINT UQ_nvr_serial       UNIQUE (serial_no),
-    CONSTRAINT UQ_nvr_mac          UNIQUE (mac_address),
     CONSTRAINT UQ_nvr_name         UNIQUE (device_name),
     CONSTRAINT CHK_nvr_usubpos     CHECK  (u_subposition IS NULL OR u_subposition BETWEEN 1 AND 3),
     CONSTRAINT CHK_nvr_status      CHECK  (status IN ('online','offline','warning','unknown')),
@@ -266,58 +292,50 @@ CREATE TABLE nvrs (
     CONSTRAINT FK_nvr_floor        FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID),
     CONSTRAINT FK_nvr_room         FOREIGN KEY (Room_ID)     REFERENCES rooms(Room_ID),
     CONSTRAINT FK_nvr_rack         FOREIGN KEY (Rack_ID)     REFERENCES racks(Rack_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE NO ACTION ON UPDATE CASCADE
 );
 GO
 
--- Cameras live on a FLOOR plan — NOT inside a Room or Rack.
--- The web app drag-drops camera icons onto the floor SVG, so map_x/map_y are
--- computed there. Survey staff only fill Site / Building / Floor.
+-- Sheet 6_CCTV — paste 2 ส่วน:
+--   ส่วน 1: cols B–R (17 cols): Site_ID ถึง Switch Port
+--   ส่วน 2: cols U–W (3 cols): Status, Fail Count, Note
+--   (ข้าม col S = NVR Device Name และ col T = NVR Channel เพราะซ้ำกับ col F, G)
+-- col E ID(PK) → NVR_CH,  col F NVR → NVR_ID,  col G CH(Port) → nvr_channel
 CREATE TABLE cameras (
+    -- ── IDENTITY PK (auto, SSMS จะข้ามให้อัตโนมัติ) ──
     id              INT          IDENTITY(1,1) NOT NULL,
-    Site_ID         NVARCHAR(10)               NOT NULL,
-    Building_ID     NVARCHAR(10)               NOT NULL,
-    Floor_ID        NVARCHAR(10)               NOT NULL,
-
-    device_name     NVARCHAR(100)              NOT NULL,
-    brand           NVARCHAR(100)              NULL,
-    model           NVARCHAR(100)              NULL,
-    serial_no       NVARCHAR(100)              NULL,
-    mac_address     NVARCHAR(100)              NULL,
-    camera_type     NVARCHAR(50)               NULL,
-    resolution      NVARCHAR(50)               NULL,
+    -- ── Excel columns ส่วน 1 (paste cols B–R) ──
+    Site_ID         NVARCHAR(10)               NOT NULL,  -- col B
+    Building_ID     NVARCHAR(10)               NOT NULL,  -- col C
+    Floor_ID        NVARCHAR(10)               NOT NULL,  -- col D
+    NVR_CH          NVARCHAR(30)               NULL,      -- col E  ID(PK) — NVR+CH key
+    NVR_ID          NVARCHAR(20)               NULL,      -- col F  NVR (FK to nvrs)
+    nvr_channel     INT                        NULL,      -- col G  CH(Port)
+    device_name     NVARCHAR(100)              NOT NULL,  -- col H  Device Name
+    brand           NVARCHAR(100)              NULL,      -- col I
+    model           NVARCHAR(100)              NULL,      -- col J
+    serial_no       NVARCHAR(100)              NULL,      -- col K  Serial No (S/N)
+    mac_address     NVARCHAR(100)              NULL,      -- col L  MAC Address
+    camera_type     NVARCHAR(50)               NULL,      -- col M  Camera Type
+    resolution      NVARCHAR(50)               NULL,      -- col N  Resolution
+    ip_address      NVARCHAR(20)               NULL,      -- col O  IP Address
+    vlan_id         INT                        NULL,      -- col P  VLAN
+    SW_ID           NVARCHAR(20)               NULL,      -- col Q  PoE Switch Name (FK)
+    poe_port_number INT                        NULL,      -- col R  Switch Port
+    -- ── Excel columns ส่วน 2 (paste cols U–W หลังจาก paste ส่วน 1 แล้ว) ──
+    status          NVARCHAR(20) DEFAULT N'unknown' NULL, -- col U  Status
+    fail_count      INT          DEFAULT 0     NULL,      -- col V  Fail Count
+    notes           NVARCHAR(MAX)              NULL,      -- col W  Note
+    -- ── DB only (not in Excel template_v4) ──
     firmware_version NVARCHAR(50)              NULL,
-
-    ip_address      NVARCHAR(20)               NULL,
-    vlan_id         INT                        NULL,
+    install_location NVARCHAR(255)             NULL,
     subnet_mask     NVARCHAR(20)               NULL,
     gateway         NVARCHAR(20)               NULL,
-
-    -- Natural key for the camera ('NVR9_CH1' = which NVR + channel records it).
-    -- Nullable: camera may be installed but not yet wired to an NVR.
-    NVR_CH          NVARCHAR(30)               NULL,
-
-    -- PoE link: which switch + port powers this camera
-    SW_ID           NVARCHAR(20)               NULL,
-    poe_port_number INT                        NULL,
-
-    -- NVR link: which NVR channel records this camera
-    NVR_ID          NVARCHAR(20)               NULL,
-    nvr_channel     INT                        NULL,
-
-    install_location NVARCHAR(255)             NULL,   -- free-text: "เพดานทางเข้าหลัก"
-
-    status          NVARCHAR(20) DEFAULT N'unknown' NULL,
-    fail_count      INT          DEFAULT 0     NULL,
     last_seen       DATETIME2(7)               NULL,
-    notes           NVARCHAR(MAX)              NULL,
     created_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
     updated_at      DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
 
     CONSTRAINT PK_cameras     PRIMARY KEY CLUSTERED (id),
-    CONSTRAINT UQ_cam_nvr_ch  UNIQUE (NVR_CH),         -- natural alternate key from Excel
-    CONSTRAINT UQ_cam_serial  UNIQUE (serial_no),
-    CONSTRAINT UQ_cam_mac     UNIQUE (mac_address),
     CONSTRAINT UQ_cam_name    UNIQUE (device_name),
     CONSTRAINT CHK_cam_status CHECK (status IN ('online','offline','warning','unknown')),
     CONSTRAINT FK_cam_site       FOREIGN KEY (Site_ID)     REFERENCES sites(Site_ID),
@@ -325,9 +343,9 @@ CREATE TABLE cameras (
     CONSTRAINT FK_cam_floor      FOREIGN KEY (Floor_ID)    REFERENCES floors(Floor_ID)
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT FK_cam_poe_switch FOREIGN KEY (SW_ID)       REFERENCES poe_switches(SW_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE,
+        ON DELETE SET NULL ON UPDATE NO ACTION,
     CONSTRAINT FK_cam_nvr        FOREIGN KEY (NVR_ID)      REFERENCES nvrs(NVR_ID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE NO ACTION
 );
 GO
 
@@ -338,7 +356,7 @@ GO
 CREATE TABLE users (
     User_ID       INT          IDENTITY(1,1)            NOT NULL,
     username      NVARCHAR(100)                         NOT NULL,
-    pw_hash       NVARCHAR(255)                         NOT NULL,   -- bcrypt
+    pw_hash       NVARCHAR(255)                         NOT NULL,
     display_name  NVARCHAR(200)                         NULL,
     role          NVARCHAR(10)                          NOT NULL,
     is_active     BIT          DEFAULT 1                NOT NULL,
@@ -351,17 +369,13 @@ CREATE TABLE users (
 );
 GO
 
--- device_id is NVARCHAR(50) because devices have mixed PK types:
---   camera     → int (id)
---   nvr        → NVARCHAR (NVR_ID)
---   poe_switch → NVARCHAR (SW_ID)
 CREATE TABLE sync_logs (
     id            INT          IDENTITY(1,1)            NOT NULL,
     device_type   NVARCHAR(20)                          NOT NULL,
     device_id     NVARCHAR(50)                          NOT NULL,
     synced_by     INT                                   NULL,
     sync_type     NVARCHAR(50)                          NULL,
-    fields_updated NVARCHAR(MAX)                        NULL,  -- JSON
+    fields_updated NVARCHAR(MAX)                        NULL,
     status        NVARCHAR(20)                          NULL,
     message       NVARCHAR(MAX)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
@@ -377,7 +391,7 @@ CREATE TABLE audit_logs (
     user_id       INT                                   NULL,
     action        NVARCHAR(20)                          NOT NULL,
     table_name    NVARCHAR(100)                         NOT NULL,
-    record_id     NVARCHAR(50)                          NOT NULL,   -- accepts both int and natural keys
+    record_id     NVARCHAR(50)                          NOT NULL,
     old_value     NVARCHAR(MAX)                         NULL,
     new_value     NVARCHAR(MAX)                         NULL,
     created_at    DATETIME2(7) DEFAULT SYSUTCDATETIME() NOT NULL,
@@ -428,6 +442,19 @@ CREATE TABLE alert_logs (
 GO
 
 -- =============================================================================
+-- SECTION 3b : FILTERED UNIQUE INDEXES (nullable unique columns)
+-- =============================================================================
+
+CREATE UNIQUE INDEX UQ_nvr_serial    ON nvrs         (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_nvr_mac       ON nvrs         (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_sw_serial     ON poe_switches (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_sw_mac        ON poe_switches (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_serial    ON cameras      (serial_no)    WHERE serial_no    IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_mac       ON cameras      (mac_address)  WHERE mac_address  IS NOT NULL;
+CREATE UNIQUE INDEX UQ_cam_nvr_ch    ON cameras      (NVR_CH)       WHERE NVR_CH       IS NOT NULL;
+GO
+
+-- =============================================================================
 -- SECTION 4 : INDEXES (performance)
 -- =============================================================================
 
@@ -468,8 +495,6 @@ GO
 -- =============================================================================
 
 CREATE OR ALTER VIEW vw_camera_full_path AS
--- The "CCTV Transaction" Susan drew on PDF page 2.
--- Cameras attach to a FLOOR (not a Room/Rack); web app places them on the floor SVG.
 SELECT
     c.id                AS camera_id,
     c.device_name       AS camera_name,
@@ -514,7 +539,7 @@ INNER JOIN sites         s  ON s.Site_ID     = n.Site_ID
 INNER JOIN buildings     b  ON b.Building_ID = n.Building_ID
 INNER JOIN floors        f  ON f.Floor_ID    = n.Floor_ID
 INNER JOIN rooms         r  ON r.Room_ID     = n.Room_ID
-INNER JOIN racks         rk ON rk.Rack_ID    = n.Rack_ID;   -- INNER because Rack_ID NOT NULL
+INNER JOIN racks         rk ON rk.Rack_ID    = n.Rack_ID;
 GO
 
 CREATE OR ALTER VIEW vw_switch_full_path AS
@@ -540,22 +565,17 @@ INNER JOIN racks         rk ON rk.Rack_ID    = sw.Rack_ID;
 GO
 
 CREATE OR ALTER VIEW vw_dashboard_summary AS
--- Per-site rollup counts. Uses scalar subqueries to avoid join cross-product.
 SELECT
     s.Site_ID, s.code AS site_code, s.name AS site_name,
-
     (SELECT COUNT(*) FROM cameras      WHERE Site_ID = s.Site_ID)                            AS total_cameras,
     (SELECT COUNT(*) FROM cameras      WHERE Site_ID = s.Site_ID AND status = 'online')      AS cameras_online,
     (SELECT COUNT(*) FROM cameras      WHERE Site_ID = s.Site_ID AND status = 'offline')     AS cameras_offline,
     (SELECT COUNT(*) FROM cameras      WHERE Site_ID = s.Site_ID AND status = 'warning')     AS cameras_warning,
-
     (SELECT COUNT(*) FROM nvrs         WHERE Site_ID = s.Site_ID)                            AS total_nvrs,
     (SELECT COUNT(*) FROM nvrs         WHERE Site_ID = s.Site_ID AND status = 'offline')     AS nvrs_offline,
     (SELECT COUNT(*) FROM nvrs         WHERE Site_ID = s.Site_ID AND hdd_used_pct > 80)      AS nvrs_hdd_warning,
-
     (SELECT COUNT(*) FROM poe_switches WHERE Site_ID = s.Site_ID)                            AS total_switches,
     (SELECT COUNT(*) FROM poe_switches WHERE Site_ID = s.Site_ID AND status = 'offline')     AS switches_offline,
-
     (SELECT COUNT(*) FROM buildings    WHERE Site_ID = s.Site_ID)                            AS total_buildings,
     (SELECT COUNT(*) FROM floors       WHERE Site_ID = s.Site_ID)                            AS total_floors,
     (SELECT COUNT(*) FROM rooms        WHERE Site_ID = s.Site_ID)                            AS total_rooms,
@@ -568,13 +588,10 @@ SELECT * FROM alert_logs WHERE resolved_at IS NULL;
 GO
 
 -- =============================================================================
--- SECTION 6 : SEED USERS (3 roles)
--- ⚠️  Replace bcrypt hashes before production. Plain-text in comments:
---       admin    →  Admin@SSM1
---       ssm_user →  User@SSM1
---       viewer   →  (logs in via Guest button — no password)
--- Generate fresh hashes with:
---       import bcrypt; print(bcrypt.hashpw(b"YourPwd", bcrypt.gensalt(12)).decode())
+-- SECTION 6 : SEED USERS (สำหรับ login เข้าเว็บ — ไม่ใช่ข้อมูล survey)
+-- ⚠️  เปลี่ยน bcrypt hash ก่อน production
+--     admin    → Admin@SSM1
+--     ssm_user → User@SSM1
 -- =============================================================================
 
 IF NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin')
@@ -599,6 +616,6 @@ VALUES ('viewer',
 GO
 
 -- =============================================================================
--- END OF SSM_schema_v2.sql
--- Total: 13 tables, 5 views, 25+ indexes, all FK + CHECK + UNIQUE constraints.
+-- END OF SSM_test_schema.sql
+-- 13 tables, 5 views, 25+ indexes — ตารางข้อมูลทั้งหมดว่างเปล่า
 -- =============================================================================
