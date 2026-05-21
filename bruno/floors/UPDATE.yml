@@ -1,10 +1,10 @@
-info:
+﻿info:
   name: UPDATE
   type: http
   seq: 3
 
 http:
-  method: PUT
+  method: POST
   url: https://localhost:44342/api/Updatefloors/F001
   auth: inherit
   headers:
@@ -19,7 +19,7 @@ http:
         "Site_ID": "S001",
         "Building_ID": "B001",
         "floor_number": 1,
-        "name": "ชั้น 1 (Updated)",
+        "name": "à¸Šà¸±à¹‰à¸™ 1 (Updated)",
         "function": "Server Room",
         "has_cctv": true,
         "image_data": null,

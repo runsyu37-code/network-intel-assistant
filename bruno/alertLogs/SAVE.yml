@@ -1,4 +1,4 @@
-info:
+﻿info:
   name: SAVE
   type: http
   seq: 2
@@ -21,9 +21,9 @@ http:
           "device_name": "CAM-BKK-01",
           "brand": "Dahua",
           "ip_address": "10.10.2.101",
-          "site_name": "สาขาเหนือ",
-          "building_name": "อาคาร B",
-          "floor_name": "ชั้น 2",
+          "site_name": "à¸ªà¸²à¸‚à¸²à¹€à¸«à¸™à¸·à¸­",
+          "building_name": "à¸­à¸²à¸„à¸²à¸£ B",
+          "floor_name": "à¸Šà¸±à¹‰à¸™ 2",
           "room_name": null,
           "poe_switch_name": "Switch-BKK-01",
           "poe_port": 1,

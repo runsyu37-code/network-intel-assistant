@@ -1,10 +1,10 @@
-info:
+﻿info:
   name: UPDATE
   type: http
   seq: 3
 
 http:
-  method: PUT
+  method: POST
   url: https://localhost:44342/api/Updatebuildings/B001
   auth: inherit
   headers:
@@ -17,7 +17,7 @@ http:
       {
         "Building_ID": "B001",
         "Site_ID": "S001",
-        "name": "อาคาร A (Updated)",
+        "name": "à¸­à¸²à¸„à¸²à¸£ A (Updated)",
         "code": "BLD-A",
         "floor_count": 5,
         "description": "Updated via Bruno test",

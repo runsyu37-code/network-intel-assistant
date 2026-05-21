@@ -1,10 +1,10 @@
-info:
+﻿info:
   name: UPDATE
   type: http
   seq: 3
 
 http:
-  method: PUT
+  method: POST
   url: https://localhost:44342/api/Updatesites/S001
   auth: inherit
   headers:
@@ -16,9 +16,9 @@ http:
     json: |-
       {
         "Site_ID": "S001",
-        "name": "สำนักงานใหญ่ (Updated)",
+        "name": "à¸ªà¸³à¸™à¸±à¸à¸‡à¸²à¸™à¹ƒà¸«à¸à¹ˆ (Updated)",
         "code": "HQ",
-        "location": "กรุงเทพมหานคร",
+        "location": "à¸à¸£à¸¸à¸‡à¹€à¸—à¸žà¸¡à¸«à¸²à¸™à¸„à¸£",
         "description": "Updated via Bruno test"
       }
 
