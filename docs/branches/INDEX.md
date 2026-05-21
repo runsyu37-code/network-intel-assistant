@@ -11,6 +11,7 @@
 | `master` | ltH (เครื่องนี้) | ฐานหลัก — พัฒนา tools, docs, schema |
 | `work-safe` | Work Notebook | ทำงานจริงที่ออฟฟิศ |
 | `backend` | ltH / Work | C# REST API — Visual Studio solution ครบ |
+| `frontend` | ltH | Web app — กำลังวางแผน (รอ UI spec) |
 
 ---
 
@@ -37,3 +38,4 @@
 
 - [work-safe.md](work-safe.md) — ที่ทำงาน มีอะไรเพิ่มจาก master
 - [backend.md](backend.md) — C# project รายละเอียดและวิธีใช้
+- [frontend.md](frontend.md) — Web app plan (ยังไม่เริ่ม)
