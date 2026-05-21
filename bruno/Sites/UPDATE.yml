@@ -16,9 +16,9 @@ http:
     json: |-
       {
         "Site_ID": "S001",
-        "name": "à¸ªà¸³à¸™à¸±à¸à¸‡à¸²à¸™à¹ƒà¸«à¸à¹ˆ (Updated)",
+        "name": "Head Office (Updated)",
         "code": "HQ",
-        "location": "à¸à¸£à¸¸à¸‡à¹€à¸—à¸žà¸¡à¸«à¸²à¸™à¸„à¸£",
+        "location": "Bangkok",
         "description": "Updated via Bruno test"
       }
 
