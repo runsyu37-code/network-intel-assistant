@@ -7,6 +7,8 @@ using System.Web.Http;
 using TestAPBNO_Survei_MonitorAPI.Models;
 using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
+using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
+using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -112,7 +114,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : racks
         [Route("api/Updateracks/{Rack_ID}")]
-        [HttpPost]
+        [HttpPut]
         public IHttpActionResult Updateracks(string Rack_ID, [FromBody] racksModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.Rack_ID))
@@ -169,7 +171,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : racks
-        [HttpPost]
+        [HttpDelete]
         [Route("api/Deleteracks/{Rack_ID}")]
         public IHttpActionResult Deleteracks(string Rack_ID)
         {

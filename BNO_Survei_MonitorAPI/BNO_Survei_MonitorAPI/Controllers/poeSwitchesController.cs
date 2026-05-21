@@ -7,6 +7,8 @@ using System.Web.Http;
 using TestAPBNO_Survei_MonitorAPI.Models;
 using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
+using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
+using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -142,7 +144,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : poe_switches
         [Route("api/UpdatepoeSwitches/{SW_ID}")]
-        [HttpPost]
+        [HttpPut]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.SW_ID))
@@ -229,7 +231,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : poe_switches
-        [HttpPost]
+        [HttpDelete]
         [Route("api/DeletepoeSwitches/{SW_ID}")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {

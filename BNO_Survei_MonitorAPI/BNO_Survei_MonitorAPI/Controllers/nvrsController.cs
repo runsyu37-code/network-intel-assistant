@@ -7,6 +7,8 @@ using System.Web.Http;
 using TestAPBNO_Survei_MonitorAPI.Models;
 using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
+using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
+using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -146,7 +148,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : nvrs
         [Route("api/Updatenvrs/{NVR_ID}")]
-        [HttpPost]
+        [HttpPut]
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.NVR_ID))
@@ -237,7 +239,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : nvrs
-        [HttpPost]
+        [HttpDelete]
         [Route("api/Deletenvrs/{NVR_ID}")]
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {

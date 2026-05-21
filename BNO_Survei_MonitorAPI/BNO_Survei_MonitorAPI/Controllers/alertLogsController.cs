@@ -7,6 +7,8 @@ using System.Web.Http;
 using TestAPBNO_Survei_MonitorAPI.Models;
 using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
+using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
+using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -115,7 +117,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : alert_logs
         [Route("api/UpdatealertLogs/{id}")]
-        [HttpPost]
+        [HttpPut]
         public IHttpActionResult UpdatealertLogs(int id, [FromBody] alertLogsModel model)
         {
             if (model == null)
@@ -176,7 +178,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : alert_logs
-        [HttpPost]
+        [HttpDelete]
         [Route("api/DeletealertLogs/{id}")]
         public IHttpActionResult DeletealertLogs(int id)
         {

@@ -7,6 +7,8 @@ using System.Web.Http;
 using TestAPBNO_Survei_MonitorAPI.Models;
 using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
+using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
+using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -97,7 +99,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : users
         [Route("api/Updateusers/{User_ID}")]
-        [HttpPost]
+        [HttpPut]
         public IHttpActionResult Updateusers(int User_ID, [FromBody] usersModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.username))
@@ -140,7 +142,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : users
-        [HttpPost]
+        [HttpDelete]
         [Route("api/Deleteusers/{User_ID}")]
         public IHttpActionResult Deleteusers(int User_ID)
         {
