@@ -1,0 +1,6 @@
+namespace BNO_Survei_MonitorAPI.Areas.HelpPage.ModelDescriptions
+{
+    public class DictionaryModelDescription : KeyValuePairModelDescription
+    {
+    }
+}

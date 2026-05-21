@@ -1,0 +1,9 @@
+namespace BNO_Survei_MonitorAPI.Areas.HelpPage.ModelDescriptions
+{
+    public class KeyValuePairModelDescription : ModelDescription
+    {
+        public ModelDescription KeyModelDescription { get; set; }
+
+        public ModelDescription ValueModelDescription { get; set; }
+    }
+}
