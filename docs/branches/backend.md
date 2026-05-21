@@ -13,7 +13,7 @@
 | `BNO_Survei_MonitorAPI/Models/` | 13 Models ตรงกับ DB tables |
 | `BNO_Survei_MonitorAPI/ConnectionDB/` | connection string ต่อ SQL Server |
 | `BNO_Survei_MonitorAPI/Web.config` | config หลัก (connection string อยู่ตรงนี้) |
-| `bruno/` | Bruno collections ครบทุก table (GET/SAVE/UPDATE/DELETE) |
+| `bruno/` | Bruno collections ครบทุก table — GET/SAVE/UPDATE/DELETE พร้อม JSON body |
 | `BACKEND.md` | สรุป API ทำอะไรได้ สถานะ และ endpoints |
 | `PROGRESS.md` | backend เสร็จแล้ว, frontend ยังค้าง |
 
@@ -24,6 +24,15 @@
 `sites` · `buildings` · `floors` · `rooms` · `racks` · `cameras` · `nvrs` · `poeSwitches` · `pingLogs` · `alertLogs` · `auditLogs` · `syncLogs` · `users`
 
 แต่ละ table มีครบ 4 operations: **GET / SAVE / UPDATE / DELETE**
+
+| Operation | Method | URL pattern |
+|---|---|---|
+| GET | `GET` | `/api/Get{table}` |
+| SAVE | `POST` | `/api/Save{table}` |
+| UPDATE | `POST` | `/api/Update{table}/{id}` |
+| DELETE | `POST` | `/api/Delete{table}/{id}` |
+
+> ใช้ POST ทุก operation ยกเว้น GET — ตาม convention ของทีม
 
 ---
 
