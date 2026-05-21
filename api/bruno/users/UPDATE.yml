@@ -1,0 +1,29 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: https://localhost:44342/api/Updateusers/1
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "User_ID": 1,
+        "username": "admin",
+        "display_name": "Administrator (Updated)",
+        "role": "admin",
+        "is_active": 1
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

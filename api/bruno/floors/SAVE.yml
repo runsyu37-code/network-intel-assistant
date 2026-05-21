@@ -1,0 +1,35 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: https://localhost:44342/api/Savefloors
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "Floor_ID": "FL_T",
+          "Site_ID": "S001",
+          "Building_ID": "B001",
+          "floor_number": 4,
+          "name": "Test Floor",
+          "function": "Test",
+          "has_cctv": false,
+          "image_data": null,
+          "note": null
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

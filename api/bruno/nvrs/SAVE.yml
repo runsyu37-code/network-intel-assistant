@@ -1,0 +1,53 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: https://localhost:44342/api/Savenvrs
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "NVR_ID": "NVR_T",
+          "Site_ID": "S001",
+          "Building_ID": "B001",
+          "Floor_ID": "F001",
+          "Room_ID": "R001",
+          "Rack_ID": "RK001",
+          "u_position": 6,
+          "u_subposition": 1,
+          "u_size": 2,
+          "device_name": "NVR-Test",
+          "brand": "Test Brand",
+          "model": "Test NVR",
+          "serial_no": null,
+          "mac_address": null,
+          "os_version": null,
+          "vlan_id": 10,
+          "ip_internet": "192.168.1.98",
+          "ip_cctv": "10.10.1.98",
+          "total_channels": 16,
+          "active_channels": 0,
+          "hdd_total_tb": 4.00,
+          "recording_res": "1080P",
+          "retention_days": 14,
+          "record_status": "normal",
+          "status": "online",
+          "fail_count": 0,
+          "notes": null
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

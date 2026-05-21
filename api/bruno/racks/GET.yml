@@ -1,0 +1,15 @@
+info:
+  name: GET
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: https://localhost:44342/api/Getracks
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

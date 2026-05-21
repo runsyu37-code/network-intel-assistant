@@ -1,0 +1,33 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: https://localhost:44342/api/Updatebuildings/B001
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Building_ID": "B001",
+        "Site_ID": "S001",
+        "name": "อาคาร A (Updated)",
+        "code": "BLD-A",
+        "floor_count": 5,
+        "description": "Updated via Bruno test",
+        "image_data": null,
+        "image_type": null,
+        "note": null
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

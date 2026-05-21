@@ -1,0 +1,31 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: https://localhost:44342/api/UpdateauditLogs/1
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "id": 1,
+        "user_id": 1,
+        "action": "UPDATE",
+        "table_name": "sites",
+        "record_id": "S001",
+        "old_value": null,
+        "new_value": "{\"name\":\"Updated\"}"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
