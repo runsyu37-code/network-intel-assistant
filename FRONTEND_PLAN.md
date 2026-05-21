@@ -1,7 +1,7 @@
 # Frontend Plan — SSM Web App
 
 > อัปเดตล่าสุด: 2026-05-22
-> สถานะ: **UI spec ครบทุก layer — รอตัดสินใจ stack**
+> สถานะ: **UI spec ครบ + stack ตัดสินใจแล้ว — พร้อม implement**
 
 ---
 
@@ -135,9 +135,21 @@ Device offline
 
 ---
 
-## สิ่งที่ยังรอตัดสินใจ
+## Stack (ตัดสินใจแล้ว — 2026-05-22)
 
-- [ ] Frontend stack (ยังไม่ได้ระบุ)
+**React**
+
+| Library | ใช้ทำอะไร |
+|---|---|
+| `React Flow` | Topology diagram (Home page) |
+| `Konva.js` | Floor plan drag-drop camera icons |
+| `Recharts` | Ping history graph ใน Device detail |
+| `Axios` | เรียก C# REST API |
+
+---
+
+## สิ่งที่ยังรอ
+
 - [ ] Wireframe / mockup จริง
 - [ ] U-position spec → อ่านใน .md ที่ทำงาน
 
@@ -145,6 +157,6 @@ Device offline
 
 ## งานถัดไป
 
-- [ ] ตัดสินใจ stack
-- [ ] เพิ่ม GET filter + GET by ID ใน backend
-- [ ] เริ่ม implement
+- [ ] เพิ่ม GET filter + GET by ID ใน backend (branch: `backend`)
+- [ ] setup React project
+- [ ] เริ่ม implement ทีละ layer
