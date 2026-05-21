@@ -1,4 +1,4 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -54,10 +54,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult SaveauditLogs([FromBody] List<auditLogsModel> modelList)
         {
             if (modelList == null || modelList.Count == 0)
-                return BadRequest("ไม่มีข้อมูลที่ส่งมา");
+                return BadRequest("à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¸¡à¸²");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.action) || string.IsNullOrWhiteSpace(x.table_name)))
-                return BadRequest("action และ table_name ห้ามว่าง");
+                return BadRequest("action à¹à¸¥à¸° table_name à¸«à¹‰à¸²à¸¡à¸§à¹ˆà¸²à¸‡");
 
             int insertCount = 0;
             try
@@ -79,7 +79,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
+                return Ok(new { success = true, inserted = insertCount, message = $"à¹€à¸žà¸´à¹ˆà¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹ƒà¸«à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }
@@ -98,11 +98,11 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Update : audit_logs
         [Route("api/UpdateauditLogs/{id}")]
-        [HttpPut]
+        [HttpPost]
         public IHttpActionResult UpdateauditLogs(int id, [FromBody] auditLogsModel model)
         {
             if (model == null)
-                return BadRequest("ห้าม Null");
+                return BadRequest("à¸«à¹‰à¸²à¸¡ Null");
 
             try
             {
@@ -140,7 +140,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Delete : audit_logs
-        [HttpDelete]
+        [HttpPost]
         [Route("api/DeleteauditLogs/{id}")]
         public IHttpActionResult DeleteauditLogs(int id)
         {
