@@ -91,8 +91,13 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 {
                     con.Open();
                     string insertSql = @"
-                        INSERT INTO [dbo].[nvrs] ([NVR_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[brand],[model],[serial_no],[mac_address],[os_version],[ip_internet],[ip_cctv],[vlan_id],[subnet_mask],[gateway],[total_channels],[active_channels],[hdd_total_tb],[hdd_used_pct],[recording_res],[retention_days],[record_status],[status],[fail_count],[last_seen],[notes])
-                        VALUES (@NVR_ID,@Site_ID,@Building_ID,@Floor_ID,@Room_ID,@Rack_ID,@u_position,@u_subposition,@u_size,@device_name,@brand,@model,@serial_no,@mac_address,@os_version,@ip_internet,@ip_cctv,@vlan_id,@subnet_mask,@gateway,@total_channels,@active_channels,@hdd_total_tb,@hdd_used_pct,@recording_res,@retention_days,@record_status,@status,@fail_count,@last_seen,@notes);";
+                        MERGE INTO [dbo].[nvrs] AS T
+                        USING (SELECT @NVR_ID AS NVR_ID) AS S ON T.NVR_ID = S.NVR_ID
+                        WHEN MATCHED THEN
+                            UPDATE SET Site_ID=@Site_ID, Building_ID=@Building_ID, Floor_ID=@Floor_ID, Room_ID=@Room_ID, Rack_ID=@Rack_ID, u_position=@u_position, u_subposition=@u_subposition, u_size=@u_size, device_name=@device_name, brand=@brand, model=@model, serial_no=@serial_no, mac_address=@mac_address, os_version=@os_version, ip_internet=@ip_internet, ip_cctv=@ip_cctv, vlan_id=@vlan_id, subnet_mask=@subnet_mask, gateway=@gateway, total_channels=@total_channels, active_channels=@active_channels, hdd_total_tb=@hdd_total_tb, hdd_used_pct=@hdd_used_pct, recording_res=@recording_res, retention_days=@retention_days, record_status=@record_status, status=@status, fail_count=@fail_count, last_seen=@last_seen, notes=@notes, updated_at=SYSUTCDATETIME()
+                        WHEN NOT MATCHED THEN
+                            INSERT ([NVR_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[brand],[model],[serial_no],[mac_address],[os_version],[ip_internet],[ip_cctv],[vlan_id],[subnet_mask],[gateway],[total_channels],[active_channels],[hdd_total_tb],[hdd_used_pct],[recording_res],[retention_days],[record_status],[status],[fail_count],[last_seen],[notes])
+                            VALUES (@NVR_ID,@Site_ID,@Building_ID,@Floor_ID,@Room_ID,@Rack_ID,@u_position,@u_subposition,@u_size,@device_name,@brand,@model,@serial_no,@mac_address,@os_version,@ip_internet,@ip_cctv,@vlan_id,@subnet_mask,@gateway,@total_channels,@active_channels,@hdd_total_tb,@hdd_used_pct,@recording_res,@retention_days,@record_status,@status,@fail_count,@last_seen,@notes);";
 
                     foreach (var item in modelList)
                     {
@@ -104,7 +109,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
+                return Ok(new { success = true, saved = insertCount, message = $"บันทึกข้อมูลสำเร็จ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }

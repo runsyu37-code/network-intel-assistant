@@ -89,8 +89,13 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 {
                     con.Open();
                     string insertSql = @"
-                        INSERT INTO [dbo].[poe_switches] ([SW_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[switch_type],[brand],[model],[serial_no],[mac_address],[os_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[total_ports],[poe_ports],[poe_budget_w],[poe_used_w],[uplink_port],[status],[fail_count],[last_seen],[notes])
-                        VALUES (@SW_ID,@Site_ID,@Building_ID,@Floor_ID,@Room_ID,@Rack_ID,@u_position,@u_subposition,@u_size,@device_name,@switch_type,@brand,@model,@serial_no,@mac_address,@os_version,@ip_address,@vlan_id,@subnet_mask,@gateway,@total_ports,@poe_ports,@poe_budget_w,@poe_used_w,@uplink_port,@status,@fail_count,@last_seen,@notes);";
+                        MERGE INTO [dbo].[poe_switches] AS T
+                        USING (SELECT @SW_ID AS SW_ID) AS S ON T.SW_ID = S.SW_ID
+                        WHEN MATCHED THEN
+                            UPDATE SET Site_ID=@Site_ID, Building_ID=@Building_ID, Floor_ID=@Floor_ID, Room_ID=@Room_ID, Rack_ID=@Rack_ID, u_position=@u_position, u_subposition=@u_subposition, u_size=@u_size, device_name=@device_name, switch_type=@switch_type, brand=@brand, model=@model, serial_no=@serial_no, mac_address=@mac_address, os_version=@os_version, ip_address=@ip_address, vlan_id=@vlan_id, subnet_mask=@subnet_mask, gateway=@gateway, total_ports=@total_ports, poe_ports=@poe_ports, poe_budget_w=@poe_budget_w, poe_used_w=@poe_used_w, uplink_port=@uplink_port, status=@status, fail_count=@fail_count, last_seen=@last_seen, notes=@notes, updated_at=SYSUTCDATETIME()
+                        WHEN NOT MATCHED THEN
+                            INSERT ([SW_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[switch_type],[brand],[model],[serial_no],[mac_address],[os_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[total_ports],[poe_ports],[poe_budget_w],[poe_used_w],[uplink_port],[status],[fail_count],[last_seen],[notes])
+                            VALUES (@SW_ID,@Site_ID,@Building_ID,@Floor_ID,@Room_ID,@Rack_ID,@u_position,@u_subposition,@u_size,@device_name,@switch_type,@brand,@model,@serial_no,@mac_address,@os_version,@ip_address,@vlan_id,@subnet_mask,@gateway,@total_ports,@poe_ports,@poe_budget_w,@poe_used_w,@uplink_port,@status,@fail_count,@last_seen,@notes);";
 
                     foreach (var item in modelList)
                     {
@@ -102,7 +107,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
+                return Ok(new { success = true, saved = insertCount, message = $"บันทึกข้อมูลสำเร็จ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }

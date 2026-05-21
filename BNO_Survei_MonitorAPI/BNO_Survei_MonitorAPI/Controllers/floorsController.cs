@@ -70,8 +70,13 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 {
                     con.Open();
                     string insertSql = @"
-                        INSERT INTO [dbo].[floors] ([Floor_ID],[Site_ID],[Building_ID],[floor_number],[name],[function],[has_cctv],[image_data],[image_type],[note])
-                        VALUES (@Floor_ID,@Site_ID,@Building_ID,@floor_number,@name,@function,@has_cctv,@image_data,@image_type,@note);";
+                        MERGE INTO [dbo].[floors] AS T
+                        USING (SELECT @Floor_ID AS Floor_ID) AS S ON T.Floor_ID = S.Floor_ID
+                        WHEN MATCHED THEN
+                            UPDATE SET Site_ID=@Site_ID, Building_ID=@Building_ID, floor_number=@floor_number, name=@name, [function]=@function, has_cctv=@has_cctv, image_data=@image_data, image_type=@image_type, note=@note, updated_at=SYSUTCDATETIME()
+                        WHEN NOT MATCHED THEN
+                            INSERT ([Floor_ID],[Site_ID],[Building_ID],[floor_number],[name],[function],[has_cctv],[image_data],[image_type],[note])
+                            VALUES (@Floor_ID,@Site_ID,@Building_ID,@floor_number,@name,@function,@has_cctv,@image_data,@image_type,@note);";
 
                     foreach (var item in modelList)
                     {
@@ -83,7 +88,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
+                return Ok(new { success = true, saved = insertCount, message = $"บันทึกข้อมูลสำเร็จ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }

@@ -77,8 +77,13 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 {
                     con.Open();
                     string insertSql = @"
-                        INSERT INTO [dbo].[rooms] ([Room_ID],[Site_ID],[Building_ID],[Floor_ID],[name],[type],[has_nvr],[has_sw],[width_m],[length_m],[x],[y],[w],[h],[image_data],[image_type],[note])
-                        VALUES (@Room_ID,@Site_ID,@Building_ID,@Floor_ID,@name,@type,@has_nvr,@has_sw,@width_m,@length_m,@x,@y,@w,@h,@image_data,@image_type,@note);";
+                        MERGE INTO [dbo].[rooms] AS T
+                        USING (SELECT @Room_ID AS Room_ID) AS S ON T.Room_ID = S.Room_ID
+                        WHEN MATCHED THEN
+                            UPDATE SET Site_ID=@Site_ID, Building_ID=@Building_ID, Floor_ID=@Floor_ID, name=@name, type=@type, has_nvr=@has_nvr, has_sw=@has_sw, width_m=@width_m, length_m=@length_m, x=@x, y=@y, w=@w, h=@h, image_data=@image_data, image_type=@image_type, note=@note, updated_at=SYSUTCDATETIME()
+                        WHEN NOT MATCHED THEN
+                            INSERT ([Room_ID],[Site_ID],[Building_ID],[Floor_ID],[name],[type],[has_nvr],[has_sw],[width_m],[length_m],[x],[y],[w],[h],[image_data],[image_type],[note])
+                            VALUES (@Room_ID,@Site_ID,@Building_ID,@Floor_ID,@name,@type,@has_nvr,@has_sw,@width_m,@length_m,@x,@y,@w,@h,@image_data,@image_type,@note);";
 
                     foreach (var item in modelList)
                     {
@@ -90,7 +95,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
+                return Ok(new { success = true, saved = insertCount, message = $"บันทึกข้อมูลสำเร็จ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }
