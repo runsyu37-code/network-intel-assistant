@@ -69,13 +69,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 {
                     con.Open();
                     string insertSql = @"
-                        MERGE INTO [dbo].[buildings] AS T
-                        USING (SELECT @Building_ID AS Building_ID) AS S ON T.Building_ID = S.Building_ID
-                        WHEN MATCHED THEN
-                            UPDATE SET Site_ID=@Site_ID, name=@name, code=@code, floor_count=@floor_count, description=@description, image_data=@image_data, image_type=@image_type, note=@note, updated_at=SYSUTCDATETIME()
-                        WHEN NOT MATCHED THEN
-                            INSERT ([Building_ID],[Site_ID],[name],[code],[floor_count],[description],[image_data],[image_type],[note])
-                            VALUES (@Building_ID,@Site_ID,@name,@code,@floor_count,@description,@image_data,@image_type,@note);";
+                        INSERT INTO [dbo].[buildings] ([Building_ID],[Site_ID],[name],[code],[floor_count],[description],[image_data],[image_type],[note])
+                        VALUES (@Building_ID,@Site_ID,@name,@code,@floor_count,@description,@image_data,@image_type,@note);";
 
                     foreach (var item in modelList)
                     {
@@ -87,7 +82,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         }
                     }
                 }
-                return Ok(new { success = true, saved = insertCount, message = $"บันทึกข้อมูลสำเร็จ {insertCount} records" });
+                return Ok(new { success = true, inserted = insertCount, message = $"เพิ่มข้อมูลใหม่สำเร็จ {insertCount} records" });
             }
             catch (SqlException ex) { return InternalServerError(ex); }
             catch (Exception ex)    { return InternalServerError(ex); }
