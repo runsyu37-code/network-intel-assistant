@@ -4,9 +4,23 @@ info:
   seq: 3
 
 http:
-  method: POST
-  url: https://localhost:44342/api/Updatesites/%7BSite_ID%7D
+  method: PUT
+  url: https://localhost:44342/api/Updatesites/S001
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Site_ID": "S001",
+        "name": "สำนักงานใหญ่ (Updated)",
+        "code": "HQ",
+        "location": "กรุงเทพมหานคร",
+        "description": "Updated via Bruno test"
+      }
 
 settings:
   encodeUrl: true

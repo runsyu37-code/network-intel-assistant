@@ -4,8 +4,8 @@ info:
   seq: 4
 
 http:
-  method: POST
-  url: https://localhost:44342/api/Deleteracks/%7BRack_ID%7D
+  method: DELETE
+  url: https://localhost:44342/api/Deleteracks/RK_T
   auth: inherit
 
 settings:

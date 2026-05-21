@@ -4,9 +4,43 @@ info:
   seq: 3
 
 http:
-  method: POST
-  url: https://localhost:44342/api/UpdatepoeSwitches/%7BSW_ID%7D
+  method: PUT
+  url: https://localhost:44342/api/UpdatepoeSwitches/SW001
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "SW_ID": "SW001",
+        "Site_ID": "S001",
+        "Building_ID": "B001",
+        "Floor_ID": "F001",
+        "Room_ID": "R001",
+        "Rack_ID": "RK001",
+        "u_position": 1,
+        "u_subposition": 1,
+        "device_name": "Switch-HQ-01 (Updated)",
+        "switch_type": "PoE",
+        "brand": "Cisco",
+        "model": "SG350-28P",
+        "serial_no": "SN-SW001",
+        "mac_address": "AA:BB:CC:DD:EE:01",
+        "os_version": "15.2.7",
+        "vlan_id": 10,
+        "ip_address": "192.168.1.1",
+        "total_ports": 28,
+        "poe_ports": 24,
+        "poe_budget_w": 370,
+        "poe_used_w": 130,
+        "uplink_port": "Gi0/1",
+        "status": "online",
+        "fail_count": 0,
+        "notes": null
+      }
 
 settings:
   encodeUrl: true

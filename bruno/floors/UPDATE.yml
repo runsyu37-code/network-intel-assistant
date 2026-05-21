@@ -4,9 +4,27 @@ info:
   seq: 3
 
 http:
-  method: POST
-  url: https://localhost:44342/api/Updatefloors/%7BFloor_ID%7D
+  method: PUT
+  url: https://localhost:44342/api/Updatefloors/F001
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Floor_ID": "F001",
+        "Site_ID": "S001",
+        "Building_ID": "B001",
+        "floor_number": 1,
+        "name": "ชั้น 1 (Updated)",
+        "function": "Server Room",
+        "has_cctv": true,
+        "image_data": null,
+        "note": null
+      }
 
 settings:
   encodeUrl: true

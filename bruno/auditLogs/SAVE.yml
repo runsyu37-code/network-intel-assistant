@@ -7,6 +7,23 @@ http:
   method: POST
   url: https://localhost:44342/api/SaveauditLogs
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "user_id": 1,
+          "action": "INSERT",
+          "table_name": "sites",
+          "record_id": "S_T",
+          "old_value": null,
+          "new_value": "{\"Site_ID\":\"S_T\",\"name\":\"Test\"}"
+        }
+      ]
 
 settings:
   encodeUrl: true

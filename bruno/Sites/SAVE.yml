@@ -7,6 +7,22 @@ http:
   method: POST
   url: https://localhost:44342/api/Savesites
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "Site_ID": "S_T",
+          "name": "Test Site",
+          "code": "TST",
+          "location": "Bangkok Test",
+          "description": "Mock test record"
+        }
+      ]
 
 settings:
   encodeUrl: true

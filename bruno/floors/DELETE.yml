@@ -4,8 +4,8 @@ info:
   seq: 4
 
 http:
-  method: POST
-  url: https://localhost:44342/api/Deletefloors/%7BFloor_ID%7D
+  method: DELETE
+  url: https://localhost:44342/api/Deletefloors/FL_T
   auth: inherit
 
 settings:

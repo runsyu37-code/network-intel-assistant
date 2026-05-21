@@ -4,9 +4,25 @@ info:
   seq: 3
 
 http:
-  method: POST
-  url: https://localhost:44342/api/UpdatesyncLogs/%7Bid%7D
+  method: PUT
+  url: https://localhost:44342/api/UpdatesyncLogs/1
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "id": 1,
+        "device_type": "camera",
+        "device_id": "1",
+        "synced_by": 1,
+        "sync_type": "auto",
+        "status": "success",
+        "message": "Updated via Bruno test"
+      }
 
 settings:
   encodeUrl: true

@@ -4,8 +4,8 @@ info:
   seq: 4
 
 http:
-  method: POST
-  url: https://localhost:44342/api/DeleteauditLogs/%7Bid%7D
+  method: DELETE
+  url: https://localhost:44342/api/DeleteauditLogs/1
   auth: inherit
 
 settings:

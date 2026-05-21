@@ -4,9 +4,24 @@ info:
   seq: 3
 
 http:
-  method: POST
-  url: https://localhost:44342/api/UpdatepingLogs/%7Bid%7D
+  method: PUT
+  url: https://localhost:44342/api/UpdatepingLogs/1
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "id": 1,
+        "device_type": "camera",
+        "device_id": "1",
+        "ip_address": "10.10.1.101",
+        "is_alive": false,
+        "latency_ms": null
+      }
 
 settings:
   encodeUrl: true

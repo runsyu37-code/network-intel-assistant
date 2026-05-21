@@ -7,6 +7,26 @@ http:
   method: POST
   url: https://localhost:44342/api/Savebuildings
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "Building_ID": "B_T",
+          "Site_ID": "S001",
+          "name": "Test Building",
+          "code": "TST-B",
+          "floor_count": 1,
+          "description": "Mock test record",
+          "image_data": null,
+          "image_type": null,
+          "note": null
+        }
+      ]
 
 settings:
   encodeUrl: true
