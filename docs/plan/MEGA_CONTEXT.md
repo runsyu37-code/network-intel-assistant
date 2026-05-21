@@ -10,7 +10,7 @@
 - ชื่อ **Ran** (Susan) — นักศึกษาปี 4 ฝึกงาน Network Engineer
 - ฝึกงานถึง **ตุลาคม 2026** — deadline โปรเจกต์นี้ **ปลาย July 2026**
 - ภาษา: พิมพ์ภาษาอังกฤษ แต่ **ต้องตอบเป็นภาษาไทยเสมอ**
-- เขียนโค้ดเองไม่ได้ — ใช้ AI generate + พยายามทำความเข้าใจ
+- แนวทาง: ใช้ AI เป็น tool หลักในการสร้างและแก้ปัญหา — focus ที่ logic และผลลัพธ์มากกว่า syntax
 - อยู่ที่ทำงาน: ใช้ `work-safe` branch, SQL Auth, path `C:\ai-playground\...`
 - อยู่ที่บ้าน: ใช้ `master` branch, Windows Auth, path `C:\1_Work_Local\AI_Agent\...`
 
