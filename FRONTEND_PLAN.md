@@ -1,99 +1,150 @@
 # Frontend Plan — SSM Web App
 
-> อัปเดตล่าสุด: 2026-05-21
-> สถานะ: **กำลังวางแผน — UI layout ตัดสินใจแล้ว, รอ Ran อธิบายแต่ละ layer**
+> อัปเดตล่าสุด: 2026-05-22
+> สถานะ: **UI spec ครบทุก layer — รอตัดสินใจ stack**
 
 ---
 
-## โครงสร้าง Hierarchy (ที่ต้องแสดงผล)
-
-```
-Site
- └── Building
-      └── Floor
-           └── Room
-                └── Rack
-                     └── Devices (Camera / NVR / PoE Switch)
-```
-
----
-
-## UI Layout (ตัดสินใจแล้ว — 2026-05-21)
+## Layout หลัก
 
 **Sidebar + Breadcrumb**
 
 ```
-┌─────────────┬────────────────────────────────────┐
-│  SIDEBAR    │  Site A > Building 1 > Floor 3     │ ← Breadcrumb
-│             │────────────────────────────────────│
-│ ▶ Site A    │  เนื้อหาของ Layer นั้น             │
-│   Site B    │                                    │
-│   Site C    │                                    │
-└─────────────┴────────────────────────────────────┘
+┌─────────────────┬──────────────────────────────────┐
+│  SIDEBAR        │  Site A > Building 1 > Floor 3   │ ← Breadcrumb
+│  (ทุก layer)    │──────────────────────────────────│
+│                 │  เนื้อหาของ layer นั้น            │
+│ 🗺 Sites        │                                  │
+│  ├── Site A     │                                  │
+│  ├── Site B     │                                  │
+│  └── Site C     │                                  │
+│                 │                                  │
+│ 📱 My Devices   │                                  │
+│  └── + Add      │                                  │
+└─────────────────┴──────────────────────────────────┘
 ```
 
-- **Sidebar** — แสดงรายการ Sites ทางซ้าย กดแล้วโหลดเนื้อหาฝั่งขวา
-- **Breadcrumb** — บอก location ปัจจุบัน กดย้อนกลับได้
-- Layer Building ลงไปแสดงฝั่งขวา ไม่ขยายใน Sidebar
+- **Sites** — navigate hierarchy
+- **My Devices** — permanent menu ทุก layer, กด Add กรอก IP/ข้อมูล sync อัตโนมัติ
 
 ---
 
-## สิ่งที่ขาดใน Backend (ต้องเพิ่มก่อน frontend เริ่ม)
+## Alert Propagation (ทุก layer)
+
+ถ้า device มีปัญหา สีแดงลอยขึ้นมาทุก layer:
+
+```
+Device offline
+ → Rack 🔴 → Room 🔴 → Floor 🔴 → Building 🔴 → Site 🔴 → Topology 🔴
+```
+
+---
+
+## UI แต่ละ Layer
+
+### Home — Topology Diagram
+- Network topology แบบ mindmap
+- HQ อยู่ตรงกลาง Sites โยงออกมา
+- เส้น = network connection จริง
+- กด Site node → เข้า Site layer
+- Sites ที่มี alert แสดง 🔴
+
+---
+
+### Site Layer
+**ขั้น 1 — Overview**
+- Isometric top view มองจากบนเฉียงๆ เห็นทุกตึกใน Site พร้อมกัน
+- กด building ไหน → ขั้น 2
+
+**ขั้น 2 — Building detail**
+- Isometric view ของตึกนั้น เห็นชั้นตามจริง
+- ไม่ต้องใส่เลขชั้น มองเห็นด้วยตาเปล่าได้
+- ชั้นที่มี alert แสดงสีแดง
+- กล้องนอกตึก → วาง icon บน building isometric ได้เลย
+- กด floor → เข้า Floor layer
+
+---
+
+### Floor Layer
+- แสดงผัง floor plan ของชั้นนั้น
+- Camera icon วางตามตำแหน่งจริง
+- กด icon กล้อง → เข้า Device layer
+
+**2 modes:**
+
+| Mode | ทำอะไรได้ |
+|---|---|
+| View (default) | ดูตำแหน่งกล้อง, toggle ซ่อน/แสดง icon |
+| Edit (unlock) | ลาก icon กล้องย้ายตำแหน่ง, add กล้องใหม่ drop ลงผังได้เลย |
+
+---
+
+### Room Layer
+- แสดงเฉพาะห้องที่มี rack (server room, network room)
+- เห็นตู้ rack คล้ายตู้จริง
+- กด rack → เข้า Rack layer
+
+---
+
+### Rack Layer
+- Interactive rack diagram แสดงตาม U-position
+- เห็นอุปกรณ์เรียงตาม slot จริง (NVR, Switch ฯลฯ)
+- ช่องว่าง = กดวางอุปกรณ์ได้
+
+| Action | ทำได้ |
+|---|---|
+| วาง | เลือก U ที่ว่าง → add อุปกรณ์ |
+| แก้ | กดอุปกรณ์ → แก้ข้อมูล |
+| ลบ | กด delete ออกจาก rack |
+
+---
+
+### Device Layer (Camera / NVR / PoE Switch)
+
+| ข้อมูล | |
+|---|---|
+| Status | Online / Offline 🔴🟢 |
+| IP | IP address |
+| MAC | MAC address |
+| S/N | Serial number |
+| OS | Operating system |
+| Ping history | กราฟ ping ย้อนหลัง |
+| Alerts | รายการ alert ล่าสุด |
+
+---
+
+## สิ่งที่ขาดใน Backend (ต้องเพิ่มก่อน implement)
 
 ### GET by Parent Filter
 
-ตอนนี้ GET คืนข้อมูลทั้งหมด — drill-down ต้องการ filter ตาม parent:
-
-| Endpoint ที่ต้องเพิ่ม | ใช้ตอนไหน |
+| Endpoint | ใช้ตอนไหน |
 |---|---|
-| `GET /api/Getbuildings?site_id=` | คลิกเข้า Site |
-| `GET /api/Getfloors?building_id=` | คลิกเข้า Building |
-| `GET /api/Getrooms?floor_id=` | คลิกเข้า Floor |
-| `GET /api/Getracks?room_id=` | คลิกเข้า Room |
-| `GET /api/Getcameras?rack_id=` | คลิกเข้า Rack |
-| `GET /api/Getnvrs?rack_id=` | คลิกเข้า Rack |
-| `GET /api/GetpoeSwitches?rack_id=` | คลิกเข้า Rack |
+| `GET /api/Getbuildings?site_id=` | เข้า Site |
+| `GET /api/Getfloors?building_id=` | เข้า Building |
+| `GET /api/Getrooms?floor_id=` | เข้า Floor |
+| `GET /api/Getracks?room_id=` | เข้า Room |
+| `GET /api/Getcameras?rack_id=` | เข้า Rack |
+| `GET /api/Getnvrs?rack_id=` | เข้า Rack |
+| `GET /api/GetpoeSwitches?rack_id=` | เข้า Rack |
 
-### GET by ID (Single Record)
+### GET by ID
 
-| Endpoint ที่ต้องเพิ่ม | ใช้ตอนไหน |
+| Endpoint | ใช้ตอนไหน |
 |---|---|
-| `GET /api/Getsites/{id}` | หน้า detail ของ Site |
-| `GET /api/Getbuildings/{id}` | หน้า detail ของ Building |
-| `GET /api/Getcameras/{id}` | หน้า detail ของ Camera |
-| *(และทุก table ที่เหลือ)* | |
+| `GET /api/Get{table}/{id}` | Device detail (ทุก table) |
 
 ---
 
-## สิ่งที่รอ Ran อธิบาย
+## สิ่งที่ยังรอตัดสินใจ
 
-### [ ] แต่ละ Layer แสดงผลยังไง?
-
-| Layer | รอคำตอบ |
-|---|---|
-| **Site** | แสดงอะไรบ้าง? แค่รายชื่อ หรือมี map/สถานะด้วย? |
-| **Building** | แสดงอะไร? มีรูปตึก หรือแค่ list floors? |
-| **Floor** | แสดง floor plan มั้ย? หรือแค่ list rooms? |
-| **Room** | แสดงอะไรใน room? racks และ devices? |
-| **Rack** | แสดง devices ใน rack ยังไง? มี diagram rack มั้ย? |
-| **Device (Camera)** | แสดงสถานะ online/offline, ping history, alerts? |
-| **Device (NVR)** | แสดงอะไรบ้าง? กล้องที่ต่ออยู่? |
-| **Device (PoE Switch)** | แสดง port status มั้ย? |
-
-### [ ] Stack ที่จะใช้?
-
-ยังไม่ได้ตัดสินใจ — รอ Ran หรือพี่เลี้ยงระบุ
-
-### [ ] Design / Wireframe มีมั้ย?
-
-พี่เลี้ยงมี mockup หรือ reference ที่ให้ดูมั้ย?
+- [ ] Frontend stack (ยังไม่ได้ระบุ)
+- [ ] Wireframe / mockup จริง
+- [ ] U-position spec → อ่านใน .md ที่ทำงาน
 
 ---
 
-## งานที่จะทำหลังได้คำตอบ
+## งานถัดไป
 
-- [ ] เพิ่ม GET filter ใน backend (13 tables)
-- [ ] เพิ่ม GET by ID ใน backend
-- [ ] ตัดสินใจ frontend stack
-- [ ] สร้าง wireframe / component list
+- [ ] ตัดสินใจ stack
+- [ ] เพิ่ม GET filter + GET by ID ใน backend
 - [ ] เริ่ม implement
