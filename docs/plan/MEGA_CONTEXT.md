@@ -70,6 +70,14 @@ network-intel-assistant/
 │   ├── workflow/ → START_HERE.md, HANDOVER.md, IMPORT_DECISION.md ฯลฯ
 │   └── log/      → LEARNING_LOG.md, BUG_LOG.md
 │
+├── api/                         ← backup C# API (mirror จาก feature/backend-api)
+│   ├── Controllers/             ← 13 controllers (CRUD)
+│   ├── Models/                  ← 13 models
+│   ├── ConnectionDB/            ← DB connection helper
+│   ├── bruno/                   ← Bruno collection (GET/SAVE/UPDATE/DELETE ครบ)
+│   ├── BACKEND.md               ← API documentation
+│   └── Web.config               ← connection string template
+│
 └── work_pack/                   ← ชุดไฟล์พร้อม copy ไปที่ทำงาน
     ├── ssm_import.py
     ├── SSM_schema_v2.sql
