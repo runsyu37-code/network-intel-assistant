@@ -150,27 +150,72 @@ Device offline
 
 ---
 
+## Deployment Scope — Decided (2026-05-22)
+
+**Intranet only** — internal use within the organization. No internet access required.
+
+---
+
+## Role & Permissions — Decided (2026-05-22)
+
+3 roles: Admin, User, Guest
+
+| Feature | Admin | User | Guest |
+|---|---|---|---|
+| View dashboard | ✅ | ✅ | ✅ |
+| View device detail | ✅ | ✅ | ✅ |
+| Add / Edit device | ✅ | ✅ | ❌ |
+| Delete device | ✅ | ❌ | ❌ |
+| Add / Edit site, building, floor | ✅ | ❌ | ❌ |
+| Manage users | ✅ | ❌ | ❌ |
+
+> Open to revision if reviewer recommends adjustments with supporting rationale.
+
+---
+
+## MVP Scope — Agreed for July Demo (2026-05-22)
+
+Reviewer reality check: full scope (52 forms, 3 roles, realtime) requires 3–4 devs × 3 months. 1 person × 6 weeks = MVP only.
+
+**MVP (must have for demo):**
+- Login + JWT auth
+- Dashboard — read-only hierarchy tree (Site → Building → Floor → Room → Rack → Device)
+- Device list + filter
+- Device detail page
+- Realtime status via polling (every 30 seconds)
+
+**Phase 7.5 (if time allows):**
+- CRUD forms for Site, Building, Floor (3 tables)
+- Basic RBAC (3 roles)
+
+**After demo:**
+- CRUD forms for remaining 10 tables
+- Full user management UI
+- Audit log
+
+> Data entry for the demo will continue using Excel + SSMS (Phase 3 workflow) — no web form needed yet.
+
+---
+
 ## Real-time Status — Decided (2026-05-22)
 
-**Polling every 5 seconds** — frontend calls the API repeatedly on a timer.
+**Polling every 30 seconds** — frontend calls the API on a timer.
 
 Chosen over WebSocket because:
 - Backend is already a C# REST API — no server-side changes needed
-- 5-second delay is acceptable for CCTV monitoring
+- 30-second interval is acceptable for CCTV monitoring
 - Simpler to implement and maintain
 
-> Open to revision: if reviewer has evidence that WebSocket or Server-Sent Events is significantly better for this use case, the decision can be reconsidered.
+> Open to revision: if reviewer provides evidence that WebSocket or SignalR is significantly better for this use case, the decision can be reconsidered.
 
 ---
 
 ## Open Decisions — Reviewer Input Needed
 
-The following areas have not been decided due to limited knowledge. Reviewer is asked to recommend an approach and explain the reasoning so the decision can be made with facts.
-
 | Area | Question | Current Thinking |
 |---|---|---|
 | **State Management** | Zustand / Context API / Redux? | Unknown — awaiting recommendation |
-| **Routing** | React Router structure? How to map Site→Building→Floor hierarchy to URLs? | Unknown — awaiting recommendation |
+| **Routing** | React Router structure? How to map hierarchy to URLs? | Unknown — awaiting recommendation |
 | **Isometric View** | Which library for Site/Building isometric rendering? | Unknown — awaiting recommendation |
 
 ---
@@ -186,4 +231,4 @@ The following areas have not been decided due to limited knowledge. Reviewer is 
 
 - [ ] Add GET filter + GET by ID to backend (branch: `backend`)
 - [ ] Set up React project
-- [ ] Implement layer by layer
+- [ ] Implement MVP layer by layer
