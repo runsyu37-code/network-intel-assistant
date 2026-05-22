@@ -189,11 +189,63 @@ These FKs are resolved by the importer using the natural-key PKs.
 
 ### U-position semantics (NVR + PoE Switch only — not cameras)
 
-| Field | Meaning |
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `u_position` | INT | NULL | เลข U นับจากด้านล่าง rack (1-based) |
+| `u_subposition` | TINYINT | NULL | micro-slot ย่อยภายใน U นั้น (ค่า 1, 2, หรือ 3) |
+| `u_size` | TINYINT | 1 | อุปกรณ์นี้กินพื้นที่กี่ U (เช่น 2U server ใส่ 2) |
+
+ทั้ง 3 field เป็น NULL ได้ — หมายความว่าอุปกรณ์ยังไม่ได้ติดตั้งลง rack
+
+#### u_subposition คืออะไร
+
+1 ช่อง U ใน rack ไม่จำเป็นต้องใส่อุปกรณ์ขนาดเต็มช่องเสมอไป  
+อุปกรณ์ขนาดเล็ก (เช่น half-width patch panel, fiber adapter) สามารถอยู่ร่วมกันใน U เดียวได้  
+`u_subposition` ระบุว่าอุปกรณ์อยู่ที่ micro-slot ไหนภายใน U นั้น
+
+จำนวน micro-slot ต่อ U กำหนดที่ระดับ rack ด้วย column `racks.units_per_u`:
+
+| | |
 |---|---|
-| `u_position` | 1-based U number from bottom of rack |
-| `u_subposition` | Micro-slot 1, 2, or 3 inside that U (each U has `units_per_u` slots, default 3) |
-| `u_size` | How many U the device occupies (default 1, e.g. 2U servers = 2) |
+| default | 3 micro-slots ต่อ U |
+| ค่าสูงสุด | 12 micro-slots ต่อ U (CHECK constraint บน `racks` table) |
+
+> **หมายเหตุ:** CHECK constraint บน device table (`CHK_sw_usubpos`, `CHK_nvr_usubpos`)  
+> กำหนด `u_subposition BETWEEN 1 AND 3` แบบ hardcode — ไม่ได้ validate แบบ dynamic ตาม `units_per_u` ของ rack  
+> ถ้า rack มี `units_per_u > 3` ในอนาคต ต้องแก้ constraint ด้วย
+
+#### ตัวอย่าง
+
+```
+Rack (42U, units_per_u = 3) — มองจากด้านหน้า rack, ด้านล่างคือ U1
+
+  ┌─────────────────────────────────┐
+  │ U6  [ sub1 ][ sub2 ][  sub3   ]│  ← ว่าง ทุก micro-slot
+  │ U5  [  Switch A  ][  Switch B  ]│  ← sub1 = Switch A, sub2 = Switch B, sub3 ว่าง
+  │ U4  │                           │  ← NVR-01 (u_size=2, กิน U3–U4)
+  │ U3  │      NVR-01               │
+  │ U2  [  Switch C  ][            ]│  ← sub1 = Switch C เต็มช่อง
+  │ U1  [                          ]│  ← ว่าง
+  └─────────────────────────────────┘ (พื้น)
+```
+
+| Device | u_position | u_subposition | u_size |
+|---|---|---|---|
+| Switch A | 5 | 1 | 1 |
+| Switch B | 5 | 2 | 1 |
+| NVR-01 | 3 | NULL | 2 |
+| Switch C | 2 | 1 | 1 |
+
+NVR-01 ใช้ `u_subposition = NULL` เพราะกินทั้ง U ไม่มีการแบ่ง micro-slot
+
+#### Index ที่เกี่ยวข้อง
+
+```sql
+IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
+IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)
+```
+
+Index นี้ช่วยให้ web app ดึงแผนผัง rack (rack diagram view) ได้เร็ว
 
 ---
 

@@ -191,9 +191,9 @@ Full schema file: `SSM_schema_v2.sql`
 |---|---|---|---|
 | SW_ID | NVARCHAR(20) | NOT NULL | **PK** |
 | Site_ID…Rack_ID | NVARCHAR | NOT NULL | **FK** → full hierarchy |
-| u_position | INT | NULL | rack unit slot |
-| u_subposition | TINYINT | NULL | 1–3 micro-slot |
-| u_size | TINYINT | NULL | height in U |
+| u_position | INT | NULL | U slot number, 1-based from rack bottom; NULL = not yet installed |
+| u_subposition | TINYINT | NULL | micro-slot within that U (1–3); NULL = occupies full U; CHECK 1–3 |
+| u_size | TINYINT | NULL | height in U (default 1); e.g. 2U device = 2 |
 | device_name | NVARCHAR(100) | NOT NULL | UNIQUE |
 | switch_type | NVARCHAR(20) | NULL | CHECK: PoE/Non-PoE/Core/Aggregation |
 | brand, model, serial_no, mac_address, os_version | NVARCHAR | NULL | UNIQUE: serial, mac |
@@ -210,7 +210,9 @@ Full schema file: `SSM_schema_v2.sql`
 |---|---|---|---|
 | NVR_ID | NVARCHAR(20) | NOT NULL | **PK** |
 | Site_ID…Rack_ID | NVARCHAR | NOT NULL | **FK** → full hierarchy |
-| u_position, u_subposition, u_size | INT/TINYINT | NULL | rack position |
+| u_position | INT | NULL | U slot number, 1-based from rack bottom; NULL = not yet installed |
+| u_subposition | TINYINT | NULL | micro-slot within that U (1–3); NULL = occupies full U; CHECK 1–3 |
+| u_size | TINYINT | NULL | height in U (default 1); e.g. 2U device = 2 |
 | device_name | NVARCHAR(100) | NOT NULL | UNIQUE |
 | brand, model, serial_no, mac_address, os_version | NVARCHAR | NULL | |
 | ip_internet | NVARCHAR(20) | NULL | uplink IP |
@@ -246,6 +248,46 @@ Full schema file: `SSM_schema_v2.sql`
 | fail_count | INT | NULL | default 0 |
 | last_seen | DATETIME2(7) | NULL | |
 | notes | NVARCHAR(MAX) | NULL | |
+
+#### U-position semantics (NVR + PoE Switch only)
+
+แต่ละ rack มี column `units_per_u TINYINT DEFAULT 3` — กำหนดว่า 1 ช่อง U แบ่งได้กี่ micro-slot (CHECK: 1–12)
+
+| Field | ความหมาย |
+|---|---|
+| `u_position` | เลข U นับจากด้านล่าง rack (1-based) |
+| `u_subposition` | micro-slot ย่อยภายใน U นั้น (1, 2, หรือ 3); NULL = กินทั้ง U |
+| `u_size` | อุปกรณ์กินกี่ U (default 1; 2U server ใส่ 2) |
+
+ทั้ง 3 field เป็น NULL ได้ — หมายความว่าอุปกรณ์ยังไม่ได้ติดตั้งลง rack
+
+```
+Rack (42U, units_per_u = 3) — มองจากด้านหน้า
+
+  ┌─────────────────────────────────┐
+  │ U5  [ Switch A ][ Switch B ][  ]│  ← sub1 = Switch A, sub2 = Switch B
+  │ U4  │                           │  ← NVR-01 (u_size=2, กิน U3–U4)
+  │ U3  │         NVR-01            │
+  │ U2  [ Switch C ][              ]│  ← sub1 = Switch C
+  │ U1  [                          ]│  ← ว่าง
+  └─────────────────────────────────┘ (พื้น / bottom of rack)
+```
+
+| Device | u_position | u_subposition | u_size |
+|---|---|---|---|
+| Switch A | 5 | 1 | 1 |
+| Switch B | 5 | 2 | 1 |
+| NVR-01 | 3 | NULL | 2 |
+| Switch C | 2 | 1 | 1 |
+
+> **Note:** CHECK constraint บน device table hardcode ไว้ที่ `u_subposition BETWEEN 1 AND 3`
+> — ถ้าในอนาคต rack มี `units_per_u > 3` ต้องแก้ constraint ด้วย
+
+Index ที่ใช้สำหรับ rack diagram view:
+```sql
+IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
+IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)
+```
 
 ---
 
