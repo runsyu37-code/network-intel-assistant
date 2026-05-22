@@ -8,19 +8,19 @@
 ## ⚠ Critical Context (read this first)
 
 - **Today:** 17 May 2026.
-- **Surveillance Monitoring project status:** started ~26 April 2026, total length 3 months, **~2 months remaining** (deadline ~late July 2026).
-- **Current phase:** Data Collection — and I'm stuck. Visible progress so far is minimal.
-- **Implication for this roadmap:** The first AI tooling I build is NOT a learning exercise — it must directly accelerate data collection so the surveillance project ships on time. Portfolio polish, life-agents, investing tools all come AFTER the work deadline is safe.
+- **Surveillance Monitoring project status:** started ~26 April 2026, total length 3 months, **deadline early July 2026** (ไม่ใช่ปลาย July — เป็นต้นเดือน July).
+- **Current phase:** Frontend Web App (React) — backend API เสร็จแล้ว, API testing ผ่านแล้ว.
+- **Implication for this roadmap:** SSM ต้องส่งต้น July — หลังจากนั้นจะได้รับโปรเจกต์ใหม่จากที่ทำงาน (ยังไม่รู้ว่าคืออะไร) สหกิจดำเนินต่อถึงตุลาคม 2026
 - **Two timelines run in parallel:**
-  - **Internship work timeline:** ends ~late July 2026 (surveillance project must ship), then continues with new assignments until October 2026.
-  - **Personal learning + portfolio timeline:** 5 months ending October 2026. Heavy load before late July, lighter after.
+  - **Internship work timeline:** SSM deadline ต้น July 2026 → จากนั้นได้รับโปรเจกต์ใหม่ → สหกิจจบตุลาคม 2026.
+  - **Personal learning + portfolio timeline:** 5 months ending October 2026. Phase 2 (life agents, investing, ML) เป็นแผนส่วนตัว ไม่ใช่งานที่ทำงานสั่ง.
 
 ---
 
 ## 0. North Star
 
 Turn the next 5 months into:
-1. **Ship the Surveillance Monitoring project on time** (~late July 2026) — non-negotiable. Everything else stacks on top of this.
+1. **Ship the Surveillance Monitoring project on time** (ต้น July 2026) — non-negotiable. Everything else stacks on top of this.
 2. **Mastery of Claude Code** — sub-agents, MCPs, slash commands, real workflows.
 3. **A team of AI agents** that help me across internship work, investing, scholarship hunting, and daily life.
 4. **A portfolio of 4–6 real projects** showcasing networking + AI development, sanitized and public-ready, that I can show to employers and scholarship committees.

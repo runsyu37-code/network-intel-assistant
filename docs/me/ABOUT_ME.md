@@ -24,13 +24,13 @@
 
 I'm currently a **Network Engineering Intern** — that's my actual role. My day-to-day work is general network engineering tasks at the company. Separately, I've been **assigned a specific project**: building a **Surveillance Monitoring web application**. The surveillance project is one assignment within the internship, not the entire internship itself. After this project, I expect to be assigned other networking/engineering tasks until the internship ends in October 2026.
 
-**Surveillance Monitoring project timeline (as of today, 17 May 2026):**
+**Surveillance Monitoring project timeline (as of 2026-05-22):**
 
 - **Total project duration:** 3 months.
-- **Started:** approximately **26 April 2026** (3 weeks ago).
-- **Deadline:** approximately **late July 2026** (~2 months remaining).
-- **Current phase:** **Data Collection** — still gathering CCTV inventory, IP/port mappings, NVR/switch relationships, building the network diagram.
-- **Honest status check:** I feel like I've made almost no visible progress yet — the project is "active" but I'm stuck on data collection. With only ~2 months left, this is the bottleneck I have to break NOW. Any AI tooling I build must directly accelerate data collection first, before anything else.
+- **Started:** approximately **26 April 2026**.
+- **Deadline:** **early July 2026** (ไม่ใช่ปลาย July — เป็นต้นเดือน July).
+- **Current phase:** **Frontend Web App (React)** — Backend API (C#) เสร็จแล้วและผ่าน testing ครบแล้ว (~55% complete ไม่นับการรอข้อมูลจริง).
+- **After SSM ships:** จะได้รับโปรเจกต์ใหม่จากที่ทำงาน (ยังไม่รู้ว่าคืออะไร) และสหกิจดำเนินต่อถึงตุลาคม 2026.
 
 **About the currently assigned project (Surveillance Monitoring web app):**
 
