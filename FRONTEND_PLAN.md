@@ -230,6 +230,25 @@ Chosen over WebSocket because:
 
 ---
 
+## Sitemap / Page List (2026-05-22)
+
+| Path | Page | Access |
+|---|---|---|
+| `/login` | Login | All |
+| `/` | Home — Topology diagram | All |
+| `/sites` | Site list | All |
+| `/sites/:site_id` | Building overview (isometric) | All |
+| `/sites/:site_id/buildings/:building_id` | Floor list (isometric) | All |
+| `/sites/:site_id/buildings/:building_id/floors/:floor_id` | Floor plan (camera icons) | Admin, User |
+| `/rooms/:room_id` | Room + Rack view | Admin only |
+| `/racks/:rack_id` | Rack detail | Admin only |
+| `/devices/cameras/:id` | Camera detail | Admin only |
+| `/devices/nvrs/:id` | NVR detail | Admin only |
+| `/devices/switches/:id` | Switch detail | Admin only |
+| `/admin/users` | User management | Admin only |
+
+---
+
 ## Pending
 
 - [ ] Wireframe / mockup
