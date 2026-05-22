@@ -189,11 +189,68 @@ These FKs are resolved by the importer using the natural-key PKs.
 
 ### U-position semantics (NVR + PoE Switch only — not cameras)
 
-| Field | Meaning |
-|---|---|
-| `u_position` | 1-based U number from bottom of rack |
-| `u_subposition` | Micro-slot 1, 2, or 3 inside that U (each U has `units_per_u` slots, default 3) |
-| `u_size` | How many U the device occupies (default 1, e.g. 2U servers = 2) |
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `u_position` | INT | NULL | U slot number counted from the bottom of the rack (1-based) |
+| `u_subposition` | TINYINT | NULL | Vertical mounting-hole position within that U (1=bottom, 2=middle, 3=top) |
+| `u_size` | TINYINT | 1 | Number of U slots the device occupies (e.g. 2U server = 2) |
+
+All 3 fields are nullable — NULL means the device has not yet been installed into a rack.
+
+#### What is u_subposition?
+
+Each U slot has 3 mounting holes arranged **vertically** (Y-axis) on the rack rail.
+`u_subposition` identifies which of those holes the device's bracket is fastened to.
+
+**Why it matters — airflow gaps:**
+If position were tracked in whole U steps only, the smallest airflow gap between two devices would be 1U (≈ 44 mm) — wasteful in a dense rack.
+With sub-position, a gap can be as small as one hole (≈ 14 mm), allowing tighter packing while still maintaining airflow.
+
+The number of holes per U is defined at the rack level via `racks.units_per_u` (default 3, max 12).
+
+> **Note:** The CHECK constraint on device tables (`CHK_sw_usubpos`, `CHK_nvr_usubpos`)
+> hardcodes `u_subposition BETWEEN 1 AND 3` — it does not validate dynamically against the parent rack's `units_per_u`.
+> If a rack ever uses `units_per_u > 3`, the constraint must be updated accordingly.
+
+#### Example
+
+```
+Rack front view — Y-axis is vertical, U1 at the bottom
+Each U has 3 mounting holes stacked vertically (sub1=bottom, sub2=middle, sub3=top)
+
+  ┌──────────────────────────────┐
+  │      [sub3] ─────────────── │ ↑
+  │ U5   [sub2] ── Switch A ─── │  (u_pos=5, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  ├──────────────────────────────┤  ← airflow gap ~14 mm
+  │      [sub3] ─────────────── │ ↑
+  │ U4   [sub2] ─────────────── │  NVR-01 spans U3–U4
+  │      [sub1] ─── NVR-01 ──── │ ↓  (u_pos=3, u_sub=1, u_size=2)
+  ├──────────────────────────────┤
+  │      [sub3] ─── NVR-01 ──── │ ↑
+  │ U3   [sub2] ─── NVR-01 ──── │
+  │      [sub1] ─── NVR-01 ──── │ ↓
+  ├──────────────────────────────┤
+  │      [sub3] ─────────────── │ ↑
+  │ U2   [sub2] ── Switch B ─── │  (u_pos=2, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  └──────────────────────────────┘ (floor)
+```
+
+| Device | u_position | u_subposition | u_size |
+|---|---|---|---|
+| Switch A | 5 | 2 | 1 |
+| NVR-01 | 3 | 1 | 2 |
+| Switch B | 2 | 2 | 1 |
+
+#### Related indexes
+
+```sql
+IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
+IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)
+```
+
+These indexes allow the web app to load the rack diagram view efficiently.
 
 ---
 

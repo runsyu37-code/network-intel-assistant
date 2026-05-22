@@ -191,9 +191,9 @@ Full schema file: `SSM_schema_v2.sql`
 |---|---|---|---|
 | SW_ID | NVARCHAR(20) | NOT NULL | **PK** |
 | Site_ID…Rack_ID | NVARCHAR | NOT NULL | **FK** → full hierarchy |
-| u_position | INT | NULL | rack unit slot |
-| u_subposition | TINYINT | NULL | 1–3 micro-slot |
-| u_size | TINYINT | NULL | height in U |
+| u_position | INT | NULL | U slot number, 1-based from rack bottom; NULL = not yet installed |
+| u_subposition | TINYINT | NULL | micro-slot within that U (1–3); NULL = occupies full U; CHECK 1–3 |
+| u_size | TINYINT | NULL | height in U (default 1); e.g. 2U device = 2 |
 | device_name | NVARCHAR(100) | NOT NULL | UNIQUE |
 | switch_type | NVARCHAR(20) | NULL | CHECK: PoE/Non-PoE/Core/Aggregation |
 | brand, model, serial_no, mac_address, os_version | NVARCHAR | NULL | UNIQUE: serial, mac |
@@ -210,7 +210,9 @@ Full schema file: `SSM_schema_v2.sql`
 |---|---|---|---|
 | NVR_ID | NVARCHAR(20) | NOT NULL | **PK** |
 | Site_ID…Rack_ID | NVARCHAR | NOT NULL | **FK** → full hierarchy |
-| u_position, u_subposition, u_size | INT/TINYINT | NULL | rack position |
+| u_position | INT | NULL | U slot number, 1-based from rack bottom; NULL = not yet installed |
+| u_subposition | TINYINT | NULL | micro-slot within that U (1–3); NULL = occupies full U; CHECK 1–3 |
+| u_size | TINYINT | NULL | height in U (default 1); e.g. 2U device = 2 |
 | device_name | NVARCHAR(100) | NOT NULL | UNIQUE |
 | brand, model, serial_no, mac_address, os_version | NVARCHAR | NULL | |
 | ip_internet | NVARCHAR(20) | NULL | uplink IP |
@@ -246,6 +248,58 @@ Full schema file: `SSM_schema_v2.sql`
 | fail_count | INT | NULL | default 0 |
 | last_seen | DATETIME2(7) | NULL | |
 | notes | NVARCHAR(MAX) | NULL | |
+
+#### U-position semantics (NVR + PoE Switch only)
+
+Each rack has `units_per_u TINYINT DEFAULT 3` — defines the number of mounting holes per U (CHECK: 1–12).
+
+| Field | Meaning |
+|---|---|
+| `u_position` | U slot number counted from the bottom of the rack (1-based) |
+| `u_subposition` | Vertical mounting-hole within that U (1=bottom, 2=middle, 3=top); NULL = hole not recorded |
+| `u_size` | Number of U slots the device occupies (default 1; 2U device = 2) |
+
+All 3 fields are nullable — NULL means the device has not yet been installed into a rack.
+
+Sub-position enables finer airflow gap planning: instead of wasting a full 1U (≈ 44 mm) for clearance, a single hole gap (≈ 14 mm) is sufficient.
+
+```
+Rack front view — Y-axis is vertical, U1 at the bottom
+Each U has 3 mounting holes stacked vertically (sub1=bottom, sub2=middle, sub3=top)
+
+  ┌──────────────────────────────┐
+  │      [sub3] ─────────────── │ ↑
+  │ U5   [sub2] ── Switch A ─── │  (u_pos=5, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  ├──────────────────────────────┤  ← airflow gap ~14 mm
+  │      [sub3] ─────────────── │ ↑
+  │ U4   [sub2] ─────────────── │  NVR-01 spans U3–U4
+  │      [sub1] ─── NVR-01 ──── │ ↓  (u_pos=3, u_sub=1, u_size=2)
+  ├──────────────────────────────┤
+  │      [sub3] ─── NVR-01 ──── │ ↑
+  │ U3   [sub2] ─── NVR-01 ──── │
+  │      [sub1] ─── NVR-01 ──── │ ↓
+  ├──────────────────────────────┤
+  │      [sub3] ─────────────── │ ↑
+  │ U2   [sub2] ── Switch B ─── │  (u_pos=2, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  └──────────────────────────────┘ (floor)
+```
+
+| Device | u_position | u_subposition | u_size |
+|---|---|---|---|
+| Switch A | 5 | 2 | 1 |
+| NVR-01 | 3 | 1 | 2 |
+| Switch B | 2 | 2 | 1 |
+
+> **Note:** The `u_subposition` CHECK constraint is hardcoded to `BETWEEN 1 AND 3` on device tables.
+> If a rack ever uses `units_per_u > 3`, the constraint must be updated accordingly.
+
+Indexes used for the rack diagram view:
+```sql
+IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
+IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)
+```
 
 ---
 
