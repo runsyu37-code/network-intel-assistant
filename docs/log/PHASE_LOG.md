@@ -130,18 +130,21 @@
 
 ## Phase 7 — SSM Web App (Frontend) 🔥
 
-**แผนงาน:**
-- สร้าง React frontend เชื่อมกับ C# API (Phase 6)
-- แสดง hierarchy: Site → Building → Floor → Room → Rack → Device
-- แสดงสถานะ online/offline ของ CCTV, NVR, Switch
-- Drill-down view แสดง device detail
+**ทำอะไรไปแล้ว (2026-05-22):**
+- กำหนด MVP scope: Login + Dashboard + Device detail + polling 30s
+- กำหนด role matrix: Admin / User / Guest พร้อม access level แต่ละชั้น
+- กำหนด sitemap: 12 pages พร้อม route
+- ตัดสินใจ stack: React Flow, Konva.js, Recharts, Axios
+- สร้าง FRONTEND_PLAN.md, WIREFRAME_BRIEF.md, RACK_POSITION.md
+- ส่ง FRONTEND_PLAN + RACK_POSITION ให้ Engineering Reviewer
+- สร้าง wireframes ผ่าน Claude Design: 5/12 หน้า
 
-**สิ่งที่คาดว่าจะได้:**
-- Web app ที่ใช้งานได้จริง — เป้าหมายหลักของโปรเจกต์
-- หน้าจอ monitor ที่ staff และ supervisor ดูได้ real-time
-- ครบ loop: Survey Excel → DB → API → Web UI
+**สิ่งที่ได้:**
+- Frontend spec ชัดเจน พร้อม implement
+- Wireframes draft 5 หน้า (Home Topology approved, Floor Plan + Rack Detail draft)
+- Reviewer feedback กำลังรอ
 
-**สถานะ:** ยังไม่เริ่ม — งานต่อไป
+**สถานะ:** 🔥 In Progress — รอ reviewer feedback + wireframes ครบ → เริ่ม React
 
 ---
 

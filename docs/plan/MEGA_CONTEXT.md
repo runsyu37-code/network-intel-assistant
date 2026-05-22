@@ -105,6 +105,10 @@ network-intel-assistant/
 | Backend API (C#) | ✅ Done | 13 controllers, Bruno bodies ครบ, HTTP methods ถูกต้องแล้ว |
 | Bruno Collection | ✅ Done | SAVE/UPDATE/DELETE มี body + method ถูก (branch: feature/backend-api) |
 | API Testing | ✅ Passed | ทดสอบผ่าน Bruno แล้ว (mock data) |
+| FRONTEND_PLAN.md | ✅ Done | sitemap, role matrix, MVP scope, stack — branch: frontend |
+| WIREFRAME_BRIEF.md | ✅ Done | Claude Design briefing file — branch: frontend |
+| RACK_POSITION.md | ✅ Done | U-position spec + known limitation — branch: frontend |
+| Wireframes (Claude Design) | ⚠️ In Progress | 5/12 หน้า — token resets Mon 2026-05-25 |
 
 ---
 
@@ -112,9 +116,11 @@ network-intel-assistant/
 
 | ลำดับ | งาน | สถานะ |
 |---|---|---|
-| 1 | SSM Web App — Frontend (React) + connect API | 🔥 งานต่อไป |
-| 2 | Paste ข้อมูลจริงจาก survey staff เข้า SSM_DB | ⏳ รอข้อมูลจาก staff |
-| 3 | ตรวจ views ใน SSMS หลัง paste ครบ | ⏳ รอทำหลัง paste |
+| 1 | Wireframes ที่เหลือ 7 หน้า (Login, Site List, Camera/NVR/Switch, User Mgmt) | ⏳ รอ Mon 2026-05-25 (token reset) |
+| 2 | Reviewer feedback จาก FRONTEND_PLAN + RACK_POSITION | ⏳ รอ feedback |
+| 3 | Setup React project + implement MVP | 🔥 งานหลัก |
+| 4 | Paste ข้อมูลจริงจาก survey staff เข้า SSM_DB | ⏳ รอข้อมูลจาก staff |
+| 5 | ตรวจ views ใน SSMS หลัง paste ครบ | ⏳ รอทำหลัง paste |
 
 > **หมายเหตุ:** ยกเลิก Python importer แล้ว — ดู `docs/workflow/IMPORT_DECISION.md`
 
