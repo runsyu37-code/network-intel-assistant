@@ -12,7 +12,7 @@
 ```
 ┌─────────────────┬──────────────────────────────────┐
 │  SIDEBAR        │  Site A > Building 1 > Floor 3   │ ← Breadcrumb
-│  (ทุก layer)    │──────────────────────────────────│
+│  (dynamic)      │──────────────────────────────────│
 │                 │  เนื้อหาของ layer นั้น            │
 │ 🗺 Sites        │                                  │
 │  ├── Site A     │                                  │
@@ -24,8 +24,20 @@
 └─────────────────┴──────────────────────────────────┘
 ```
 
-- **Sites** — navigate hierarchy
+- **Sidebar is dynamic** — content changes as user drills deeper into the hierarchy
 - **My Devices** — permanent menu ทุก layer, กด Add กรอก IP/ข้อมูล sync อัตโนมัติ
+
+### Sidebar Navigation Behavior
+
+| Current Layer | Sidebar shows |
+|---|---|
+| Home / Topology | Sites list |
+| Site Overview | Buildings in that site |
+| Building Detail | Floors in that building |
+| Floor Plan | Rooms in that floor |
+| Room / Rack | Devices in that rack |
+
+Each layer **replaces** the previous list — not nested/accordion. Breadcrumb in topbar always shows full path back.
 
 ---
 

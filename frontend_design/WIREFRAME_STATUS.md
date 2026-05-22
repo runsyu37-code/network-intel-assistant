@@ -31,12 +31,35 @@
 
 ---
 
-## Known Issues
+## Known Issues — To Fix
 
-| Issue | Affects | Plan |
-|---|---|---|
-| Isometric buildings look hollow (no solid faces) | Site Overview, Building Detail | Fix after token reset or during implementation |
-| Sub U-position not shown in Rack Detail | Rack Detail | Add during React implementation |
+| # | Issue | Affects | Plan |
+|---|---|---|---|
+| 1 | Isometric buildings render hollow (no solid 3D faces) | Site Overview, Building Detail | Re-gen after token reset Mon 2026-05-25 |
+| 2 | Sub U-position (micro-slot) not shown in Rack Detail | Rack Detail | Add during React implementation |
+| 3 | Sidebar does not reflect current navigation layer (static across all pages) | All pages | Must implement dynamic sidebar in React — see spec below |
+
+---
+
+## Sidebar Behavior Spec (Dynamic Navigation)
+
+The sidebar must update its content as the user drills deeper into the hierarchy.
+
+| Current Layer | Sidebar shows |
+|---|---|
+| Home / Topology | Sites list |
+| Site Overview | Buildings in that site |
+| Building Detail | Floors in that building |
+| Floor Plan | Rooms in that floor (or cameras list) |
+| Room / Rack | Devices in that rack |
+
+**Behavior:**
+- Each layer replaces the previous list in the sidebar — not nested/accordion
+- Breadcrumb (topbar) always shows the full path back
+- Clicking a sidebar item navigates to that item's detail page
+- Back navigation via breadcrumb or browser back
+
+> Note: Current wireframes show a static Sites list in all pages — this is a wireframe limitation, not the intended behavior.
 
 ---
 
