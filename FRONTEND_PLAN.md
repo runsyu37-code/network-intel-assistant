@@ -135,28 +135,55 @@ Device offline
 
 ---
 
-## Stack (ตัดสินใจแล้ว — 2026-05-22)
+## Stack — Decided (2026-05-22)
+
+> All decisions listed here are open to revision if the reviewer or future sessions provide facts or evidence that a different approach is better. Nothing is locked permanently.
 
 **React**
 
-| Library | ใช้ทำอะไร |
-|---|---|
-| `React Flow` | Topology diagram (Home page) |
-| `Konva.js` | Floor plan drag-drop camera icons |
-| `Recharts` | Ping history graph ใน Device detail |
-| `Axios` | เรียก C# REST API |
+| Library | Purpose | Status |
+|---|---|---|
+| `React Flow` | Topology diagram (Home page) | Decided |
+| `Konva.js` | Floor plan drag-drop camera icons | Decided |
+| `Recharts` | Ping history graph in Device detail | Decided |
+| `Axios` | Call C# REST API | Decided |
 
 ---
 
-## สิ่งที่ยังรอ
+## Real-time Status — Decided (2026-05-22)
 
-- [ ] Wireframe / mockup จริง
-- [ ] U-position spec → อ่านใน .md ที่ทำงาน
+**Polling every 5 seconds** — frontend calls the API repeatedly on a timer.
+
+Chosen over WebSocket because:
+- Backend is already a C# REST API — no server-side changes needed
+- 5-second delay is acceptable for CCTV monitoring
+- Simpler to implement and maintain
+
+> Open to revision: if reviewer has evidence that WebSocket or Server-Sent Events is significantly better for this use case, the decision can be reconsidered.
 
 ---
 
-## งานถัดไป
+## Open Decisions — Reviewer Input Needed
 
-- [ ] เพิ่ม GET filter + GET by ID ใน backend (branch: `backend`)
-- [ ] setup React project
-- [ ] เริ่ม implement ทีละ layer
+The following areas have not been decided due to limited knowledge. Reviewer is asked to recommend an approach and explain the reasoning so the decision can be made with facts.
+
+| Area | Question | Current Thinking |
+|---|---|---|
+| **State Management** | Zustand / Context API / Redux? | Unknown — awaiting recommendation |
+| **Routing** | React Router structure? How to map Site→Building→Floor hierarchy to URLs? | Unknown — awaiting recommendation |
+| **Isometric View** | Which library for Site/Building isometric rendering? | Unknown — awaiting recommendation |
+
+---
+
+## Pending
+
+- [ ] Wireframe / mockup
+- [ ] U-position spec (see .md at work notebook)
+
+---
+
+## Next Steps
+
+- [ ] Add GET filter + GET by ID to backend (branch: `backend`)
+- [ ] Set up React project
+- [ ] Implement layer by layer
