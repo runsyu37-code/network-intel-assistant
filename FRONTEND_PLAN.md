@@ -162,12 +162,22 @@ Device offline
 
 | Feature | Admin | User | Guest |
 |---|---|---|---|
-| View dashboard | ✅ | ✅ | ✅ |
-| View device detail | ✅ | ✅ | ✅ |
-| Add / Edit device | ✅ | ✅ | ❌ |
-| Delete device | ✅ | ❌ | ❌ |
-| Add / Edit site, building, floor | ✅ | ❌ | ❌ |
+| Home — topology diagram | ✅ | ✅ | ✅ |
+| Site list | ✅ | ✅ | ✅ |
+| Building view (isometric) | ✅ | ✅ | ✅ |
+| See floor count per building | ✅ | ✅ | ✅ |
+| Enter floor plan | ✅ | ✅ | ❌ |
+| See camera name on floor plan | ✅ | ✅ (name only) | ❌ |
+| See full camera detail | ✅ | ❌ | ❌ |
+| Enter Room layer | ✅ | ❌ | ❌ |
+| Enter Rack layer | ✅ | ❌ | ❌ |
+| Add / Edit / Delete any data | ✅ | ❌ | ❌ |
 | Manage users | ✅ | ❌ | ❌ |
+
+**Summary:**
+- **Admin** — full access to everything
+- **User** — read-only, navigates down to floor plan, sees camera names only, cannot enter Room/Rack or view device details
+- **Guest** — read-only, sees site/building/floor count only, cannot enter any floor plan
 
 > Open to revision if reviewer recommends adjustments with supporting rationale.
 
