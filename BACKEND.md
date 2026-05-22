@@ -251,39 +251,51 @@ Full schema file: `SSM_schema_v2.sql`
 
 #### U-position semantics (NVR + PoE Switch only)
 
-แต่ละ rack มี column `units_per_u TINYINT DEFAULT 3` — กำหนดว่า 1 ช่อง U แบ่งได้กี่ micro-slot (CHECK: 1–12)
+Each rack has `units_per_u TINYINT DEFAULT 3` — defines the number of mounting holes per U (CHECK: 1–12).
 
-| Field | ความหมาย |
+| Field | Meaning |
 |---|---|
-| `u_position` | เลข U นับจากด้านล่าง rack (1-based) |
-| `u_subposition` | micro-slot ย่อยภายใน U นั้น (1, 2, หรือ 3); NULL = กินทั้ง U |
-| `u_size` | อุปกรณ์กินกี่ U (default 1; 2U server ใส่ 2) |
+| `u_position` | U slot number counted from the bottom of the rack (1-based) |
+| `u_subposition` | Vertical mounting-hole within that U (1=bottom, 2=middle, 3=top); NULL = hole not recorded |
+| `u_size` | Number of U slots the device occupies (default 1; 2U device = 2) |
 
-ทั้ง 3 field เป็น NULL ได้ — หมายความว่าอุปกรณ์ยังไม่ได้ติดตั้งลง rack
+All 3 fields are nullable — NULL means the device has not yet been installed into a rack.
+
+Sub-position enables finer airflow gap planning: instead of wasting a full 1U (≈ 44 mm) for clearance, a single hole gap (≈ 14 mm) is sufficient.
 
 ```
-Rack (42U, units_per_u = 3) — มองจากด้านหน้า
+Rack front view — Y-axis is vertical, U1 at the bottom
+Each U has 3 mounting holes stacked vertically (sub1=bottom, sub2=middle, sub3=top)
 
-  ┌─────────────────────────────────┐
-  │ U5  [ Switch A ][ Switch B ][  ]│  ← sub1 = Switch A, sub2 = Switch B
-  │ U4  │                           │  ← NVR-01 (u_size=2, กิน U3–U4)
-  │ U3  │         NVR-01            │
-  │ U2  [ Switch C ][              ]│  ← sub1 = Switch C
-  │ U1  [                          ]│  ← ว่าง
-  └─────────────────────────────────┘ (พื้น / bottom of rack)
+  ┌──────────────────────────────┐
+  │      [sub3] ─────────────── │ ↑
+  │ U5   [sub2] ── Switch A ─── │  (u_pos=5, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  ├──────────────────────────────┤  ← airflow gap ~14 mm
+  │      [sub3] ─────────────── │ ↑
+  │ U4   [sub2] ─────────────── │  NVR-01 spans U3–U4
+  │      [sub1] ─── NVR-01 ──── │ ↓  (u_pos=3, u_sub=1, u_size=2)
+  ├──────────────────────────────┤
+  │      [sub3] ─── NVR-01 ──── │ ↑
+  │ U3   [sub2] ─── NVR-01 ──── │
+  │      [sub1] ─── NVR-01 ──── │ ↓
+  ├──────────────────────────────┤
+  │      [sub3] ─────────────── │ ↑
+  │ U2   [sub2] ── Switch B ─── │  (u_pos=2, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  └──────────────────────────────┘ (floor)
 ```
 
 | Device | u_position | u_subposition | u_size |
 |---|---|---|---|
-| Switch A | 5 | 1 | 1 |
-| Switch B | 5 | 2 | 1 |
-| NVR-01 | 3 | NULL | 2 |
-| Switch C | 2 | 1 | 1 |
+| Switch A | 5 | 2 | 1 |
+| NVR-01 | 3 | 1 | 2 |
+| Switch B | 2 | 2 | 1 |
 
-> **Note:** CHECK constraint บน device table hardcode ไว้ที่ `u_subposition BETWEEN 1 AND 3`
-> — ถ้าในอนาคต rack มี `units_per_u > 3` ต้องแก้ constraint ด้วย
+> **Note:** The `u_subposition` CHECK constraint is hardcoded to `BETWEEN 1 AND 3` on device tables.
+> If a rack ever uses `units_per_u > 3`, the constraint must be updated accordingly.
 
-Index ที่ใช้สำหรับ rack diagram view:
+Indexes used for the rack diagram view:
 ```sql
 IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
 IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)

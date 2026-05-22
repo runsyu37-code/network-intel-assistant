@@ -191,61 +191,66 @@ These FKs are resolved by the importer using the natural-key PKs.
 
 | Field | Type | Default | Meaning |
 |---|---|---|---|
-| `u_position` | INT | NULL | เลข U นับจากด้านล่าง rack (1-based) |
-| `u_subposition` | TINYINT | NULL | micro-slot ย่อยภายใน U นั้น (ค่า 1, 2, หรือ 3) |
-| `u_size` | TINYINT | 1 | อุปกรณ์นี้กินพื้นที่กี่ U (เช่น 2U server ใส่ 2) |
+| `u_position` | INT | NULL | U slot number counted from the bottom of the rack (1-based) |
+| `u_subposition` | TINYINT | NULL | Vertical mounting-hole position within that U (1=bottom, 2=middle, 3=top) |
+| `u_size` | TINYINT | 1 | Number of U slots the device occupies (e.g. 2U server = 2) |
 
-ทั้ง 3 field เป็น NULL ได้ — หมายความว่าอุปกรณ์ยังไม่ได้ติดตั้งลง rack
+All 3 fields are nullable — NULL means the device has not yet been installed into a rack.
 
-#### u_subposition คืออะไร
+#### What is u_subposition?
 
-1 ช่อง U ใน rack ไม่จำเป็นต้องใส่อุปกรณ์ขนาดเต็มช่องเสมอไป  
-อุปกรณ์ขนาดเล็ก (เช่น half-width patch panel, fiber adapter) สามารถอยู่ร่วมกันใน U เดียวได้  
-`u_subposition` ระบุว่าอุปกรณ์อยู่ที่ micro-slot ไหนภายใน U นั้น
+Each U slot has 3 mounting holes arranged **vertically** (Y-axis) on the rack rail.
+`u_subposition` identifies which of those holes the device's bracket is fastened to.
 
-จำนวน micro-slot ต่อ U กำหนดที่ระดับ rack ด้วย column `racks.units_per_u`:
+**Why it matters — airflow gaps:**
+If position were tracked in whole U steps only, the smallest airflow gap between two devices would be 1U (≈ 44 mm) — wasteful in a dense rack.
+With sub-position, a gap can be as small as one hole (≈ 14 mm), allowing tighter packing while still maintaining airflow.
 
-| | |
-|---|---|
-| default | 3 micro-slots ต่อ U |
-| ค่าสูงสุด | 12 micro-slots ต่อ U (CHECK constraint บน `racks` table) |
+The number of holes per U is defined at the rack level via `racks.units_per_u` (default 3, max 12).
 
-> **หมายเหตุ:** CHECK constraint บน device table (`CHK_sw_usubpos`, `CHK_nvr_usubpos`)  
-> กำหนด `u_subposition BETWEEN 1 AND 3` แบบ hardcode — ไม่ได้ validate แบบ dynamic ตาม `units_per_u` ของ rack  
-> ถ้า rack มี `units_per_u > 3` ในอนาคต ต้องแก้ constraint ด้วย
+> **Note:** The CHECK constraint on device tables (`CHK_sw_usubpos`, `CHK_nvr_usubpos`)
+> hardcodes `u_subposition BETWEEN 1 AND 3` — it does not validate dynamically against the parent rack's `units_per_u`.
+> If a rack ever uses `units_per_u > 3`, the constraint must be updated accordingly.
 
-#### ตัวอย่าง
+#### Example
 
 ```
-Rack (42U, units_per_u = 3) — มองจากด้านหน้า rack, ด้านล่างคือ U1
+Rack front view — Y-axis is vertical, U1 at the bottom
+Each U has 3 mounting holes stacked vertically (sub1=bottom, sub2=middle, sub3=top)
 
-  ┌─────────────────────────────────┐
-  │ U6  [ sub1 ][ sub2 ][  sub3   ]│  ← ว่าง ทุก micro-slot
-  │ U5  [  Switch A  ][  Switch B  ]│  ← sub1 = Switch A, sub2 = Switch B, sub3 ว่าง
-  │ U4  │                           │  ← NVR-01 (u_size=2, กิน U3–U4)
-  │ U3  │      NVR-01               │
-  │ U2  [  Switch C  ][            ]│  ← sub1 = Switch C เต็มช่อง
-  │ U1  [                          ]│  ← ว่าง
-  └─────────────────────────────────┘ (พื้น)
+  ┌──────────────────────────────┐
+  │      [sub3] ─────────────── │ ↑
+  │ U5   [sub2] ── Switch A ─── │  (u_pos=5, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  ├──────────────────────────────┤  ← airflow gap ~14 mm
+  │      [sub3] ─────────────── │ ↑
+  │ U4   [sub2] ─────────────── │  NVR-01 spans U3–U4
+  │      [sub1] ─── NVR-01 ──── │ ↓  (u_pos=3, u_sub=1, u_size=2)
+  ├──────────────────────────────┤
+  │      [sub3] ─── NVR-01 ──── │ ↑
+  │ U3   [sub2] ─── NVR-01 ──── │
+  │      [sub1] ─── NVR-01 ──── │ ↓
+  ├──────────────────────────────┤
+  │      [sub3] ─────────────── │ ↑
+  │ U2   [sub2] ── Switch B ─── │  (u_pos=2, u_sub=2, u_size=1)
+  │      [sub1] ─────────────── │ ↓
+  └──────────────────────────────┘ (floor)
 ```
 
 | Device | u_position | u_subposition | u_size |
 |---|---|---|---|
-| Switch A | 5 | 1 | 1 |
-| Switch B | 5 | 2 | 1 |
-| NVR-01 | 3 | NULL | 2 |
-| Switch C | 2 | 1 | 1 |
+| Switch A | 5 | 2 | 1 |
+| NVR-01 | 3 | 1 | 2 |
+| Switch B | 2 | 2 | 1 |
 
-NVR-01 ใช้ `u_subposition = NULL` เพราะกินทั้ง U ไม่มีการแบ่ง micro-slot
-
-#### Index ที่เกี่ยวข้อง
+#### Related indexes
 
 ```sql
 IX_nvrs_rack_slot    ON nvrs         (Rack_ID, u_position, u_subposition)
 IX_sw_rack_slot      ON poe_switches (Rack_ID, u_position, u_subposition)
 ```
 
-Index นี้ช่วยให้ web app ดึงแผนผัง rack (rack diagram view) ได้เร็ว
+These indexes allow the web app to load the rack diagram view efficiently.
 
 ---
 
