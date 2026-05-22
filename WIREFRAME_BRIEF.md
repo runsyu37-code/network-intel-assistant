@@ -177,6 +177,126 @@
 
 ---
 
+## Data Models — Form Fields for CRUD Popups
+
+> Used when generating Add / Edit popup wireframes. Fields marked (FK) = dropdown selector.
+
+### Site
+| Field | Type | Required |
+|---|---|---|
+| Site ID | Text | ✅ |
+| Site Name | Text | ✅ |
+| Site Code | Text | |
+| Location / Address | Text | |
+| Description | Textarea | |
+
+### Building
+| Field | Type | Required |
+|---|---|---|
+| Site (FK) | Dropdown | ✅ |
+| Building ID | Text | ✅ |
+| Building Name | Text | ✅ |
+| Building Code | Text | |
+| Floor Count | Number | |
+| Description | Textarea | |
+| Note | Text | |
+| Floor Plan Image | File upload | |
+
+### Floor
+| Field | Type | Required |
+|---|---|---|
+| Building (FK) | Dropdown | ✅ |
+| Floor ID | Text | ✅ |
+| Floor Number | Number | |
+| Floor Name | Text | |
+| Main Function | Text | |
+| Has CCTV | Toggle | |
+| Note | Text | |
+| Floor Plan Image | File upload | |
+
+### Room
+| Field | Type | Required |
+|---|---|---|
+| Floor (FK) | Dropdown | ✅ |
+| Room ID | Text | ✅ |
+| Room Name | Text | ✅ |
+| Room Type | Dropdown (server / network / office / power / other) | |
+| Has NVR | Toggle | |
+| Has Switch | Toggle | |
+| Note | Text | |
+
+### Rack
+| Field | Type | Required |
+|---|---|---|
+| Room (FK) | Dropdown | ✅ |
+| Rack ID | Text | ✅ |
+| Rack Name | Text | ✅ |
+| Total U | Number (default 42) | ✅ |
+| Note | Text | |
+
+### Camera
+| Field | Type | Required |
+|---|---|---|
+| Floor (FK) | Dropdown | ✅ |
+| Device Name | Text | ✅ |
+| Brand / Model | Text | |
+| Serial No. | Text | |
+| MAC Address | Text | |
+| Camera Type | Text | |
+| Resolution | Text | |
+| IP Address | Text | |
+| VLAN | Number | |
+| NVR (FK) | Dropdown | |
+| NVR Channel | Number | |
+| PoE Switch (FK) | Dropdown | |
+| Switch Port | Number | |
+| Status | Dropdown (online / offline / warning / unknown) | |
+| Notes | Textarea | |
+
+### NVR
+| Field | Type | Required |
+|---|---|---|
+| Rack (FK) | Dropdown | ✅ |
+| Device Name | Text | ✅ |
+| Brand / Model | Text | |
+| Serial No. | Text | |
+| MAC Address | Text | |
+| IP (Internet Port) | Text | |
+| IP (CCTV Port) | Text | |
+| OS / Firmware | Text | |
+| VLAN | Number | |
+| Total Channels | Number | |
+| Active Channels | Number | |
+| HDD Total (TB) | Number | |
+| Recording Resolution | Text | |
+| Retention (days) | Number | |
+| Record Status | Dropdown (normal / warning / error / stopped) | |
+| U Position | Number | |
+| Status | Dropdown (online / offline / warning / unknown) | |
+| Notes | Textarea | |
+
+### PoE Switch
+| Field | Type | Required |
+|---|---|---|
+| Rack (FK) | Dropdown | ✅ |
+| Device Name | Text | ✅ |
+| Brand / Model | Text | |
+| Serial No. | Text | |
+| MAC Address | Text | |
+| Switch Type | Dropdown (PoE / Non-PoE / Core / Aggregation) | |
+| IP Address | Text | |
+| OS / Firmware | Text | |
+| VLAN | Number | |
+| Total Ports | Number | |
+| PoE Ports | Number | |
+| PoE Budget (W) | Number | |
+| Uplink Port | Text | |
+| U Position | Number | |
+| Status | Dropdown (online / offline / warning / unknown) | |
+| Notes | Textarea | |
+
+---
+
 ## Notes for Claude Design
 
 - Prioritize readability of alert status colors at all times
