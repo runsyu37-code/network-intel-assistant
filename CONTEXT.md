@@ -12,14 +12,17 @@ Backend ของระบบ SSM (Surveillance Smart-Monitor)
 
 ---
 
-## สถานะตอนนี้
+## สถานะตอนนี้ (อัปเดต 2026-05-24)
 
 | ส่วน | สถานะ |
 |---|---|
-| 13 Controllers (CRUD ครบ) | ✅ เสร็จแล้ว |
-| Bruno test collections | ✅ เสร็จแล้ว |
-| GET by parent filter | ❌ ยังไม่มี |
-| GET by ID (single record) | ❌ ยังไม่มี |
+| 13 Controllers (CRUD ครบ) | ✅ เสร็จและทดสอบแล้ว |
+| devicesController (unified search) | ✅ เสร็จแล้ว |
+| Route names — PascalCase ทั้งหมด | ✅ เสร็จแล้ว |
+| Bruno test collections | ✅ อัปเดต PascalCase แล้ว |
+| Cascade delete (hierarchy) | ✅ แก้แล้ว (pre-delete logic) |
+| connectionStrings.config | ✅ gitignored — แต่ละเครื่องสร้างเอง |
+| Frontend (web app) | 📋 Phase 7 — ยังไม่เริ่ม |
 
 ---
 
@@ -36,38 +39,10 @@ Backend ของระบบ SSM (Surveillance Smart-Monitor)
 
 ---
 
-## งานที่ต้องทำต่อ (ตามลำดับ)
+## งานที่ต้องทำต่อ
 
-### 1. เพิ่ม GET by Parent Filter (สำคัญมาก — frontend ต้องใช้)
-
-| Endpoint ที่ต้องเพิ่ม | ใช้ตอนไหน |
-|---|---|
-| `GET /api/Getbuildings?site_id=` | drill-down เข้า Site |
-| `GET /api/Getfloors?building_id=` | drill-down เข้า Building |
-| `GET /api/Getrooms?floor_id=` | drill-down เข้า Floor |
-| `GET /api/Getracks?room_id=` | drill-down เข้า Room |
-| `GET /api/Getcameras?rack_id=` | drill-down เข้า Rack |
-| `GET /api/Getnvrs?rack_id=` | drill-down เข้า Rack |
-| `GET /api/GetpoeSwitches?rack_id=` | drill-down เข้า Rack |
-
-วิธีทำใน C#:
-```csharp
-[Route("api/Getbuildings")]
-[HttpGet]
-public IHttpActionResult Getbuildings(string site_id = null)
-{
-    // ถ้า site_id มีค่า → WHERE Site_ID = @site_id
-    // ถ้าไม่มี → คืนทั้งหมด (เหมือนเดิม)
-}
-```
-
-### 2. เพิ่ม GET by ID (Single Record)
-
-| Endpoint ที่ต้องเพิ่ม |
-|---|
-| `GET /api/Getsites/{id}` |
-| `GET /api/Getbuildings/{id}` |
-| *(และทุก table)* |
+**Phase 7 — Frontend web app**
+Backend พร้อมแล้ว ขั้นตอนถัดไปคือสร้าง frontend
 
 ---
 
@@ -90,9 +65,37 @@ PROGRESS.md          ← session log และ checklist
 
 ```
 1. เปิด BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI.slnx ใน Visual Studio
-2. แก้ connection string ใน Web.config
+2. สร้างไฟล์ connectionStrings.config (gitignored — ไม่มีใน repo)
 3. Run (F5) → ขึ้นที่ https://localhost:44342
 4. ทดสอบด้วย Bruno (bruno/ folder)
+```
+
+### connectionStrings.config — ต้องสร้างเองบนแต่ละเครื่อง
+
+ไฟล์นี้ gitignored วางไว้ที่:
+`BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/connectionStrings.config`
+
+**Home laptop (ltH) — Windows Auth:**
+```xml
+<connectionStrings>
+  <add name="CN" connectionString="Data Source=localhost\SQLEXPRESS;Initial Catalog=SSM_DB;Integrated Security=True;" />
+</connectionStrings>
+```
+
+**Work notebook — SQL Auth:**
+```xml
+<connectionStrings>
+  <add name="CN" connectionString="Data Source=DESKTOP-R2SH8R7\SQLEXPRESS;Initial Catalog=SSM_DB;Integrated Security=False;User ID=sa;Password=Buono@1234;" />
+</connectionStrings>
+```
+
+### SSM_DB ยังไม่มี?
+
+รัน SQL ตามลำดับใน SSMS:
+```
+1. CREATE DATABASE SSM_DB;
+2. SSM_schema_v2.sql
+3. mock_data.sql
 ```
 
 ---

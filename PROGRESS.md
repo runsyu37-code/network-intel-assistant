@@ -1,6 +1,6 @@
 # Progress Log — backend branch
 
-> อัปเดตล่าสุด: 2026-05-21
+> อัปเดตล่าสุด: 2026-05-24
 
 ---
 
@@ -53,6 +53,21 @@
 - string-PK tables: sites, buildings, floors, rooms, racks, nvrs, poeSwitches
 - auto-increment PK tables: cameras, users, alertLogs, auditLogs, pingLogs, syncLogs
 
+### Cascade Delete (สำคัญ)
+
+SQL Server บล็อก CASCADE บน FK_sw_rack และ FK_nvr_rack (multiple cascade path)
+แก้โดยให้ Delete controllers ลบ poe_switches + nvrs ก่อนเสมอ:
+
+| Controller | Pre-delete ก่อน |
+|---|---|
+| DeleteSites | poe_switches + nvrs WHERE Site_ID |
+| DeleteBuildings | poe_switches + nvrs WHERE Building_ID |
+| DeleteFloors | poe_switches + nvrs WHERE Floor_ID |
+| DeleteRooms | poe_switches + nvrs WHERE Room_ID |
+| DeleteRacks | poe_switches + nvrs WHERE Rack_ID |
+
+cameras ลบอัตโนมัติผ่าน `FK_cam_floor CASCADE` อยู่แล้ว
+
 ---
 
 ## Bruno Collections
@@ -66,6 +81,20 @@
 ---
 
 ## Session Log
+
+### 2026-05-24
+- เพิ่ม `devicesController.cs` — unified GET search ข้าม cameras/nvrs/poe_switches (UNION ALL)
+- เพิ่ม `deviceSearchModel.cs`
+- Rename route ทุกตัว → PascalCase (`GetSites`, `SaveSites`, `UpdateSites`, `DeleteSites`, ฯลฯ)
+- แก้ typo `Updatenvrs` → `UpdateNvrs`
+- เพิ่ม `device_type` filter ใน `GetSyncLogs`
+- Externalize connection string → `connectionStrings.config` (gitignored — แต่ละเครื่องสร้างเอง)
+- สร้าง `mock_data.sql` + ติดตั้ง SSM_DB บน ltH (home laptop)
+- อัปเดต Bruno collections — URL ทั้งหมด → PascalCase (53 files)
+- ทดสอบ GET ทุกตัวผ่าน ✅
+- ทดสอบ Save/Update/Delete ผ่าน ✅
+- แก้ cascade delete: เพิ่ม pre-delete logic ใน 5 hierarchy controllers
+- **backend พร้อมแล้ว — ไป frontend ได้เลย**
 
 ### 2026-05-21
 - Rename branch `feature/backend-api` → `backend`
@@ -83,6 +112,7 @@
 
 ## งานที่ยังค้าง
 
-- [ ] รัน API กับ SSM_DB จริงที่ทำงาน
-- [ ] Frontend web app (ยังไม่ได้ตัดสินใจ stack)
+- [ ] สร้าง `connectionStrings.config` บน work notebook (gitignored — ต้องสร้างเอง ดู CONTEXT.md)
+- [ ] รัน `SSM_schema_v2.sql` + `mock_data.sql` บน work notebook ถ้ายังไม่มี SSM_DB
+- [ ] Frontend web app (Phase 7 — ยังไม่ได้ตัดสินใจ stack)
 - [ ] Merge เข้า master (รอหลัง frontend เสร็จ)
