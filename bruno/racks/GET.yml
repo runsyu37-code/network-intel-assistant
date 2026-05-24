@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: GET
   type: http
   seq: 1
 
 http:
   method: GET
-  url: https://localhost:44342/api/Getracks
+  url: https://localhost:44342/api/GetRacks
   auth: inherit
 
 settings:

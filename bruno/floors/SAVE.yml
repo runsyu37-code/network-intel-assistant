@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: SAVE
   type: http
   seq: 2
 
 http:
   method: POST
-  url: https://localhost:44342/api/Savefloors
+  url: https://localhost:44342/api/SaveFloors
   auth: inherit
   headers:
     - name: Content-Type

@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deleterooms/RM_T
+  url: https://localhost:44342/api/DeleteRooms/RM_T
   auth: inherit
 
 settings:

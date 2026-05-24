@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deleteusers/4
+  url: https://localhost:44342/api/DeleteUsers/4
   auth: inherit
 
 settings:

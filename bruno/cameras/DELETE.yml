@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deletecameras/4
+  url: https://localhost:44342/api/DeleteCameras/4
   auth: inherit
 
 settings:

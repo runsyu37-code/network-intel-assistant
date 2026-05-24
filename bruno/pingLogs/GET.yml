@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: GET
   type: http
   seq: 1
 
 http:
   method: GET
-  url: https://localhost:44342/api/GetpingLogs
+  url: https://localhost:44342/api/GetPingLogs
   auth: inherit
 
 settings:

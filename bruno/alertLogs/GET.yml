@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: GET
   type: http
   seq: 1
 
 http:
   method: GET
-  url: https://localhost:44342/api/GetalertLogs
+  url: https://localhost:44342/api/GetAlertLogs
   auth: inherit
 
 settings:

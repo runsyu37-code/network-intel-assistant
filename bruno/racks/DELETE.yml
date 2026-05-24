@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deleteracks/RK_T
+  url: https://localhost:44342/api/DeleteRacks/RK_T
   auth: inherit
 
 settings:

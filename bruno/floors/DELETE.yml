@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deletefloors/FL_T
+  url: https://localhost:44342/api/DeleteFloors/FL_T
   auth: inherit
 
 settings:

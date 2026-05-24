@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: UPDATE
   type: http
   seq: 3
 
 http:
   method: POST
-  url: https://localhost:44342/api/UpdatepoeSwitches/SW001
+  url: https://localhost:44342/api/UpdatePoeSwitches/SW001
   auth: inherit
   headers:
     - name: Content-Type

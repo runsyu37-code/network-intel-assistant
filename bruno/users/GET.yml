@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: GET
   type: http
   seq: 1
 
 http:
   method: GET
-  url: https://localhost:44342/api/Getusers
+  url: https://localhost:44342/api/GetUsers
   auth: inherit
 
 settings:

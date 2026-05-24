@@ -1,11 +1,11 @@
-﻿info:
+info:
   name: DELETE
   type: http
   seq: 4
 
 http:
   method: POST
-  url: https://localhost:44342/api/Deletesites/S_T
+  url: https://localhost:44342/api/DeleteSites/S_T
   auth: inherit
 
 settings:
