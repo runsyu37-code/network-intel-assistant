@@ -10,8 +10,8 @@ BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/obj/
 # NuGet packages (restore on build)
 BNO_Survei_MonitorAPI/packages/
 
-# Sensitive config — do NOT commit connection strings
-# Web.config is included but connection string "CN" should be set locally
+# Sensitive config — each machine has its own connectionStrings.config
+connectionStrings.config
 
 # Python
 __pycache__/
