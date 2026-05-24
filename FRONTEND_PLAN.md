@@ -1,7 +1,7 @@
 # Frontend Plan — SSM Web App
 
-> อัปเดตล่าสุด: 2026-05-22
-> สถานะ: **UI spec ครบ + stack ตัดสินใจแล้ว — พร้อม implement**
+> อัปเดตล่าสุด: 2026-05-24
+> สถานะ: **Backend เสร็จและทดสอบแล้ว — พร้อมเริ่ม frontend**
 
 ---
 
@@ -12,7 +12,7 @@
 ```
 ┌─────────────────┬──────────────────────────────────┐
 │  SIDEBAR        │  Site A > Building 1 > Floor 3   │ ← Breadcrumb
-│  (dynamic)      │──────────────────────────────────│
+│  (ทุก layer)    │──────────────────────────────────│
 │                 │  เนื้อหาของ layer นั้น            │
 │ 🗺 Sites        │                                  │
 │  ├── Site A     │                                  │
@@ -24,20 +24,8 @@
 └─────────────────┴──────────────────────────────────┘
 ```
 
-- **Sidebar is dynamic** — content changes as user drills deeper into the hierarchy
+- **Sites** — navigate hierarchy
 - **My Devices** — permanent menu ทุก layer, กด Add กรอก IP/ข้อมูล sync อัตโนมัติ
-
-### Sidebar Navigation Behavior
-
-| Current Layer | Sidebar shows |
-|---|---|
-| Home / Topology | Sites list |
-| Site Overview | Buildings in that site |
-| Building Detail | Floors in that building |
-| Floor Plan | Rooms in that floor |
-| Room / Rack | Devices in that rack |
-
-Each layer **replaces** the previous list — not nested/accordion. Breadcrumb in topbar always shows full path back.
 
 ---
 
@@ -125,151 +113,92 @@ Device offline
 
 ---
 
-## สิ่งที่ขาดใน Backend (ต้องเพิ่มก่อน implement)
+## สถานะ Backend (อัปเดต 2026-05-24)
 
-### GET by Parent Filter
+✅ **Backend พร้อมแล้ว** — 13 controllers, CRUD ครบ, ทดสอบผ่านแล้ว
+✅ Route ทุกตัว PascalCase: `GetSites`, `SaveSites`, `UpdateSites`, `DeleteSites`, ฯลฯ
+✅ `GetDevices` — unified search ข้าม cameras/nvrs/poe_switches
+✅ Delete hierarchy (sites/buildings/floors/rooms/racks) ลบ child devices อัตโนมัติ
 
-| Endpoint | ใช้ตอนไหน |
+### ⚠️ GET filter ที่อาจต้องเพิ่มระหว่าง implement
+
+ตอนนี้ filter บาง endpoint ยังไม่ครบสำหรับ drill-down — ตรวจสอบตอนทำแต่ละหน้า:
+
+| Endpoint ที่ต้องการ | มีแล้ว? |
 |---|---|
-| `GET /api/Getbuildings?site_id=` | เข้า Site |
-| `GET /api/Getfloors?building_id=` | เข้า Building |
-| `GET /api/Getrooms?floor_id=` | เข้า Floor |
-| `GET /api/Getracks?room_id=` | เข้า Room |
-| `GET /api/Getcameras?rack_id=` | เข้า Rack |
-| `GET /api/Getnvrs?rack_id=` | เข้า Rack |
-| `GET /api/GetpoeSwitches?rack_id=` | เข้า Rack |
+| `GET /api/GetBuildings?Site_ID=` | ⚠️ ตรวจสอบ |
+| `GET /api/GetFloors?Building_ID=` | ✅ มีแล้ว |
+| `GET /api/GetRooms?Floor_ID=` | ⚠️ ตรวจสอบ |
+| `GET /api/GetRacks?Room_ID=` | ⚠️ ตรวจสอบ |
+| `GET /api/GetCameras?Floor_ID=` | ✅ มีแล้ว |
+| `GET /api/GetNvrs?Rack_ID=` | ⚠️ ตรวจสอบ |
+| `GET /api/GetPoeSwitches?Rack_ID=` | ⚠️ ตรวจสอบ |
 
-### GET by ID
-
-| Endpoint | ใช้ตอนไหน |
-|---|---|
-| `GET /api/Get{table}/{id}` | Device detail (ทุก table) |
+> ถ้า filter ไหนขาด → เพิ่มใน backend branch แล้ว push ก่อน implement หน้านั้น
 
 ---
 
-## Stack — Decided (2026-05-22)
+## Stack (ตัดสินใจแล้ว — อัปเดต 2026-05-24)
 
-> All decisions listed here are open to revision if the reviewer or future sessions provide facts or evidence that a different approach is better. Nothing is locked permanently.
+**React + Vite**
 
-**React**
-
-| Library | Purpose | Status |
+| ส่วน | Library | ใช้ทำอะไร |
 |---|---|---|
-| `React Flow` | Topology diagram (Home page) | Decided |
-| `Konva.js` | Floor plan drag-drop camera icons | Decided |
-| `Recharts` | Ping history graph in Device detail | Decided |
-| `Axios` | Call C# REST API | Decided |
+| Build | `Vite` | เบา setup เร็ว |
+| Routing | `React Router v6` | nested routes ตาม hierarchy |
+| UI หลัก | `Ant Design` | Table/Form/Modal/Breadcrumb ครบ เหมาะ admin tool |
+| Topology | `React Flow` | Topology diagram (Home page) |
+| Floor plan | `Konva.js` | drag-drop camera icons บน floor plan |
+| Graph | `Recharts` | Ping history graph ใน Device detail |
+| HTTP | `Axios` | เรียก C# REST API |
+| State | `useState / useContext` | scope เล็กพอ ไม่ต้อง Redux/Zustand |
+| Realtime | polling ทุก 30 วินาที | ง่ายกว่า WebSocket ไม่ต้องแก้ backend |
 
 ---
 
-## Deployment Scope — Decided (2026-05-22)
+## MVP Scope (สำหรับ demo)
 
-**Intranet only** — internal use within the organization. No internet access required.
+1 คน 6 สัปดาห์ ทำได้เท่านี้:
 
----
-
-## Role & Permissions — Decided (2026-05-22)
-
-3 roles: Admin, User, Guest
-
-| Feature | Admin | User | Guest |
-|---|---|---|---|
-| Home — topology diagram | ✅ | ✅ | ✅ |
-| Site list | ✅ | ✅ | ✅ |
-| Building view (isometric) | ✅ | ✅ | ✅ |
-| See floor count per building | ✅ | ✅ | ✅ |
-| Enter floor plan | ✅ | ✅ | ❌ |
-| See camera name on floor plan | ✅ | ✅ (name only) | ❌ |
-| See full camera detail | ✅ | ❌ | ❌ |
-| Enter Room layer | ✅ | ❌ | ❌ |
-| Enter Rack layer | ✅ | ❌ | ❌ |
-| Add / Edit / Delete any data | ✅ | ❌ | ❌ |
-| Manage users | ✅ | ❌ | ❌ |
-
-**Summary:**
-- **Admin** — full access to everything
-- **User** — read-only, navigates down to floor plan, sees camera names only, cannot enter Room/Rack or view device details
-- **Guest** — read-only, sees site/building/floor count only, cannot enter any floor plan
-
-> Open to revision if reviewer recommends adjustments with supporting rationale.
-
----
-
-## MVP Scope — Agreed for July Demo (2026-05-22)
-
-Reviewer reality check: full scope (52 forms, 3 roles, realtime) requires 3–4 devs × 3 months. 1 person × 6 weeks = MVP only.
-
-**MVP (must have for demo):**
-- Login + JWT auth
-- Dashboard — read-only hierarchy tree (Site → Building → Floor → Room → Rack → Device)
-- Device list + filter
+**MVP (must have):**
+- Login
+- Dashboard — hierarchy tree (Site → Building → Floor → Room → Rack → Device) + status
+- Device list + filter (ใช้ GetDevices)
 - Device detail page
-- Realtime status via polling (every 30 seconds)
+- Realtime status polling ทุก 30 วินาที
 
-**Phase 7.5 (if time allows):**
-- CRUD forms for Site, Building, Floor (3 tables)
-- Basic RBAC (3 roles)
+**Phase 7.5 (ถ้าเวลาพอ):**
+- CRUD forms สำหรับ Site, Building, Floor
+- Delete พร้อม confirm popup แจ้งว่าจะลบ child ด้วย
 
-**After demo:**
-- CRUD forms for remaining 10 tables
-- Full user management UI
-- Audit log
-
-> Data entry for the demo will continue using Excel + SSMS (Phase 3 workflow) — no web form needed yet.
+**หลัง demo:**
+- CRUD ครบทุก 13 table
+- User management
+- Alert log management
 
 ---
 
-## Real-time Status — Decided (2026-05-22)
+## Route Structure
 
-**Polling every 30 seconds** — frontend calls the API on a timer.
-
-Chosen over WebSocket because:
-- Backend is already a C# REST API — no server-side changes needed
-- 30-second interval is acceptable for CCTV monitoring
-- Simpler to implement and maintain
-
-> Open to revision: if reviewer provides evidence that WebSocket or SignalR is significantly better for this use case, the decision can be reconsidered.
-
----
-
-## Open Decisions — Reviewer Input Needed
-
-| Area | Question | Current Thinking |
-|---|---|---|
-| **State Management** | Zustand / Context API / Redux? | Unknown — awaiting recommendation |
-| **Routing** | React Router structure? How to map hierarchy to URLs? | Unknown — awaiting recommendation |
-| **Isometric View** | Which library for Site/Building isometric rendering? | Unknown — awaiting recommendation |
+```
+/login
+/                          → Dashboard
+/sites                     → รายการ sites
+/sites/:siteId             → Buildings ใน site
+/buildings/:buildingId     → Floors ใน building
+/floors/:floorId           → Floor plan + cameras
+/rooms/:roomId             → Racks ใน room
+/racks/:rackId             → Rack diagram (switches + NVRs)
+/devices                   → ค้นหา device ทุกประเภท
+/alerts                    → Alert logs
+/admin/users               → User management (admin only)
+```
 
 ---
 
-## Sitemap / Page List (2026-05-22)
+## งานถัดไป
 
-| Path | Page | Access |
-|---|---|---|
-| `/login` | Login | All |
-| `/` | Home — Topology diagram | All |
-| `/sites` | Site list | All |
-| `/sites/:site_id` | Building overview (isometric) | All |
-| `/sites/:site_id/buildings/:building_id` | Floor list (isometric) | All |
-| `/sites/:site_id/buildings/:building_id/floors/:floor_id` | Floor plan (camera icons) | Admin, User |
-| `/rooms/:room_id` | Room + Rack view | Admin only |
-| `/racks/:rack_id` | Rack detail | Admin only |
-| `/devices/cameras/:id` | Camera detail | Admin only |
-| `/devices/nvrs/:id` | NVR detail | Admin only |
-| `/devices/switches/:id` | Switch detail | Admin only |
-| `/admin/users` | User management | Admin only |
-
----
-
-## Pending
-
-- [ ] Wireframe / mockup
-- [ ] U-position spec (see .md at work notebook)
-
----
-
-## Next Steps
-
-- [ ] Add GET filter + GET by ID to backend (branch: `backend`)
-- [ ] Set up React project
-- [ ] Implement MVP layer by layer
+- [ ] setup React + Vite project ใน `frontend` branch
+- [ ] สร้าง skeleton: layout + routing + sidebar ทั้งหมด
+- [ ] implement ทีละหน้าเริ่มจาก Dashboard → Sites → drill-down ลงไป
+- [ ] ตรวจสอบ GET filter ที่ขาดระหว่าง implement แต่ละหน้า

@@ -1,4 +1,4 @@
-# CONTEXT — work-safe branch
+# CONTEXT — backend branch
 
 > สำหรับ AI: อ่านไฟล์นี้จบแล้วรู้ทุกอย่างที่ต้องทำใน branch นี้
 
@@ -6,73 +6,111 @@
 
 ## branch นี้คืออะไร
 
-**Work Notebook branch** — ใช้ที่ทำงานเท่านั้น
-มีทุกอย่างจาก `master` + ไฟล์ C# API backup เพิ่มมา
+**C# REST API — BNO_Survei_MonitorAPI (ASP.NET WebAPI)**
+Backend ของระบบ SSM (Surveillance Smart-Monitor)
+ให้ข้อมูลแก่ frontend React ผ่าน HTTP
 
 ---
 
-## เครื่องนี้คือ
+## สถานะตอนนี้ (อัปเดต 2026-05-24)
 
-| | ค่า |
+| ส่วน | สถานะ |
 |---|---|
-| เครื่อง | Work Notebook (ที่ทำงาน) |
-| Path | `C:\ai-playground\network-intel-assistant` |
-| SQL Auth | ใช้ SQL Auth (user/password) ไม่ใช่ Windows Auth |
-| Branch | `work-safe` |
+| 13 Controllers (CRUD ครบ) | ✅ เสร็จและทดสอบแล้ว |
+| devicesController (unified search) | ✅ เสร็จแล้ว |
+| Route names — PascalCase ทั้งหมด | ✅ เสร็จแล้ว |
+| Bruno test collections | ✅ อัปเดต PascalCase แล้ว |
+| Cascade delete (hierarchy) | ✅ แก้แล้ว (pre-delete logic) |
+| connectionStrings.config | ✅ gitignored — แต่ละเครื่องสร้างเอง |
+| Frontend (web app) | 📋 Phase 7 — ยังไม่เริ่ม |
 
 ---
 
-## มีอะไรเพิ่มจาก master
+## HTTP Method Convention
 
-| Folder | คืออะไร |
-|---|---|
-| `api/Controllers/` | C# Controller files (backup ไว้อ้างอิง) |
-| `api/Models/` | C# Model files |
-| `api/bruno/` | Bruno collections |
-| `api/BACKEND.md` | สรุป API |
-| `docs/workflow/IMPORT_DECISION.md` | เหตุผลที่เลิกใช้ ssm_import.py |
-| `docs/log/BUG_LOG.md` | log bugs ที่เจอที่ทำงาน |
+> ใช้ POST ทุก operation ยกเว้น GET — ตาม convention ของทีม
+
+| Operation | Method | Pattern |
+|---|---|---|
+| GET all | `GET` | `/api/Get{table}` |
+| SAVE | `POST` | `/api/Save{table}` |
+| UPDATE | `POST` | `/api/Update{table}/{id}` |
+| DELETE | `POST` | `/api/Delete{table}/{id}` |
 
 ---
 
-## งานที่ทำที่ทำงาน
+## งานที่ต้องทำต่อ
 
-### รัน Importer (SQL Auth)
-```powershell
-cd work_pack
-python ssm_import.py Fakeinfo_test.xlsx --server SERVER\SQLEXPRESS --db SSM_DB --auth sql --user sa --password รหัส
+**Phase 7 — Frontend web app**
+Backend พร้อมแล้ว ขั้นตอนถัดไปคือสร้าง frontend
+
+---
+
+## โครงสร้าง Folder
+
 ```
+BNO_Survei_MonitorAPI/
+├── Controllers/     ← 13 controllers (แก้ไขตรงนี้)
+├── Models/          ← 13 models (ตรงกับ DB tables)
+├── ConnectionDB/    ← connection string
+└── Web.config       ← แก้ connection string ตรงนี้ก่อน run
 
-### ทดสอบ API
-- เปิด Visual Studio → รัน project ใน branch `backend`
-- ใช้ Bruno collections ที่ `api/bruno/`
-
----
-
-## ข้อมูลที่ต้องการ มาจากไหน
-
-| ต้องการ | ไปหาที่ |
-|---|---|
-| Schema DB | `database/SSM_schema_v2.sql` |
-| Template Excel | `work_pack/template_v4_empty.xlsx` |
-| คู่มือ importer | `work_pack/SSM_IMPORT_GUIDE.md` |
-| C# API backup | `api/` |
-| AI briefing เต็ม | `docs/plan/MEGA_CONTEXT.md` |
-
----
-
-## Sync จาก master
-
-เมื่อ master อัปเดต ให้ sync มาที่ work-safe:
-```bash
-# รันที่บ้าน (ltH) หลัง push master แล้ว
-git push origin master:work-safe --force
+bruno/               ← test collections (อัปเดตหลังเพิ่ม endpoint ใหม่)
+PROGRESS.md          ← session log และ checklist
 ```
 
 ---
 
-## กฎสำคัญ
+## วิธีรัน Project
 
-- ห้าม commit ข้อมูลจริง (IP, MAC, hostname จริง)
-- ห้าม push sensitive data ขึ้น GitHub
-- ข้อมูลจริงอยู่ที่เครื่องนี้เท่านั้น
+```
+1. เปิด BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI.slnx ใน Visual Studio
+2. สร้างไฟล์ connectionStrings.config (gitignored — ไม่มีใน repo)
+3. Run (F5) → ขึ้นที่ https://localhost:44342
+4. ทดสอบด้วย Bruno (bruno/ folder)
+```
+
+### connectionStrings.config — ต้องสร้างเองบนแต่ละเครื่อง
+
+ไฟล์นี้ gitignored วางไว้ที่:
+`BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/connectionStrings.config`
+
+**Home laptop (ltH) — Windows Auth:**
+```xml
+<connectionStrings>
+  <add name="CN" connectionString="Data Source=localhost\SQLEXPRESS;Initial Catalog=SSM_DB;Integrated Security=True;" />
+</connectionStrings>
+```
+
+**Work notebook — SQL Auth:**
+```xml
+<connectionStrings>
+  <add name="CN" connectionString="Data Source=DESKTOP-R2SH8R7\SQLEXPRESS;Initial Catalog=SSM_DB;Integrated Security=False;User ID=sa;Password=Buono@1234;" />
+</connectionStrings>
+```
+
+### SSM_DB ยังไม่มี?
+
+รัน SQL ตามลำดับใน SSMS:
+```
+1. CREATE DATABASE SSM_DB;
+2. SSM_schema_v2.sql
+3. mock_data.sql
+```
+
+---
+
+## อยากรู้ Schema ของ DB
+
+→ ดูที่ `database/SSM_schema_v2.sql` ใน branch `master` หรือ `work-safe`
+
+---
+
+## Roadmap
+
+```
+เพิ่ม GET filter (7 endpoints)
+    → เพิ่ม GET by ID (13 endpoints)
+        → อัปเดต Bruno collections
+            → backend พร้อมให้ frontend เรียก
+```
