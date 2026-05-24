@@ -171,6 +171,14 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {
                     con.Open();
+                    string pre = @"
+                        DELETE FROM [dbo].[poe_switches] WHERE Floor_ID = @Floor_ID;
+                        DELETE FROM [dbo].[nvrs]         WHERE Floor_ID = @Floor_ID;";
+                    using (var pre_cmd = new SqlCommand(pre, con))
+                    {
+                        pre_cmd.Parameters.AddWithValue("@Floor_ID", Floor_ID);
+                        pre_cmd.ExecuteNonQuery();
+                    }
                     string sql = @"DELETE FROM [dbo].[floors] WHERE Floor_ID = @Floor_ID;";
                     using (var cmd = new SqlCommand(sql, con))
                     {
