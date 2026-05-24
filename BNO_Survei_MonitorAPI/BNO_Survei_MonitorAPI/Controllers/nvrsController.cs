@@ -16,16 +16,24 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class nvrsController : ApiController
     {
         #region GET : nvrs
-        [Route("api/Getnvrs")]
+        [Route("api/GetNvrs")]
         [HttpGet]
-        public IHttpActionResult Getnvrs()
+        public IHttpActionResult GetNvrs(string Site_ID = null, string Rack_ID = null, string status = null, string NVR_ID = null)
         {
             List<nvrsModel> ListRP = new List<nvrsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [NVR_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[brand],[model],[serial_no],[mac_address],[os_version],[ip_internet],[ip_cctv],[vlan_id],[subnet_mask],[gateway],[total_channels],[active_channels],[hdd_total_tb],[hdd_used_pct],[recording_res],[retention_days],[record_status],[status],[fail_count],[last_seen],[notes],[created_at],[updated_at] FROM [dbo].[nvrs] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Site_ID)) sql += " AND Site_ID = @Site_ID";
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) sql += " AND Rack_ID = @Rack_ID";
+                if (!string.IsNullOrWhiteSpace(status))  sql += " AND status = @status";
+                if (!string.IsNullOrWhiteSpace(NVR_ID))  sql += " AND NVR_ID = @NVR_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Site_ID)) cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) cmd.Parameters.AddWithValue("@Rack_ID", Rack_ID);
+                if (!string.IsNullOrWhiteSpace(status))  cmd.Parameters.AddWithValue("@status", status);
+                if (!string.IsNullOrWhiteSpace(NVR_ID))  cmd.Parameters.AddWithValue("@NVR_ID", NVR_ID);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -74,7 +82,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : nvrs
-        [Route("api/Savenvrs")]
+        [Route("api/SaveNvrs")]
         [HttpPost]
         public IHttpActionResult Savenvrs([FromBody] List<nvrsModel> modelList)
         {
@@ -147,7 +155,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : nvrs
-        [Route("api/Updatenvrs/{NVR_ID}")]
+        [Route("api/UpdateNvrs/{NVR_ID}")]
         [HttpPost]
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
@@ -240,7 +248,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : nvrs
         [HttpPost]
-        [Route("api/Deletenvrs/{NVR_ID}")]
+        [Route("api/DeleteNvrs/{NVR_ID}")]
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {
             if (string.IsNullOrWhiteSpace(NVR_ID))

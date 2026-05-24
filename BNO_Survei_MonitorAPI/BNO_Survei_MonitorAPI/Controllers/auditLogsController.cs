@@ -16,16 +16,20 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class auditLogsController : ApiController
     {
         #region GET : audit_logs
-        [Route("api/GetauditLogs")]
+        [Route("api/GetAuditLogs")]
         [HttpGet]
-        public IHttpActionResult GetauditLogs()
+        public IHttpActionResult GetAuditLogs(int? user_id = null, string table_name = null)
         {
             List<auditLogsModel> ListRP = new List<auditLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [id],[user_id],[action],[table_name],[record_id],[old_value],[new_value],[created_at] FROM [dbo].[audit_logs] WHERE 1=1";
+                if (user_id.HasValue)                        sql += " AND user_id = @user_id";
+                if (!string.IsNullOrWhiteSpace(table_name))  sql += " AND table_name = @table_name";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (user_id.HasValue)                        cmd.Parameters.AddWithValue("@user_id", user_id.Value);
+                if (!string.IsNullOrWhiteSpace(table_name))  cmd.Parameters.AddWithValue("@table_name", table_name);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -49,7 +53,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : audit_logs
-        [Route("api/SaveauditLogs")]
+        [Route("api/SaveAuditLogs")]
         [HttpPost]
         public IHttpActionResult SaveauditLogs([FromBody] List<auditLogsModel> modelList)
         {
@@ -97,7 +101,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : audit_logs
-        [Route("api/UpdateauditLogs/{id}")]
+        [Route("api/UpdateAuditLogs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdateauditLogs(int id, [FromBody] auditLogsModel model)
         {
@@ -141,7 +145,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : audit_logs
         [HttpPost]
-        [Route("api/DeleteauditLogs/{id}")]
+        [Route("api/DeleteAuditLogs/{id}")]
         public IHttpActionResult DeleteauditLogs(int id)
         {
             try

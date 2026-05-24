@@ -16,16 +16,20 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class roomsController : ApiController
     {
         #region GET : rooms
-        [Route("api/Getrooms")]
+        [Route("api/GetRooms")]
         [HttpGet]
-        public IHttpActionResult Getrooms()
+        public IHttpActionResult GetRooms(string Floor_ID = null, string Room_ID = null)
         {
             List<roomsModel> ListRP = new List<roomsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [Room_ID],[Site_ID],[Building_ID],[Floor_ID],[name],[type],[has_nvr],[has_sw],[width_m],[length_m],[x],[y],[w],[h],[image_data],[image_type],[note],[created_at],[updated_at] FROM [dbo].[rooms] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Floor_ID)) sql += " AND Floor_ID = @Floor_ID";
+                if (!string.IsNullOrWhiteSpace(Room_ID))  sql += " AND Room_ID = @Room_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Floor_ID)) cmd.Parameters.AddWithValue("@Floor_ID", Floor_ID);
+                if (!string.IsNullOrWhiteSpace(Room_ID))  cmd.Parameters.AddWithValue("@Room_ID", Room_ID);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -60,7 +64,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : rooms
-        [Route("api/Saverooms")]
+        [Route("api/SaveRooms")]
         [HttpPost]
         public IHttpActionResult Saverooms([FromBody] List<roomsModel> modelList)
         {
@@ -119,7 +123,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : rooms
-        [Route("api/Updaterooms/{Room_ID}")]
+        [Route("api/UpdateRooms/{Room_ID}")]
         [HttpPost]
         public IHttpActionResult Updaterooms(string Room_ID, [FromBody] roomsModel model)
         {
@@ -184,7 +188,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : rooms
         [HttpPost]
-        [Route("api/Deleterooms/{Room_ID}")]
+        [Route("api/DeleteRooms/{Room_ID}")]
         public IHttpActionResult Deleterooms(string Room_ID)
         {
             if (string.IsNullOrWhiteSpace(Room_ID))

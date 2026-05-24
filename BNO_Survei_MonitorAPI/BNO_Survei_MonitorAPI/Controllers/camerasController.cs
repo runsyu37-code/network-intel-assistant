@@ -16,16 +16,24 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class camerasController : ApiController
     {
         #region GET : cameras
-        [Route("api/Getcameras")]
+        [Route("api/GetCameras")]
         [HttpGet]
-        public IHttpActionResult Getcameras()
+        public IHttpActionResult GetCameras(string Site_ID = null, string Floor_ID = null, string status = null, int? id = null)
         {
             List<camerasModel> ListRP = new List<camerasModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [id],[Site_ID],[Building_ID],[Floor_ID],[device_name],[brand],[model],[serial_no],[mac_address],[camera_type],[resolution],[firmware_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[NVR_CH],[SW_ID],[poe_port_number],[NVR_ID],[nvr_channel],[install_location],[status],[fail_count],[last_seen],[notes],[created_at],[updated_at] FROM [dbo].[cameras] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Site_ID))  sql += " AND Site_ID = @Site_ID";
+                if (!string.IsNullOrWhiteSpace(Floor_ID)) sql += " AND Floor_ID = @Floor_ID";
+                if (!string.IsNullOrWhiteSpace(status))   sql += " AND status = @status";
+                if (id.HasValue)                          sql += " AND id = @id";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Site_ID))  cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
+                if (!string.IsNullOrWhiteSpace(Floor_ID)) cmd.Parameters.AddWithValue("@Floor_ID", Floor_ID);
+                if (!string.IsNullOrWhiteSpace(status))   cmd.Parameters.AddWithValue("@status", status);
+                if (id.HasValue)                          cmd.Parameters.AddWithValue("@id", id.Value);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -69,7 +77,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : cameras
-        [Route("api/Savecameras")]
+        [Route("api/SaveCameras")]
         [HttpPost]
         public IHttpActionResult Savecameras([FromBody] List<camerasModel> modelList)
         {
@@ -136,7 +144,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : cameras
-        [Route("api/Updatecameras/{id}")]
+        [Route("api/UpdateCameras/{id}")]
         [HttpPost]
         public IHttpActionResult Updatecameras(int id, [FromBody] camerasModel model)
         {
@@ -219,7 +227,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : cameras
         [HttpPost]
-        [Route("api/Deletecameras/{id}")]
+        [Route("api/DeleteCameras/{id}")]
         public IHttpActionResult Deletecameras(int id)
         {
             try

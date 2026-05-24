@@ -16,16 +16,19 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class alertLogsController : ApiController
     {
         #region GET : alert_logs
-        [Route("api/GetalertLogs")]
+        [Route("api/GetAlertLogs")]
         [HttpGet]
-        public IHttpActionResult GetalertLogs()
+        public IHttpActionResult GetAlertLogs(string device_type = null, bool active_only = false)
         {
             List<alertLogsModel> ListRP = new List<alertLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [id],[device_type],[device_id],[device_name],[brand],[ip_address],[site_name],[building_name],[floor_name],[room_name],[poe_switch_name],[poe_port],[alert_type],[message],[webhook_sent],[resolved_at],[alerted_at],[updated_at] FROM [dbo].[alert_logs] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(device_type)) sql += " AND device_type = @device_type";
+                if (active_only)                             sql += " AND resolved_at IS NULL";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(device_type)) cmd.Parameters.AddWithValue("@device_type", device_type);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -59,7 +62,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : alert_logs
-        [Route("api/SavealertLogs")]
+        [Route("api/SaveAlertLogs")]
         [HttpPost]
         public IHttpActionResult SavealertLogs([FromBody] List<alertLogsModel> modelList)
         {
@@ -116,7 +119,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : alert_logs
-        [Route("api/UpdatealertLogs/{id}")]
+        [Route("api/UpdateAlertLogs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatealertLogs(int id, [FromBody] alertLogsModel model)
         {
@@ -179,7 +182,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : alert_logs
         [HttpPost]
-        [Route("api/DeletealertLogs/{id}")]
+        [Route("api/DeleteAlertLogs/{id}")]
         public IHttpActionResult DeletealertLogs(int id)
         {
             try

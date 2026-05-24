@@ -16,16 +16,22 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class syncLogsController : ApiController
     {
         #region GET : sync_logs
-        [Route("api/GetsyncLogs")]
+        [Route("api/GetSyncLogs")]
         [HttpGet]
-        public IHttpActionResult GetsyncLogs()
+        public IHttpActionResult GetSyncLogs(string device_type = null, string device_id = null, string status = null)
         {
             List<syncLogsModel> ListRP = new List<syncLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [id],[device_type],[device_id],[synced_by],[sync_type],[fields_updated],[status],[message],[created_at] FROM [dbo].[sync_logs] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(device_type)) sql += " AND device_type = @device_type";
+                if (!string.IsNullOrWhiteSpace(device_id))   sql += " AND device_id = @device_id";
+                if (!string.IsNullOrWhiteSpace(status))      sql += " AND status = @status";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(device_type)) cmd.Parameters.AddWithValue("@device_type", device_type);
+                if (!string.IsNullOrWhiteSpace(device_id))   cmd.Parameters.AddWithValue("@device_id", device_id);
+                if (!string.IsNullOrWhiteSpace(status))      cmd.Parameters.AddWithValue("@status", status);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -50,7 +56,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : sync_logs
-        [Route("api/SavesyncLogs")]
+        [Route("api/SaveSyncLogs")]
         [HttpPost]
         public IHttpActionResult SavesyncLogs([FromBody] List<syncLogsModel> modelList)
         {
@@ -99,7 +105,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : sync_logs
-        [Route("api/UpdatesyncLogs/{id}")]
+        [Route("api/UpdateSyncLogs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatesyncLogs(int id, [FromBody] syncLogsModel model)
         {
@@ -145,7 +151,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : sync_logs
         [HttpPost]
-        [Route("api/DeletesyncLogs/{id}")]
+        [Route("api/DeleteSyncLogs/{id}")]
         public IHttpActionResult DeletesyncLogs(int id)
         {
             try

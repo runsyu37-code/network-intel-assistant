@@ -169,8 +169,8 @@
     <Compile Include="Controllers\roomsController.cs" />
     <Compile Include="Controllers\sitesController.cs" />
     <Compile Include="Controllers\syncLogsController.cs" />
+    <Compile Include="Controllers\devicesController.cs" />
     <Compile Include="Controllers\usersController.cs" />
-    <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -186,6 +186,7 @@
     <Compile Include="Models\roomsModel.cs" />
     <Compile Include="Models\sitesModel.cs" />
     <Compile Include="Models\syncLogsModel.cs" />
+    <Compile Include="Models\deviceSearchModel.cs" />
     <Compile Include="Models\usersModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -16,16 +16,18 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class sitesController : ApiController
     {
         #region GET : sites
-        [Route("api/Getsites")]
+        [Route("api/GetSites")]
         [HttpGet]
-        public IHttpActionResult Getsites()
+        public IHttpActionResult GetSites(string Site_ID = null)
         {
             List<sitesModel> ListRP = new List<sitesModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [Site_ID],[name],[code],[location],[description],[created_at],[updated_at] FROM [dbo].[sites] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Site_ID)) sql += " AND Site_ID = @Site_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Site_ID)) cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -48,7 +50,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : sites
-        [Route("api/Savesites")]
+        [Route("api/SaveSites")]
         [HttpPost]
         public IHttpActionResult Savesites([FromBody] List<sitesModel> modelList)
         {
@@ -95,7 +97,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : sites
-        [Route("api/Updatesites/{Site_ID}")]
+        [Route("api/UpdateSites/{Site_ID}")]
         [HttpPost]
         public IHttpActionResult Updatesites(string Site_ID, [FromBody] sitesModel model)
         {
@@ -136,7 +138,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : sites
         [HttpPost]
-        [Route("api/Deletesites/{Site_ID}")]
+        [Route("api/DeleteSites/{Site_ID}")]
         public IHttpActionResult Deletesites(string Site_ID)
         {
             if (string.IsNullOrWhiteSpace(Site_ID))

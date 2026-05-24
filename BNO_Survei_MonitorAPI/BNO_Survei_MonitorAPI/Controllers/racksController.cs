@@ -16,16 +16,20 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class racksController : ApiController
     {
         #region GET : racks
-        [Route("api/Getracks")]
+        [Route("api/GetRacks")]
         [HttpGet]
-        public IHttpActionResult Getracks()
+        public IHttpActionResult GetRacks(string Room_ID = null, string Rack_ID = null)
         {
             List<racksModel> ListRP = new List<racksModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [Rack_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[name],[total_units],[units_per_u],[brand],[model],[max_power_w],[image_data],[image_type],[note],[created_at],[updated_at] FROM [dbo].[racks] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Room_ID)) sql += " AND Room_ID = @Room_ID";
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) sql += " AND Rack_ID = @Rack_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Room_ID)) cmd.Parameters.AddWithValue("@Room_ID", Room_ID);
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) cmd.Parameters.AddWithValue("@Rack_ID", Rack_ID);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -57,7 +61,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : racks
-        [Route("api/Saveracks")]
+        [Route("api/SaveRacks")]
         [HttpPost]
         public IHttpActionResult Saveracks([FromBody] List<racksModel> modelList)
         {
@@ -113,7 +117,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : racks
-        [Route("api/Updateracks/{Rack_ID}")]
+        [Route("api/UpdateRacks/{Rack_ID}")]
         [HttpPost]
         public IHttpActionResult Updateracks(string Rack_ID, [FromBody] racksModel model)
         {
@@ -172,7 +176,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : racks
         [HttpPost]
-        [Route("api/Deleteracks/{Rack_ID}")]
+        [Route("api/DeleteRacks/{Rack_ID}")]
         public IHttpActionResult Deleteracks(string Rack_ID)
         {
             if (string.IsNullOrWhiteSpace(Rack_ID))

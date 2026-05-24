@@ -16,16 +16,24 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class poeSwitchesController : ApiController
     {
         #region GET : poe_switches
-        [Route("api/GetpoeSwitches")]
+        [Route("api/GetPoeSwitches")]
         [HttpGet]
-        public IHttpActionResult GetpoeSwitches()
+        public IHttpActionResult GetPoeSwitches(string Site_ID = null, string Rack_ID = null, string status = null, string SW_ID = null)
         {
             List<poeSwitchesModel> ListRP = new List<poeSwitchesModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [SW_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[switch_type],[brand],[model],[serial_no],[mac_address],[os_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[total_ports],[poe_ports],[poe_budget_w],[poe_used_w],[uplink_port],[status],[fail_count],[last_seen],[notes],[created_at],[updated_at] FROM [dbo].[poe_switches] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(Site_ID)) sql += " AND Site_ID = @Site_ID";
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) sql += " AND Rack_ID = @Rack_ID";
+                if (!string.IsNullOrWhiteSpace(status))  sql += " AND status = @status";
+                if (!string.IsNullOrWhiteSpace(SW_ID))   sql += " AND SW_ID = @SW_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(Site_ID)) cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
+                if (!string.IsNullOrWhiteSpace(Rack_ID)) cmd.Parameters.AddWithValue("@Rack_ID", Rack_ID);
+                if (!string.IsNullOrWhiteSpace(status))  cmd.Parameters.AddWithValue("@status", status);
+                if (!string.IsNullOrWhiteSpace(SW_ID))   cmd.Parameters.AddWithValue("@SW_ID", SW_ID);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -72,7 +80,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : poe_switches
-        [Route("api/SavepoeSwitches")]
+        [Route("api/SavePoeSwitches")]
         [HttpPost]
         public IHttpActionResult SavepoeSwitches([FromBody] List<poeSwitchesModel> modelList)
         {
@@ -143,7 +151,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : poe_switches
-        [Route("api/UpdatepoeSwitches/{SW_ID}")]
+        [Route("api/UpdatePoeSwitches/{SW_ID}")]
         [HttpPost]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
@@ -232,7 +240,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : poe_switches
         [HttpPost]
-        [Route("api/DeletepoeSwitches/{SW_ID}")]
+        [Route("api/DeletePoeSwitches/{SW_ID}")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {
             if (string.IsNullOrWhiteSpace(SW_ID))

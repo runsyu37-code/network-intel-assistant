@@ -16,16 +16,20 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class pingLogsController : ApiController
     {
         #region GET : ping_logs
-        [Route("api/GetpingLogs")]
+        [Route("api/GetPingLogs")]
         [HttpGet]
-        public IHttpActionResult GetpingLogs()
+        public IHttpActionResult GetPingLogs(string device_id = null, string device_type = null)
         {
             List<pingLogsModel> ListRP = new List<pingLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [id],[device_type],[device_id],[ip_address],[is_alive],[latency_ms],[pinged_at] FROM [dbo].[ping_logs] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(device_id))   sql += " AND device_id = @device_id";
+                if (!string.IsNullOrWhiteSpace(device_type)) sql += " AND device_type = @device_type";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(device_id))   cmd.Parameters.AddWithValue("@device_id", device_id);
+                if (!string.IsNullOrWhiteSpace(device_type)) cmd.Parameters.AddWithValue("@device_type", device_type);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -48,7 +52,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : ping_logs
-        [Route("api/SavepingLogs")]
+        [Route("api/SavePingLogs")]
         [HttpPost]
         public IHttpActionResult SavepingLogs([FromBody] List<pingLogsModel> modelList)
         {
@@ -95,7 +99,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : ping_logs
-        [Route("api/UpdatepingLogs/{id}")]
+        [Route("api/UpdatePingLogs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatepingLogs(int id, [FromBody] pingLogsModel model)
         {
@@ -137,7 +141,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : ping_logs
         [HttpPost]
-        [Route("api/DeletepingLogs/{id}")]
+        [Route("api/DeletePingLogs/{id}")]
         public IHttpActionResult DeletepingLogs(int id)
         {
             try

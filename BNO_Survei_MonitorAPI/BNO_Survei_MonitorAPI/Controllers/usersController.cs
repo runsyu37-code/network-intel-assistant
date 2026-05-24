@@ -16,16 +16,20 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class usersController : ApiController
     {
         #region GET : users
-        [Route("api/Getusers")]
+        [Route("api/GetUsers")]
         [HttpGet]
-        public IHttpActionResult Getusers()
+        public IHttpActionResult GetUsers(string role = null, int? User_ID = null)
         {
             List<usersModel> ListRP = new List<usersModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 string sql = "SELECT [User_ID],[username],[pw_hash],[display_name],[role],[is_active],[last_login],[created_at],[updated_at] FROM [dbo].[users] WHERE 1=1";
+                if (!string.IsNullOrWhiteSpace(role)) sql += " AND role = @role";
+                if (User_ID.HasValue)                 sql += " AND User_ID = @User_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
+                if (!string.IsNullOrWhiteSpace(role)) cmd.Parameters.AddWithValue("@role", role);
+                if (User_ID.HasValue)                 cmd.Parameters.AddWithValue("@User_ID", User_ID.Value);
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -50,7 +54,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : users
-        [Route("api/Saveusers")]
+        [Route("api/SaveUsers")]
         [HttpPost]
         public IHttpActionResult Saveusers([FromBody] List<usersModel> modelList)
         {
@@ -98,7 +102,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : users
-        [Route("api/Updateusers/{User_ID}")]
+        [Route("api/UpdateUsers/{User_ID}")]
         [HttpPost]
         public IHttpActionResult Updateusers(int User_ID, [FromBody] usersModel model)
         {
@@ -143,7 +147,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : users
         [HttpPost]
-        [Route("api/Deleteusers/{User_ID}")]
+        [Route("api/DeleteUsers/{User_ID}")]
         public IHttpActionResult Deleteusers(int User_ID)
         {
             try
