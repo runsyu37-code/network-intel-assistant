@@ -191,6 +191,7 @@
     <Compile Include="Controllers\buildingsController.cs" />
     <Compile Include="Controllers\camerasController.cs" />
     <Compile Include="Controllers\floorsController.cs" />
+    <Compile Include="Controllers\hierarchyController.cs" />
     <Compile Include="Controllers\nvrsController.cs" />
     <Compile Include="Controllers\pingLogsController.cs" />
     <Compile Include="Controllers\poeSwitchesController.cs" />
