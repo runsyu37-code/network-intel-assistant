@@ -1,0 +1,19 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio IDE files
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# NuGet
+packages/
+*.nupkg
+
+# Publish output
+publish/
+
+# Frontend libraries (restored by dotnet tooling)
+wwwroot/lib/
