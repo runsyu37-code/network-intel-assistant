@@ -2,8 +2,13 @@ import { Form, Input, Button, Card, Typography } from 'antd'
 
 const { Title } = Typography
 
+interface LoginValues {
+  username: string
+  password: string
+}
+
 export default function LoginPage() {
-  const onFinish = (values) => {
+  const onFinish = (values: LoginValues) => {
     console.log('login', values)
   }
 
