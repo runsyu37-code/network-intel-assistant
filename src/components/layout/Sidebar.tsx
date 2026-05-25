@@ -11,7 +11,7 @@ const NAV = [
     section: 'Monitor',
     items: [
       { to: '/dashboard/topology', Icon: Network,    label: 'Topology'      },
-      { to: '/dashboard/topology',  Icon: Building2,  label: 'Sites',  count: 6 },
+      { to: '/dashboard/topology',   Icon: Building2,  label: 'Sites',  count: 6 },
     ],
   },
   {

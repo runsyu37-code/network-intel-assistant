@@ -2,13 +2,15 @@ import { Link, useLocation } from 'react-router-dom'
 import { Bell, Settings } from 'lucide-react'
 
 const PAGE_LABELS: Record<string, string> = {
-  topology: 'Topology',
-  sites:    'Sites & Buildings',
-  cameras:  'Cameras',
-  nvrs:     'NVRs',
-  switches: 'PoE Switches',
-  racks:    'Racks',
-  users:    'Users',
+  topology:  'Topology',
+  sites:     'Sites & Buildings',
+  buildings: 'Building Detail',
+  floors:    'Floor Plan',
+  racks:     'Rack Detail',
+  cameras:   'Cameras',
+  nvrs:      'NVRs',
+  switches:  'PoE Switches',
+  users:     'Users',
 }
 
 export default function Topbar() {

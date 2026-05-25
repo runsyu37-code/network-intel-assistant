@@ -3,3 +3,6 @@
 @import './styles/layout.css';
 @import './styles/topology.css';
 @import './styles/sites.css';
+@import './styles/floor.css';
+@import './styles/rack.css';
+@import './styles/devicelist.css';
