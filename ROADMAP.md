@@ -205,7 +205,37 @@ I'll have Claude Code walk me through these step-by-step in Week 1.
 
 > **This is the deadline month.** Every hour here goes toward getting the Surveillance Monitoring web app to a deliverable state. Life-agents, scholarship hunting, and investing tools are DEFERRED to Phase 2.
 
-**Week 5–6 — Wire the AI tools into the actual deliverable**
+**Week 5 — Ping Service (real-world monitoring)**
+
+The web app needs to know when a camera is actually offline — not just what's in the database. This requires a background service running on a machine that has network access to the camera VLAN.
+
+Architecture:
+```
+[CCTV VLAN — cameras at 10.10.x.x]
+        ↕  ping / ICMP
+[Windows machine — runs API + Ping Service]
+        ↕  HTTP
+[Browser — Web App]
+```
+
+Ping Service responsibilities:
+- Read all device IPs from DB every 30 seconds
+- Ping each device (camera, NVR, PoE switch)
+- Write result to `ping_logs` table
+- Update `status` field in cameras / nvrs / poe_switches
+- If device fails X consecutive pings → write to `alert_logs`
+- Frontend polling every 30s reads the updated status → shows 🔴 automatically
+
+**Deployment constraint:** The machine running the API must be physically/logically on the CCTV VLAN (or a VLAN that can route to all camera subnets). Without this, pings cannot reach the cameras.
+
+**Test setup (before full VLAN access is available):**
+- Use a small PoE switch (1 building, registered in the system)
+- Connect 1 real camera
+- Run API + Ping Service on a laptop connected to that switch
+- Unplug the camera → confirm status turns 🔴 in the web app
+- This validates the full monitoring loop before scaling to the real network
+
+**Week 6 — Wire AI tools into the actual deliverable**
 - Use Month 1's inventory + topology agents to populate the real web app's database with the now-collected inventory.
 - Build `alert-triage-agent`: when CCTV fails, agent reads logs + topology and suggests likely cause.
 - Integrate `alert-triage-agent` with the existing Discord webhook (adds an AI-written diagnosis to the existing red-alert message).
@@ -340,6 +370,9 @@ A project is "done" when **all** of these are true:
 | 2026-05-17 | Skip Docker, FastAPI, ML libraries until month they're needed | Avoid tool-overload paralysis |
 | 2026-05-17 | Split roadmap into Phase 1 (critical path to surveillance project deadline ~25 July) and Phase 2 (portfolio + life agents Aug–Oct) | Project is 3 weeks in, 2 months left, still in data collection; the AI tooling must directly accelerate the work deliverable before doing anything else |
 | 2026-05-17 | Defer scholarship/investing/life agents to Phase 2 | Cannot afford to context-switch during the surveillance deadline crunch |
+| 2026-05-25 | Add Ping Service as Week 5 deliverable (Month 2) | Web app must reflect real device status — requires background service pinging cameras on CCTV VLAN |
+| 2026-05-25 | Test Ping Service with 1 PoE switch + 1 camera before full VLAN deployment | Validates the full monitoring loop cheaply without needing access to the full CCTV network |
+| 2026-05-25 | API must be deployed on a machine physically on the CCTV VLAN | Cameras are not internet-facing — only machines on the same VLAN can ping them |
 
 *(New decisions get appended here in future sessions.)*
 
