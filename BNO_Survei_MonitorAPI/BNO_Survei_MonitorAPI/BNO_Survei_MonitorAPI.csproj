@@ -186,6 +186,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="ConnectionDB\ConnectionDB.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Services\PingService.cs" />
     <Compile Include="Controllers\alertLogsController.cs" />
     <Compile Include="Controllers\auditLogsController.cs" />
     <Compile Include="Controllers\buildingsController.cs" />
