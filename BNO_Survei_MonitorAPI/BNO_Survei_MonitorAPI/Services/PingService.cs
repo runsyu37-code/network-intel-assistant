@@ -53,17 +53,42 @@ namespace BNO_Survei_MonitorAPI.Services
             foreach (var d in LoadDevices())
             {
                 if (string.IsNullOrWhiteSpace(d.IpAddress)) continue;
-
-                bool alive = TryPing(d.IpAddress, out long latencyMs);
-
-                WritePingLog(d, alive, latencyMs);
-                UpdateDeviceStatus(d, alive);
-
-                if (alive)
-                    ResolveOpenAlerts(d);
-                else
-                    HandleOffline(d);
+                try
+                {
+                    bool alive = TryPing(d.IpAddress, out long latencyMs);
+                    WritePingLog(d, alive, latencyMs);
+                    UpdateDeviceStatus(d, alive);
+                    if (alive) ResolveOpenAlerts(d);
+                    else       HandleOffline(d);
+                }
+                catch (Exception ex)
+                {
+                    WriteErrorLog(d.DeviceType, d.DeviceId, d.IpAddress, ex);
+                }
             }
+        }
+
+        private static void WriteErrorLog(string deviceType, string deviceId, string ip, Exception ex)
+        {
+            try
+            {
+                const string sql = @"
+                    INSERT INTO ping_logs (device_type, device_id, ip_address, is_alive, latency_ms)
+                    VALUES ('_error', @did, @ip, 0, NULL)";
+                using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+                {
+                    con.Open();
+                    using (var cmd = new SqlCommand(sql, con))
+                    {
+                        // store error info in device_id field (truncated)
+                        string errMsg = $"{deviceType}:{deviceId} — {ex.GetType().Name}: {ex.Message}";
+                        cmd.Parameters.AddWithValue("@did", errMsg.Length > 200 ? errMsg.Substring(0, 200) : errMsg);
+                        cmd.Parameters.AddWithValue("@ip",  (object)ip ?? DBNull.Value);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch { /* absolute last resort — ignore */ }
         }
 
         // ---------------------------------------------------------------
