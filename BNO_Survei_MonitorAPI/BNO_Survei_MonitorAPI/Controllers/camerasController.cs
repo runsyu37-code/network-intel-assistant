@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class camerasController : ApiController
     {
         #region GET : cameras
-        [Route("api/GetCameras")]
+        [Route("api/cameras")]
         [HttpGet]
         public IHttpActionResult GetCameras(string Site_ID = null, string Floor_ID = null, string status = null, int? id = null)
         {
@@ -77,7 +77,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : cameras
-        [Route("api/SaveCameras")]
+        [Route("api/cameras")]
         [HttpPost]
         public IHttpActionResult Savecameras([FromBody] List<camerasModel> modelList)
         {
@@ -144,7 +144,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : cameras
-        [Route("api/UpdateCameras/{id}")]
+        [Route("api/cameras/{id}")]
         [HttpPost]
         public IHttpActionResult Updatecameras(int id, [FromBody] camerasModel model)
         {
@@ -227,7 +227,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : cameras
         [HttpPost]
-        [Route("api/DeleteCameras/{id}")]
+        [Route("api/cameras/delete/{id}")]
         public IHttpActionResult Deletecameras(int id)
         {
             try

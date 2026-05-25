@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class poeSwitchesController : ApiController
     {
         #region GET : poe_switches
-        [Route("api/GetPoeSwitches")]
+        [Route("api/poe-switches")]
         [HttpGet]
         public IHttpActionResult GetPoeSwitches(string Site_ID = null, string Rack_ID = null, string status = null, string SW_ID = null)
         {
@@ -80,7 +80,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : poe_switches
-        [Route("api/SavePoeSwitches")]
+        [Route("api/poe-switches")]
         [HttpPost]
         public IHttpActionResult SavepoeSwitches([FromBody] List<poeSwitchesModel> modelList)
         {
@@ -151,7 +151,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : poe_switches
-        [Route("api/UpdatePoeSwitches/{SW_ID}")]
+        [Route("api/poe-switches/{SW_ID}")]
         [HttpPost]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
@@ -240,7 +240,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : poe_switches
         [HttpPost]
-        [Route("api/DeletePoeSwitches/{SW_ID}")]
+        [Route("api/poe-switches/delete/{SW_ID}")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {
             if (string.IsNullOrWhiteSpace(SW_ID))

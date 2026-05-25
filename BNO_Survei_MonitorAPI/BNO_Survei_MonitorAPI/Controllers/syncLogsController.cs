@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class syncLogsController : ApiController
     {
         #region GET : sync_logs
-        [Route("api/GetSyncLogs")]
+        [Route("api/sync-logs")]
         [HttpGet]
         public IHttpActionResult GetSyncLogs(string device_type = null, string device_id = null, string status = null)
         {
@@ -56,7 +56,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : sync_logs
-        [Route("api/SaveSyncLogs")]
+        [Route("api/sync-logs")]
         [HttpPost]
         public IHttpActionResult SavesyncLogs([FromBody] List<syncLogsModel> modelList)
         {
@@ -105,7 +105,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : sync_logs
-        [Route("api/UpdateSyncLogs/{id}")]
+        [Route("api/sync-logs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatesyncLogs(int id, [FromBody] syncLogsModel model)
         {
@@ -151,7 +151,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : sync_logs
         [HttpPost]
-        [Route("api/DeleteSyncLogs/{id}")]
+        [Route("api/sync-logs/delete/{id}")]
         public IHttpActionResult DeletesyncLogs(int id)
         {
             try

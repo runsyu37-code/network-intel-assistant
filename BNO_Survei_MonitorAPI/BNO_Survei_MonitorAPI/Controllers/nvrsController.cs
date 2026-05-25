@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class nvrsController : ApiController
     {
         #region GET : nvrs
-        [Route("api/GetNvrs")]
+        [Route("api/nvrs")]
         [HttpGet]
         public IHttpActionResult GetNvrs(string Site_ID = null, string Rack_ID = null, string status = null, string NVR_ID = null)
         {
@@ -82,7 +82,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : nvrs
-        [Route("api/SaveNvrs")]
+        [Route("api/nvrs")]
         [HttpPost]
         public IHttpActionResult Savenvrs([FromBody] List<nvrsModel> modelList)
         {
@@ -155,7 +155,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : nvrs
-        [Route("api/UpdateNvrs/{NVR_ID}")]
+        [Route("api/nvrs/{NVR_ID}")]
         [HttpPost]
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
@@ -248,7 +248,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : nvrs
         [HttpPost]
-        [Route("api/DeleteNvrs/{NVR_ID}")]
+        [Route("api/nvrs/delete/{NVR_ID}")]
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {
             if (string.IsNullOrWhiteSpace(NVR_ID))

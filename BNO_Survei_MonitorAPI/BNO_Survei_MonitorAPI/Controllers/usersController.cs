@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class usersController : ApiController
     {
         #region GET : users
-        [Route("api/GetUsers")]
+        [Route("api/users")]
         [HttpGet]
         public IHttpActionResult GetUsers(string role = null, int? User_ID = null)
         {
@@ -54,7 +54,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : users
-        [Route("api/SaveUsers")]
+        [Route("api/users")]
         [HttpPost]
         public IHttpActionResult Saveusers([FromBody] List<usersModel> modelList)
         {
@@ -102,7 +102,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : users
-        [Route("api/UpdateUsers/{User_ID}")]
+        [Route("api/users/{User_ID}")]
         [HttpPost]
         public IHttpActionResult Updateusers(int User_ID, [FromBody] usersModel model)
         {
@@ -147,7 +147,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : users
         [HttpPost]
-        [Route("api/DeleteUsers/{User_ID}")]
+        [Route("api/users/delete/{User_ID}")]
         public IHttpActionResult Deleteusers(int User_ID)
         {
             try

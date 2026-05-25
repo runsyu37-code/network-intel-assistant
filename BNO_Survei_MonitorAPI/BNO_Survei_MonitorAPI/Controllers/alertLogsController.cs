@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class alertLogsController : ApiController
     {
         #region GET : alert_logs
-        [Route("api/GetAlertLogs")]
+        [Route("api/alert-logs")]
         [HttpGet]
         public IHttpActionResult GetAlertLogs(string device_type = null, bool active_only = false)
         {
@@ -62,7 +62,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : alert_logs
-        [Route("api/SaveAlertLogs")]
+        [Route("api/alert-logs")]
         [HttpPost]
         public IHttpActionResult SavealertLogs([FromBody] List<alertLogsModel> modelList)
         {
@@ -119,7 +119,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : alert_logs
-        [Route("api/UpdateAlertLogs/{id}")]
+        [Route("api/alert-logs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatealertLogs(int id, [FromBody] alertLogsModel model)
         {
@@ -182,7 +182,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : alert_logs
         [HttpPost]
-        [Route("api/DeleteAlertLogs/{id}")]
+        [Route("api/alert-logs/delete/{id}")]
         public IHttpActionResult DeletealertLogs(int id)
         {
             try

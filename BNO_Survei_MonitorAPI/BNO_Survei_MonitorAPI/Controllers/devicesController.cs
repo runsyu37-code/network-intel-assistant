@@ -13,7 +13,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class devicesController : ApiController
     {
         #region GET : devices (unified search)
-        [Route("api/GetDevices")]
+        [Route("api/devices")]
         [HttpGet]
         public IHttpActionResult GetDevices(
             string device_type  = null,

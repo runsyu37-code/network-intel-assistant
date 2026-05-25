@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class buildingsController : ApiController
     {
         #region GET : buildings
-        [Route("api/GetBuildings")]
+        [Route("api/buildings")]
         [HttpGet]
         public IHttpActionResult GetBuildings(string Site_ID = null, string Building_ID = null)
         {
@@ -56,7 +56,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : buildings
-        [Route("api/SaveBuildings")]
+        [Route("api/buildings")]
         [HttpPost]
         public IHttpActionResult Savebuildings([FromBody] List<buildingsModel> modelList)
         {
@@ -107,7 +107,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : buildings
-        [Route("api/UpdateBuildings/{Building_ID}")]
+        [Route("api/buildings/{Building_ID}")]
         [HttpPost]
         public IHttpActionResult Updatebuildings(string Building_ID, [FromBody] buildingsModel model)
         {
@@ -156,7 +156,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : buildings
         [HttpPost]
-        [Route("api/DeleteBuildings/{Building_ID}")]
+        [Route("api/buildings/delete/{Building_ID}")]
         public IHttpActionResult Deletebuildings(string Building_ID)
         {
             if (string.IsNullOrWhiteSpace(Building_ID))

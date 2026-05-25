@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class pingLogsController : ApiController
     {
         #region GET : ping_logs
-        [Route("api/GetPingLogs")]
+        [Route("api/ping-logs")]
         [HttpGet]
         public IHttpActionResult GetPingLogs(string device_id = null, string device_type = null)
         {
@@ -52,7 +52,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : ping_logs
-        [Route("api/SavePingLogs")]
+        [Route("api/ping-logs")]
         [HttpPost]
         public IHttpActionResult SavepingLogs([FromBody] List<pingLogsModel> modelList)
         {
@@ -99,7 +99,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : ping_logs
-        [Route("api/UpdatePingLogs/{id}")]
+        [Route("api/ping-logs/{id}")]
         [HttpPost]
         public IHttpActionResult UpdatepingLogs(int id, [FromBody] pingLogsModel model)
         {
@@ -141,7 +141,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : ping_logs
         [HttpPost]
-        [Route("api/DeletePingLogs/{id}")]
+        [Route("api/ping-logs/delete/{id}")]
         public IHttpActionResult DeletepingLogs(int id)
         {
             try

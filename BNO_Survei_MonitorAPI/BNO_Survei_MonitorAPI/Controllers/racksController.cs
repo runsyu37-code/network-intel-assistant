@@ -1,4 +1,4 @@
-﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,7 +16,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
     public class racksController : ApiController
     {
         #region GET : racks
-        [Route("api/GetRacks")]
+        [Route("api/racks")]
         [HttpGet]
         public IHttpActionResult GetRacks(string Room_ID = null, string Rack_ID = null)
         {
@@ -61,7 +61,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Save : racks
-        [Route("api/SaveRacks")]
+        [Route("api/racks")]
         [HttpPost]
         public IHttpActionResult Saveracks([FromBody] List<racksModel> modelList)
         {
@@ -117,7 +117,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #endregion
 
         #region Update : racks
-        [Route("api/UpdateRacks/{Rack_ID}")]
+        [Route("api/racks/{Rack_ID}")]
         [HttpPost]
         public IHttpActionResult Updateracks(string Rack_ID, [FromBody] racksModel model)
         {
@@ -176,7 +176,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         #region Delete : racks
         [HttpPost]
-        [Route("api/DeleteRacks/{Rack_ID}")]
+        [Route("api/racks/delete/{Rack_ID}")]
         public IHttpActionResult Deleteracks(string Rack_ID)
         {
             if (string.IsNullOrWhiteSpace(Rack_ID))
