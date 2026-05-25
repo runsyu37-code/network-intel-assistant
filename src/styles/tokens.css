@@ -24,6 +24,7 @@
   --canvas-bg:   #f0f2f5;
   --edge-stroke: #cbd2db;
   --grid-dot:    #d0d5dd;
+  --grid-size:   24px;
   --ring-soft:   rgba(15, 23, 42, 0.04);
   --shadow-1:    0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.02);
   --shadow-2:    0 2px 8px rgba(15, 23, 42, 0.08);
@@ -51,9 +52,11 @@
   --warn-soft:   rgba(251, 191, 36, 0.14);
   --alert:       #f87171;
   --alert-soft:  rgba(248, 113, 113, 0.14);
+  --accent-2:    #7aa2ff;
   --canvas-bg:   var(--surface);
   --edge-stroke: #3a4258;
   --grid-dot:    rgba(255, 255, 255, 0.06);
+  --grid-size:   24px;
   --ring-soft:   rgba(255, 255, 255, 0.04);
   --shadow-1:    0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
   --shadow-2:    0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.45);
