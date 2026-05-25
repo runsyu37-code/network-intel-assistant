@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<title>SSM — Site A / Building A — Main Tower</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ------------------------------------------------------------------
+     SSM v1.0 — Modern Minimal
+     Solid borders, real shadows, semantic status colors, blue accent.
+  ------------------------------------------------------------------ */
+  :root, :root[data-theme="dark"]{
+    /* surfaces — deep navy stack */
+    --bg:        #0b0e16;
+    --surface:   #11151f;
+    --surface-2: #161b27;
+    --surface-3: #1c2230;
+    /* borders */
+    --border:    #232938;
+    --border-2:  #2e3547;
+    /* ink */
+    --ink:       #f1f3f8;
+    --ink-2:     #b3bbcc;
+    --ink-3:     #7c8499;
+    --ink-4:     #4d556a;
+    /* accent (primary) */
+    --accent:    #5b8def;
+    --accent-2:  #7aa2ff;
+    --accent-soft:rgba(91,141,239,.14);
+    /* status — tuned for dark bg */
+    --ok:        #34d399;
+    --ok-soft:   rgba(52,211,153,.14);
+    --warn:      #fbbf24;
+    --warn-soft: rgba(251,191,36,.14);
+    --alert:     #f87171;
+    --alert-soft:rgba(248,113,113,.14);
+    /* edges + grid (theme-aware) */
+    --edge-stroke: #3a4258;
+    --grid-dot:    rgba(255,255,255,.06);
+    --grid-size:   24px;
+    --canvas-bg:   var(--surface);
+    --ring-soft:   rgba(255,255,255,.04);
+    /* shadows — darker, deeper */
+    --shadow-1:  0 1px 2px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03);
+    --shadow-2:  0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.45);
+    --shadow-3:  0 2px 6px rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.55);
+  }
+
+  :root[data-theme="light"]{
+    /* surfaces */
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --surface-2: #f3f5f8;
+    --surface-3: #eceff3;
+    /* borders */
+    --border:    #e6e8ec;
+    --border-2:  #d4d7dc;
+    /* ink */
+    --ink:       #0f172a;
+    --ink-2:     #475569;
+    --ink-3:     #94a3b8;
+    --ink-4:     #cbd2db;
+    /* accent */
+    --accent:    #2563eb;
+    --accent-2:  #1d4ed8;
+    --accent-soft:#eff6ff;
+    /* status — tuned for light bg */
+    --ok:        #16a34a;
+    --ok-soft:   #ecfdf5;
+    --warn:      #d97706;
+    --warn-soft: #fffbeb;
+    --alert:     #dc2626;
+    --alert-soft:#fef2f2;
+    /* edges + grid */
+    --edge-stroke: #cbd2db;
+    --grid-dot:    #d0d5dd;
+    --grid-size:   24px;
+    --canvas-bg:   #f0f2f5;
+    --ring-soft:   rgba(15,23,42,.04);
+    /* shadows */
+    --shadow-1:  0 1px 2px rgba(15,23,42,.04), 0 0 0 1px rgba(15,23,42,.02);
+    --shadow-2:  0 2px 8px rgba(15,23,42,.08);
+    --shadow-3:  0 6px 18px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;font-feature-settings:"calt" 0}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+  /* shell */
+  .app{display:grid;grid-template-columns:256px 1fr;height:100vh;min-height:640px}
+
+  /* ============== SIDEBAR ============== */
+  .sidebar{
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;
+    padding:16px 12px 12px;gap:18px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 14px;border-bottom:1px solid var(--border)}
+  .brand .logo{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--accent);color:#0b0e16;display:grid;place-items:center;
+    font-weight:700;font-size:14px;letter-spacing:.02em
+  }
+  .brand .name{font-weight:600;font-size:14px;letter-spacing:-.005em;color:var(--ink)}
+  .brand .ver{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+  .nav-section{display:flex;flex-direction:column;gap:2px}
+  .nav-section .label{
+    text-transform:uppercase;font-size:10px;letter-spacing:.1em;font-weight:600;
+    color:var(--ink-3);padding:0 8px;margin:6px 0 6px
+  }
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 10px;border-radius:7px;color:var(--ink-2);cursor:pointer;
+    font-weight:500;
+  }
+  .nav-item:hover{background:var(--surface-2);color:var(--ink)}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent-2);font-weight:600}
+  .nav-item .ico{width:18px;height:18px;flex:none;color:currentColor;opacity:.9}
+  .nav-item .count{
+    margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:500;
+    background:var(--surface-2);padding:1px 7px;border-radius:999px
+  }
+  .nav-item.active .count{background:rgba(91,141,239,.18);color:var(--accent-2)}
+
+  .tree{display:flex;flex-direction:column;gap:1px;padding:2px 0 0 4px;margin-left:8px;
+    border-left:1px solid var(--border)}
+  .tree .leaf{
+    display:flex;align-items:center;gap:10px;
+    padding:6px 10px;border-radius:6px;color:var(--ink-2);cursor:pointer;font-size:13px
+  }
+  .tree .leaf:hover{background:var(--surface-2);color:var(--ink)}
+  .tree .leaf.active{background:var(--accent-soft);color:var(--accent-2);font-weight:600}
+  .tree .leaf .dot{width:8px;height:8px;border-radius:50%;flex:none;margin-left:auto;
+    box-shadow:0 0 0 3px var(--ring-soft)}
+  .dot.r{background:var(--alert)} .dot.g{background:var(--ok)} .dot.y{background:var(--warn)}
+
+  .add-row{
+    display:flex;align-items:center;gap:10px;
+    padding:7px 10px;border:1px dashed var(--border-2);border-radius:7px;
+    color:var(--ink-2);cursor:pointer;margin:6px 0 0;font-weight:500
+  }
+  .add-row:hover{color:var(--accent);border-color:var(--accent)}
+  .add-row .plus{
+    width:16px;height:16px;border-radius:50%;background:var(--surface-2);
+    display:grid;place-items:center;font-size:13px;line-height:1;color:var(--ink-2)
+  }
+
+  .sidebar .spacer{flex:1}
+  .sidebar-foot{display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid var(--border)}
+  .theme-toggle{
+    display:flex;background:var(--surface-2);border-radius:8px;padding:3px;font-size:12px;border:1px solid var(--border)
+  }
+  .theme-toggle button{
+    flex:1;padding:6px 10px;border-radius:6px;color:var(--ink-3);font-weight:500;
+    display:flex;align-items:center;justify-content:center;gap:6px
+  }
+  .theme-toggle button.on{background:var(--surface-3);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border-2);font-weight:600}
+  .user-chip{
+    display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;
+    background:var(--surface-2)
+  }
+  .user-chip:hover{background:var(--surface-3)}
+  .user-chip .avatar{
+    width:30px;height:30px;border-radius:50%;background:var(--accent);color:#0b0e16;
+    display:grid;place-items:center;font-weight:700;font-size:11px;letter-spacing:.02em
+  }
+  .user-chip .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+  .user-chip .name{font-weight:600;color:var(--ink);font-size:13px}
+  .user-chip .role{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+  .user-chip .caret{margin-left:auto;color:var(--ink-3)}
+
+  /* ============== MAIN ============== */
+  .main{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+
+  .topbar{
+    display:flex;align-items:center;gap:14px;
+    padding:11px 24px;border-bottom:1px solid var(--border);
+    background:var(--surface);min-height:56px
+  }
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-3)}
+  .crumbs a{color:var(--ink-2);text-decoration:none;font-weight:500}
+  .crumbs a:hover{color:var(--ink)}
+  .crumbs .here{color:var(--ink);font-weight:600}
+  .crumbs .sep{color:var(--ink-4)}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 10px;border:1px solid var(--border);border-radius:999px;
+    color:var(--ink-2);font-size:12px;background:var(--surface);font-weight:500
+  }
+  .pill .dot-i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .pill.alert{border-color:rgba(248,113,113,.35);background:var(--alert-soft);color:var(--alert);font-weight:600}
+  .pill.alert .dot-i{background:var(--alert);box-shadow:0 0 0 3px rgba(248,113,113,.18)}
+  .pill.poll{color:var(--ink-2)}
+  .pill.poll .dot-i{background:var(--ok)}
+  .icon-btn{
+    width:34px;height:34px;border-radius:8px;
+    display:grid;place-items:center;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--border)
+  }
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+  .icon-btn svg{width:16px;height:16px}
+
+  /* page header */
+  .page-head{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+    padding:22px 24px 14px
+  }
+  .page-head h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.015em;color:var(--ink)}
+  .page-head .sub{color:var(--ink-3);font-size:13px;margin-top:4px;max-width:60ch}
+  .legend{display:flex;align-items:center;gap:18px;color:var(--ink-2);font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+  .legend .swatch{display:inline-flex;align-items:center;gap:7px;font-weight:500}
+  .legend .swatch i{width:8px;height:8px;border-radius:50%;display:inline-block;
+    box-shadow:0 0 0 3px rgba(15,23,42,.04)}
+  .legend .line-swatch{display:inline-flex;align-items:center;gap:7px;font-weight:500}
+  .legend .line-swatch i{width:22px;height:0;border-top:1.5px solid var(--ink-2);display:inline-block}
+  .legend .line-swatch.dashed i{border-top-style:dashed}
+
+  /* canvas */
+  .canvas-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 24px 24px}
+  .canvas{
+    flex:1;min-height:0;position:relative;
+    background:var(--canvas-bg);
+    border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;
+    background-image:radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px);
+    background-size:var(--grid-size) var(--grid-size);background-position:0 0;
+    box-shadow:var(--shadow-1)
+  }
+
+  /* canvas toolbar */
+  .canvas-tools{
+    position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:3
+  }
+  .canvas-tools .group{
+    display:flex;flex-direction:column;background:var(--surface);
+    border:1px solid var(--border);border-radius:8px;overflow:hidden;
+    box-shadow:var(--shadow-1)
+  }
+  .canvas-tools .group .icon-btn{background:transparent;border:0;border-radius:0;border-bottom:1px solid var(--border)}
+  .canvas-tools .group .icon-btn:last-child{border-bottom:0}
+  .canvas-tools > .icon-btn{box-shadow:var(--shadow-1)}
+
+  /* minimap */
+  .minimap{
+    position:absolute;left:14px;bottom:14px;
+    width:172px;height:104px;
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    overflow:hidden;z-index:3;box-shadow:var(--shadow-1)
+  }
+  .minimap .label{
+    position:absolute;left:8px;top:6px;font-size:10px;color:var(--ink-3);
+    font-weight:600;letter-spacing:.08em;text-transform:uppercase;z-index:2
+  }
+  .minimap .viewport{
+    position:absolute;left:30%;top:28%;width:50%;height:52%;
+    border:1.5px solid var(--accent);border-radius:3px;
+    background:rgba(91,141,239,.10)
+  }
+  .minimap .nub{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
+  .minimap .nub.r{background:var(--alert)}
+  .minimap .nub.y{background:var(--warn)}
+  .minimap .nub.hq{background:var(--accent);width:8px;height:8px}
+
+  /* edges */
+  svg.edges{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+  .edge{fill:none;stroke:var(--edge-stroke);stroke-width:1.5;stroke-linecap:round}
+  .edge.alert{stroke:var(--alert);stroke-width:2}
+  .edge.vpn{stroke:var(--edge-stroke);stroke-dasharray:5 5}
+  .edge-label{
+    font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;fill:var(--ink-3);font-weight:500
+  }
+
+  /* nodes */
+  .node{
+    position:absolute;transform:translate(-50%,-50%);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:13px 15px;
+    min-width:216px;
+    display:flex;align-items:center;gap:12px;
+    z-index:2;cursor:pointer;user-select:none;
+    box-shadow:var(--shadow-2);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  :root[data-theme="light"] .node{ border-color:#d4d7dc; }
+  .node:hover{transform:translate(-50%,-50%) translateY(-1px);box-shadow:var(--shadow-3);border-color:var(--border-2)}
+  .node .dot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--ring-soft)}
+  .node .meta{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+  .node .title{font-weight:600;font-size:13px;color:var(--ink);letter-spacing:-.005em;line-height:1.25;white-space:nowrap}
+  .node .sub{font-size:11.5px;color:var(--ink-3);font-weight:500}
+  .node .count{font-size:11px;color:var(--ink-2);font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:500;
+    background:var(--surface-2);padding:3px 8px;border-radius:999px;flex:none}
+
+  /* HQ node — accent primary */
+  .node.hq{
+    background:linear-gradient(180deg, #1b2540 0%, #141a2c 100%);
+    color:#fff;border-color:rgba(91,141,239,.45);
+    min-width:220px;padding:14px 16px;gap:12px;
+    display:flex;flex-direction:column;align-items:stretch;
+    box-shadow:0 0 0 1px rgba(91,141,239,.18), 0 8px 28px rgba(0,0,0,.55), 0 0 32px rgba(91,141,239,.18)
+  }
+  .node.hq:hover{transform:translate(-50%,-50%) translateY(-1px)}
+  .node.hq .head{display:flex;align-items:center;gap:10px}
+  .node.hq .glyph{
+    width:32px;height:32px;border-radius:8px;background:var(--accent);color:#0b0e16;
+    display:grid;place-items:center;font-weight:700;font-size:13px;flex:none
+  }
+  .node.hq .title{color:#fff;font-size:14px;white-space:normal}
+  .node.hq .ip{color:#94a3b8;font-size:11.5px;margin-top:2px;font-family:'JetBrains Mono',ui-monospace,monospace}
+  .node.hq .stat{
+    display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;
+    padding:8px 0 0;border-top:1px solid rgba(255,255,255,.08);font-weight:500
+  }
+  .node.hq .stat .dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.05);background:var(--ok)}
+  .node.hq .stat .count{margin-left:auto;color:#94a3b8;background:transparent;padding:0}
+
+  /* status-tinted left border + dot color */
+  .node.alert{border-color:rgba(248,113,113,.4)}
+  .node.warn{border-color:rgba(251,191,36,.35)}
+  .node.ok{border-color:var(--border)}
+  .node.alert::before,
+  .node.warn::before,
+  .node.ok::before{
+    content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;
+  }
+  .node.alert::before{background:var(--alert)}
+  .node.warn::before {background:var(--warn)}
+  .node.ok::before   {background:var(--ok)}
+
+  /* subtle pulse on the offline node’s dot */
+  @keyframes pulseDot{
+    0%{box-shadow:0 0 0 0 rgba(248,113,113,.45)}
+    100%{box-shadow:0 0 0 10px rgba(248,113,113,0)}
+  }
+  .node.alert .dot{animation:pulseDot 1.8s ease-out infinite}
+
+  /* ============== ISOMETRIC SCENE ============== */
+  .iso-scene{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .iso-scene .bldg{cursor:pointer;transition:filter .15s ease}
+  .iso-scene .bldg:hover{filter:brightness(1.06)}
+  /* Strong-contrast three-face shading (light / medium / dark) */
+  .iso-scene .face-top   { fill:#f4f6fa; stroke:#7d8593; stroke-width:1.3; stroke-linejoin:round }
+  .iso-scene .face-south { fill:#b6bcc8; stroke:#7d8593; stroke-width:1.3; stroke-linejoin:round }
+  .iso-scene .face-east  { fill:#878d99; stroke:#6b727f; stroke-width:1.3; stroke-linejoin:round }
+  /* Alert building — red across all faces + strong outline */
+  .iso-scene .bldg.alert .face-top   { fill:#fbd6d6; stroke:var(--alert); stroke-width:2 }
+  .iso-scene .bldg.alert .face-south { fill:#e08888; stroke:var(--alert); stroke-width:2 }
+  .iso-scene .bldg.alert .face-east  { fill:#a85c5c; stroke:#a32020; stroke-width:2 }
+  /* Warn building — amber */
+  .iso-scene .bldg.warn  .face-top   { fill:#f7e1a3; stroke:#b58a2a; stroke-width:1.6 }
+  .iso-scene .bldg.warn  .face-south { fill:#d6b25c; stroke:#b58a2a; stroke-width:1.6 }
+  .iso-scene .bldg.warn  .face-east  { fill:#a3853a; stroke:#9a7826; stroke-width:1.6 }
+  /* Window / floor grid (computed line ends, no transform) */
+  .iso-scene .grid{ stroke:rgba(0,0,0,.22); stroke-width:.9; fill:none; pointer-events:none }
+  .iso-scene .bldg.alert .grid { stroke:rgba(132,30,30,.45) }
+  .iso-scene .bldg.warn  .grid { stroke:rgba(110,80,12,.4) }
+  /* Ground shadow under each building */
+  .iso-scene .shadow{ fill:rgba(0,0,0,.18); pointer-events:none }
+  /* Outdoor camera marker */
+  .iso-scene .cam-bg{ fill:#0f172a; stroke:#ffffff; stroke-width:1.6 }
+  .iso-scene .cam-tip{ fill:#0f172a; stroke:#ffffff; stroke-width:1.4 }
+  .iso-scene .cam-label{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; fill:#1e2433; font-weight:600 }
+
+  [data-theme="dark"] .iso-scene .face-top   { fill:#2a3142; stroke:#4c5468 }
+  [data-theme="dark"] .iso-scene .face-south { fill:#1c2231; stroke:#4c5468 }
+  [data-theme="dark"] .iso-scene .face-east  { fill:#131826; stroke:#3a4258 }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-top   { fill:#552a2a }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-south { fill:#3c1c1c }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-east  { fill:#2a1212 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-top   { fill:#544017 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-south { fill:#3a2c10 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-east  { fill:#291f08 }
+  [data-theme="dark"] .iso-scene .grid{ stroke:rgba(255,255,255,.10) }
+  [data-theme="dark"] .iso-scene .shadow{ fill:rgba(0,0,0,.45) }
+  [data-theme="dark"] .iso-scene .cam-bg{ fill:#ffffff; stroke:#0b0e16 }
+  [data-theme="dark"] .iso-scene .cam-tip{ fill:#ffffff; stroke:#0b0e16 }
+  [data-theme="dark"] .iso-scene .cam-label{ fill:var(--ink-3) }
+
+  /* ============== FLOOR CARDS (Building Detail) ============== */
+  .floor-card{
+    position:absolute;transform:translate(-50%,-50%);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 12px 7px 14px;
+    min-width:300px;
+    display:flex;align-items:center;gap:10px;
+    z-index:3;cursor:pointer;user-select:none;
+    box-shadow:var(--shadow-2);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    font-size:12.5px;
+  }
+  :root[data-theme="light"] .floor-card{ border-color:#d4d7dc }
+  .floor-card:hover{transform:translate(-50%,-50%) translateY(-1px);box-shadow:var(--shadow-3);border-color:var(--border-2)}
+  .floor-card .dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--ring-soft)}
+  .floor-card .num{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:700;color:var(--ink);font-size:11.5px;
+    background:var(--surface-2);padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+  .floor-card .label{color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .floor-card .count{margin-left:auto;font-size:11px;color:var(--ink-2);font-family:'JetBrains Mono',ui-monospace,monospace;
+    background:var(--surface-2);padding:2px 8px;border-radius:999px;flex:none}
+  /* status accents */
+  .floor-card.alert{border-color:#fecaca}
+  .floor-card.warn { border-color:#fde2a3 }
+  .floor-card.alert::before,
+  .floor-card.warn::before,
+  .floor-card.ok::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;
+  }
+  .floor-card.alert::before{background:var(--alert)}
+  .floor-card.warn::before {background:var(--warn)}
+  .floor-card.ok::before   {background:var(--ok)}
+  /* alert num colored */
+  .floor-card.alert .num{color:var(--alert);background:rgba(248,113,113,.12)}
+  .floor-card.warn  .num{color:#b58a2a;background:rgba(214,179,93,.18)}
+  [data-theme="dark"] .floor-card.warn .num{color:#fbbf24;background:rgba(251,191,36,.14)}
+  /* guest / locked variant */
+  .floor-card.locked{cursor:not-allowed;opacity:.55}
+  .floor-card.locked .lock{margin-left:6px;color:var(--ink-3)}
+
+  /* leader line from building to card */
+  .iso-scene .leader{ stroke:#9099a8; stroke-width:1; stroke-dasharray:3 3; fill:none; opacity:.7 }
+  [data-theme="dark"] .iso-scene .leader{ stroke:#4c5468 }
+
+  /* floor slabs use the same iso face classes; alert/warn override applies */
+  .iso-scene .bldg.alert .grid{ stroke:rgba(150,30,30,.4) }
+  .iso-scene .floor-divider{ stroke:rgba(0,0,0,.18); stroke-width:1.1; fill:none }
+  [data-theme="dark"] .iso-scene .floor-divider{ stroke:rgba(255,255,255,.10) }
+</style>
+</head>
+<body style="background-color: rgb(237, 237, 237)">
+<div class="app" data-screen-label="05 Building A — Main Tower">
+
+  <!-- ============== SIDEBAR ============== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="name">SSM</div>
+        <div class="ver mono">v1.0 · Surveillance Smart-Monitor</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Navigation</div>
+      <div class="nav-item">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="6.5" y1="6.5" x2="10.5" y2="10.5"/><line x1="17.5" y1="6.5" x2="13.5" y2="10.5"/><line x1="6.5" y1="17.5" x2="10.5" y2="13.5"/><line x1="17.5" y1="17.5" x2="13.5" y2="13.5"/></svg>
+        <span>Home — Topology</span>
+      </div>
+      <div class="nav-item active">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Sites</span>
+        <span class="count">4</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Sites</div>
+      <div class="tree">
+        <div class="leaf active">Site A — HQ Bangkok<span class="dot r"></span></div>
+        <div class="leaf">Site B — Chiang Mai DC<span class="dot g"></span></div>
+        <div class="leaf">Site C — Phuket Branch<span class="dot g"></span></div>
+        <div class="leaf">Site D — Khon Kaen<span class="dot y"></span></div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="sidebar-foot">
+      <div class="theme-toggle" id="themeToggle">
+        <button data-theme="light" class="on" aria-pressed="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+          Light
+        </button>
+        <button data-theme="dark" aria-pressed="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark
+        </button>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">AD</div>
+        <div class="who">
+          <span class="name">Anan D.</span>
+          <span class="role">Admin</span>
+        </div>
+        <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============== MAIN ============== -->
+  <main class="main">
+
+    <!-- breadcrumb + global utilities -->
+    <div class="topbar">
+      <nav class="crumbs">
+        <a href="#">Home</a>
+        <span class="sep">/</span>
+        <a href="#">Sites</a>
+        <span class="sep">/</span>
+        <a href="#">Site A — HQ Bangkok</a>
+        <span class="sep">/</span>
+        <span class="here">Building A — Main Tower</span>
+      </nav>
+      <div class="right">
+        <span class="pill alert"><span class="dot-i"></span>1 site offline</span>
+        <span class="pill poll"><span class="dot-i"></span>Polling · 30s</span>
+        <button class="icon-btn" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="icon-btn" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- page header -->
+    <div class="page-head">
+      <div>
+        <h1>Building A — Main Tower</h1>
+        <div class="sub">Click a floor to view its floor plan.</div>
+      </div>
+      <div class="legend">
+        <span class="swatch"><i style="background:var(--ok)"></i>Online</span>
+        <span class="swatch"><i style="background:var(--warn)"></i>Warning</span>
+        <span class="swatch"><i style="background:var(--alert)"></i>Offline</span>
+        <span class="line-swatch"><i style="width:14px;height:14px;border:0;border-radius:50%;background:#0f172a"></i>Outdoor camera</span>
+      </div>
+    </div>
+
+    <!-- canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas" id="canvas">
+
+        <!-- canvas controls -->
+        <div class="canvas-tools">
+          <div class="group">
+            <button class="icon-btn" title="Zoom in">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="icon-btn" title="Zoom out">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="icon-btn" title="Fit to view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+            </button>
+          </div>
+          <button class="icon-btn" title="Re-layout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="icon-btn" title="Lock pan/zoom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </button>
+        </div>
+
+        <!-- isometric building cross-section — floor slabs, cameras, leader lines (rendered by script) -->
+        <svg class="iso-scene" id="isoScene" viewBox="0 0 1000 600" preserveAspectRatio="none"></svg>
+
+        <!-- Floor cards (slim, positioned next to each floor by the iso script) -->
+        <div class="floor-card ok"    data-floor="6">
+          <span class="dot" style="background:var(--ok)"></span>
+          <span class="num">F6</span>
+          <span class="label">Executive Office</span>
+          <span class="count">4 dev</span>
+        </div>
+        <div class="floor-card warn"  data-floor="5">
+          <span class="dot" style="background:var(--warn)"></span>
+          <span class="num">F5</span>
+          <span class="label">Meeting Rooms</span>
+          <span class="count">5 dev</span>
+        </div>
+        <div class="floor-card ok"    data-floor="4">
+          <span class="dot" style="background:var(--ok)"></span>
+          <span class="num">F4</span>
+          <span class="label">Office</span>
+          <span class="count">8 dev</span>
+        </div>
+        <div class="floor-card ok"    data-floor="3">
+          <span class="dot" style="background:var(--ok)"></span>
+          <span class="num">F3</span>
+          <span class="label">Office</span>
+          <span class="count">7 dev</span>
+        </div>
+        <div class="floor-card alert" data-floor="2">
+          <span class="dot" style="background:var(--alert)"></span>
+          <span class="num">F2</span>
+          <span class="label">Server Room · 2 cams offline</span>
+          <span class="count">9 dev</span>
+        </div>
+        <div class="floor-card ok"    data-floor="1">
+          <span class="dot" style="background:var(--ok)"></span>
+          <span class="num">F1</span>
+          <span class="label">Lobby · Reception</span>
+          <span class="count">3 dev</span>
+        </div>
+
+        <!-- minimap reflecting floor stack -->
+        <div class="minimap" aria-hidden="true" style="left:auto;right:14px">
+          <span class="label">Floors</span>
+          <div class="viewport" style="left:30%;top:18%;width:36%;height:64%"></div>
+          <div class="nub"   style="left:42%;top:18%"></div>
+          <div class="nub y" style="left:42%;top:30%"></div>
+          <div class="nub"   style="left:42%;top:43%"></div>
+          <div class="nub"   style="left:42%;top:55%"></div>
+          <div class="nub r" style="left:42%;top:68%"></div>
+          <div class="nub"   style="left:42%;top:80%"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>
+  // Theme toggle — persists choice in localStorage
+  (function(){
+    var root = document.documentElement;
+    var toggle = document.getElementById('themeToggle');
+    if(!toggle) return;
+    var saved = null;
+    try{ saved = localStorage.getItem('ssm.theme'); }catch(e){}
+    if(saved === 'light' || saved === 'dark') apply(saved);
+    toggle.addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-theme]');
+      if(!btn) return;
+      apply(btn.dataset.theme);
+      try{ localStorage.setItem('ssm.theme', btn.dataset.theme); }catch(e){}
+    });
+    function apply(theme){
+      root.setAttribute('data-theme', theme);
+      toggle.querySelectorAll('button[data-theme]').forEach(function(b){
+        var on = b.dataset.theme === theme;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+  })();
+</script>
+<script>
+  // ============== BUILDING CROSS-SECTION SCENE ==============
+  (function(){
+    var svg = document.getElementById('isoScene');
+    if(!svg) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var CX = 300, CY = 360;        // world (0,0,0) projects here
+    var COS = 0.866, SIN = 0.5;
+    var W = 220, D = 140;          // footprint
+    var HFLOOR = 50;               // each floor's z thickness
+
+    function project(x, y, z){
+      return [(x - y) * COS + CX, (x + y) * SIN + CY - z];
+    }
+    function el(tag, attrs){
+      var e = document.createElementNS(NS, tag);
+      for(var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    function poly(parent, cls, pts){
+      parent.appendChild(el('polygon', { 'class': cls, points: pts.map(function(p){return p[0]+','+p[1];}).join(' ') }));
+    }
+    function line(parent, cls, x1, y1, x2, y2){
+      parent.appendChild(el('line', { 'class': cls, x1:x1, y1:y1, x2:x2, y2:y2 }));
+    }
+    function gridOnFace(parent, A, B, D2, cols, rows){
+      var i;
+      for(i = 1; i < cols; i++){
+        var t = i / cols;
+        line(parent, 'grid',
+          A[0] + t*(B[0]-A[0]), A[1] + t*(B[1]-A[1]),
+          D2[0] + t*(B[0]-A[0]), D2[1] + t*(B[1]-A[1]));
+      }
+      for(i = 1; i < rows; i++){
+        var s = i / rows;
+        line(parent, 'grid',
+          A[0] + s*(D2[0]-A[0]), A[1] + s*(D2[1]-A[1]),
+          B[0] + s*(D2[0]-A[0]), B[1] + s*(D2[1]-A[1]));
+      }
+    }
+
+    // Floors bottom-to-top
+    var floors = [
+      { num:1, status:'ok',    pattern:'lobby'   },
+      { num:2, status:'alert', pattern:'rack'    },  // Server Room
+      { num:3, status:'ok',    pattern:'office'  },
+      { num:4, status:'ok',    pattern:'office'  },
+      { num:5, status:'warn',  pattern:'meeting' },
+      { num:6, status:'ok',    pattern:'office'  }
+    ];
+
+    // ground shadow under whole building
+    var gp = project(W/2, D/2, 0);
+    svg.appendChild(el('ellipse', { 'class':'shadow',
+      cx:gp[0], cy:gp[1]+10, rx:(W+D)*0.42*COS, ry:(W+D)*0.42*SIN*0.6 }));
+
+    // Each floor as an iso slab. Painted bottom-to-top so upper floors layer
+    // over lower ones correctly. Only the top floor draws its top face (the roof).
+    floors.forEach(function(f, i){
+      var zlo = i * HFLOOR;
+      var zhi = zlo + HFLOOR;
+      var g = el('g', { 'class':'bldg ' + f.status, 'data-floor': f.num });
+      svg.appendChild(g);
+
+      var SWb = project(0, 0, zlo);
+      var SEb = project(W, 0, zlo);
+      var NEb = project(W, D, zlo);
+      var SWt = project(0, 0, zhi);
+      var SEt = project(W, 0, zhi);
+      var NEt = project(W, D, zhi);
+
+      // Top face — only for topmost slab (the roof)
+      if(i === floors.length - 1){
+        var NWt = project(0, D, zhi);
+        poly(g, 'face-top', [SWt, SEt, NEt, NWt]);
+      }
+      // South face (front, cut-away stripe per floor)
+      poly(g, 'face-south', [SWb, SEb, SEt, SWt]);
+      // East face
+      poly(g, 'face-east', [SEb, NEb, NEt, SEt]);
+
+      // Interior pattern (grid) per floor function
+      if(f.pattern === 'office'){
+        gridOnFace(g, SWb, SEb, SWt, 4, 1);
+        gridOnFace(g, SEb, NEb, SEt, 3, 1);
+      } else if(f.pattern === 'meeting'){
+        gridOnFace(g, SWb, SEb, SWt, 3, 1);
+        gridOnFace(g, SEb, NEb, SEt, 2, 1);
+      } else if(f.pattern === 'lobby'){
+        gridOnFace(g, SWb, SEb, SWt, 2, 1);
+        gridOnFace(g, SEb, NEb, SEt, 2, 1);
+      } else if(f.pattern === 'rack'){
+        // 5 vertical "rack" stripes on the south face — denser pattern reads as racks
+        gridOnFace(g, SWb, SEb, SWt, 5, 1);
+        gridOnFace(g, SEb, NEb, SEt, 3, 1);
+      }
+
+      // Roof detail line — small parapet edge on the topmost slab
+      if(i === floors.length - 1){
+        var NWb = project(0, D, zhi);
+        // Already drew top face; ridge stroke could go here if needed
+      }
+    });
+
+    // Outdoor cameras mounted on the EAST exterior wall
+    // (different from the cams inside the Server Room — those are floor-plan items)
+    var camsOn = [
+      { fz: 5.2, u: 0.55 },   // upper, near F5
+      { fz: 2.4, u: 0.35 }    // mid, near F2/F3 boundary
+    ];
+    camsOn.forEach(function(cam, idx){
+      var z = cam.fz * HFLOOR;
+      var Ap = project(W, 0, z);
+      var Bp = project(W, D, z);
+      var cx = Ap[0] + cam.u * (Bp[0] - Ap[0]);
+      var cy = Ap[1] + cam.u * (Bp[1] - Ap[1]);
+      var cg = el('g', { transform: 'translate(' + cx + ',' + cy + ')' });
+      svg.appendChild(cg);
+      cg.appendChild(el('circle',  { 'class':'cam-bg', r:6 }));
+      cg.appendChild(el('polygon', { 'class':'cam-tip', points:'4,-3 12,-7 12,1' }));
+      var t = el('text', { 'class':'cam-label', x:10, y:14 });
+      t.textContent = 'CAM-0' + (idx+1);
+      cg.appendChild(t);
+    });
+
+    // Position floor cards to the right, aligned with each floor's south-face center y
+    floors.forEach(function(f, i){
+      var card = document.querySelector('.floor-card[data-floor="' + f.num + '"]');
+      if(!card) return;
+      var midZ = i * HFLOOR + HFLOOR/2;
+      var faceY = W/2 * SIN + CY - midZ; // south-face center y in viewBox coords
+      var leftPct = 73;
+      var topPct  = (faceY / 600) * 100;
+      card.style.left = leftPct + '%';
+      card.style.top  = topPct  + '%';
+    });
+
+    // Subtle leader lines from each floor's east edge to its card
+    floors.forEach(function(f, i){
+      var midZ = i * HFLOOR + HFLOOR/2;
+      var anchor = project(W, D/2, midZ); // east face midpoint
+      // Stop the leader just before where cards start (~viewBox x 580)
+      line(svg, 'leader', anchor[0], anchor[1], 580, anchor[1]);
+    });
+  })();
+</script>
+</body>
+</html>

@@ -7,12 +7,12 @@ namespace BNO_Survei_MonitorAPI
     {
         public static void Register(HttpConfiguration config)
         {
-            // CORS — allow React dev server + production intranet origin
-            var cors = new EnableCorsAttribute(
-                origins: "http://localhost:5173,http://localhost:3000,http://localhost:5174",
-                headers: "*",
-                methods: "*"
-            );
+                // CORS — allow React dev server + production intranet origin
+                var cors = new EnableCorsAttribute(
+                    origins: "http://localhost:5173,http://localhost:3000,http://localhost:5174",
+                    headers: "*",
+                    methods: "*"
+                );
             config.EnableCors(cors);
 
             // JWT auth filter applied globally

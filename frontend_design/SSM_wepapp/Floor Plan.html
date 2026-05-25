@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<title>SSM — Building A / Floor 3</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ------------------------------------------------------------------
+     SSM v1.0 — Modern Minimal
+     Solid borders, real shadows, semantic status colors, blue accent.
+  ------------------------------------------------------------------ */
+  :root, :root[data-theme="dark"]{
+    /* surfaces — deep navy stack */
+    --bg:        #0b0e16;
+    --surface:   #11151f;
+    --surface-2: #161b27;
+    --surface-3: #1c2230;
+    /* borders */
+    --border:    #232938;
+    --border-2:  #2e3547;
+    /* ink */
+    --ink:       #f1f3f8;
+    --ink-2:     #b3bbcc;
+    --ink-3:     #7c8499;
+    --ink-4:     #4d556a;
+    /* accent (primary) */
+    --accent:    #5b8def;
+    --accent-2:  #7aa2ff;
+    --accent-soft:rgba(91,141,239,.14);
+    /* status — tuned for dark bg */
+    --ok:        #34d399;
+    --ok-soft:   rgba(52,211,153,.14);
+    --warn:      #fbbf24;
+    --warn-soft: rgba(251,191,36,.14);
+    --alert:     #f87171;
+    --alert-soft:rgba(248,113,113,.14);
+    /* edges + grid (theme-aware) */
+    --edge-stroke: #3a4258;
+    --grid-dot:    rgba(255,255,255,.06);
+    --grid-size:   24px;
+    --canvas-bg:   var(--surface);
+    --ring-soft:   rgba(255,255,255,.04);
+    /* shadows — darker, deeper */
+    --shadow-1:  0 1px 2px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03);
+    --shadow-2:  0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.45);
+    --shadow-3:  0 2px 6px rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.55);
+  }
+
+  :root[data-theme="light"]{
+    /* surfaces */
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --surface-2: #f3f5f8;
+    --surface-3: #eceff3;
+    /* borders */
+    --border:    #e6e8ec;
+    --border-2:  #d4d7dc;
+    /* ink */
+    --ink:       #0f172a;
+    --ink-2:     #475569;
+    --ink-3:     #94a3b8;
+    --ink-4:     #cbd2db;
+    /* accent */
+    --accent:    #2563eb;
+    --accent-2:  #1d4ed8;
+    --accent-soft:#eff6ff;
+    /* status — tuned for light bg */
+    --ok:        #16a34a;
+    --ok-soft:   #ecfdf5;
+    --warn:      #d97706;
+    --warn-soft: #fffbeb;
+    --alert:     #dc2626;
+    --alert-soft:#fef2f2;
+    /* edges + grid */
+    --edge-stroke: #cbd2db;
+    --grid-dot:    #d0d5dd;
+    --grid-size:   24px;
+    --canvas-bg:   #f0f2f5;
+    --ring-soft:   rgba(15,23,42,.04);
+    /* shadows */
+    --shadow-1:  0 1px 2px rgba(15,23,42,.04), 0 0 0 1px rgba(15,23,42,.02);
+    --shadow-2:  0 2px 8px rgba(15,23,42,.08);
+    --shadow-3:  0 6px 18px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;font-feature-settings:"calt" 0}
+  button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+
+  /* shell */
+  .app{display:grid;grid-template-columns:256px 1fr;height:100vh;min-height:640px}
+
+  /* ============== SIDEBAR ============== */
+  .sidebar{
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;
+    padding:16px 12px 12px;gap:18px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 14px;border-bottom:1px solid var(--border)}
+  .brand .logo{
+    width:32px;height:32px;border-radius:8px;
+    background:var(--accent);color:#0b0e16;display:grid;place-items:center;
+    font-weight:700;font-size:14px;letter-spacing:.02em
+  }
+  .brand .name{font-weight:600;font-size:14px;letter-spacing:-.005em;color:var(--ink)}
+  .brand .ver{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+  .nav-section{display:flex;flex-direction:column;gap:2px}
+  .nav-section .label{
+    text-transform:uppercase;font-size:10px;letter-spacing:.1em;font-weight:600;
+    color:var(--ink-3);padding:0 8px;margin:6px 0 6px
+  }
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:8px 10px;border-radius:7px;color:var(--ink-2);cursor:pointer;
+    font-weight:500;
+  }
+  .nav-item:hover{background:var(--surface-2);color:var(--ink)}
+  .nav-item.active{background:var(--accent-soft);color:var(--accent-2);font-weight:600}
+  .nav-item .ico{width:18px;height:18px;flex:none;color:currentColor;opacity:.9}
+  .nav-item .count{
+    margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:500;
+    background:var(--surface-2);padding:1px 7px;border-radius:999px
+  }
+  .nav-item.active .count{background:rgba(91,141,239,.18);color:var(--accent-2)}
+
+  .tree{display:flex;flex-direction:column;gap:1px;padding:2px 0 0 4px;margin-left:8px;
+    border-left:1px solid var(--border)}
+  .tree .leaf{
+    display:flex;align-items:center;gap:10px;
+    padding:6px 10px;border-radius:6px;color:var(--ink-2);cursor:pointer;font-size:13px
+  }
+  .tree .leaf:hover{background:var(--surface-2);color:var(--ink)}
+  .tree .leaf.active{background:var(--accent-soft);color:var(--accent-2);font-weight:600}
+  .tree .leaf .dot{width:8px;height:8px;border-radius:50%;flex:none;margin-left:auto;
+    box-shadow:0 0 0 3px var(--ring-soft)}
+  .dot.r{background:var(--alert)} .dot.g{background:var(--ok)} .dot.y{background:var(--warn)}
+
+  .add-row{
+    display:flex;align-items:center;gap:10px;
+    padding:7px 10px;border:1px dashed var(--border-2);border-radius:7px;
+    color:var(--ink-2);cursor:pointer;margin:6px 0 0;font-weight:500
+  }
+  .add-row:hover{color:var(--accent);border-color:var(--accent)}
+  .add-row .plus{
+    width:16px;height:16px;border-radius:50%;background:var(--surface-2);
+    display:grid;place-items:center;font-size:13px;line-height:1;color:var(--ink-2)
+  }
+
+  .sidebar .spacer{flex:1}
+  .sidebar-foot{display:flex;flex-direction:column;gap:10px;padding-top:12px;border-top:1px solid var(--border)}
+  .theme-toggle{
+    display:flex;background:var(--surface-2);border-radius:8px;padding:3px;font-size:12px;border:1px solid var(--border)
+  }
+  .theme-toggle button{
+    flex:1;padding:6px 10px;border-radius:6px;color:var(--ink-3);font-weight:500;
+    display:flex;align-items:center;justify-content:center;gap:6px
+  }
+  .theme-toggle button.on{background:var(--surface-3);color:var(--ink);box-shadow:inset 0 0 0 1px var(--border-2);font-weight:600}
+  .user-chip{
+    display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;
+    background:var(--surface-2)
+  }
+  .user-chip:hover{background:var(--surface-3)}
+  .user-chip .avatar{
+    width:30px;height:30px;border-radius:50%;background:var(--accent);color:#0b0e16;
+    display:grid;place-items:center;font-weight:700;font-size:11px;letter-spacing:.02em
+  }
+  .user-chip .who{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+  .user-chip .name{font-weight:600;color:var(--ink);font-size:13px}
+  .user-chip .role{font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+  .user-chip .caret{margin-left:auto;color:var(--ink-3)}
+
+  /* ============== MAIN ============== */
+  .main{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+
+  .topbar{
+    display:flex;align-items:center;gap:14px;
+    padding:11px 24px;border-bottom:1px solid var(--border);
+    background:var(--surface);min-height:56px
+  }
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-3)}
+  .crumbs a{color:var(--ink-2);text-decoration:none;font-weight:500}
+  .crumbs a:hover{color:var(--ink)}
+  .crumbs .here{color:var(--ink);font-weight:600}
+  .crumbs .sep{color:var(--ink-4)}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 10px;border:1px solid var(--border);border-radius:999px;
+    color:var(--ink-2);font-size:12px;background:var(--surface);font-weight:500
+  }
+  .pill .dot-i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .pill.alert{border-color:rgba(248,113,113,.35);background:var(--alert-soft);color:var(--alert);font-weight:600}
+  .pill.alert .dot-i{background:var(--alert);box-shadow:0 0 0 3px rgba(248,113,113,.18)}
+  .pill.poll{color:var(--ink-2)}
+  .pill.poll .dot-i{background:var(--ok)}
+  .icon-btn{
+    width:34px;height:34px;border-radius:8px;
+    display:grid;place-items:center;color:var(--ink-2);
+    background:var(--surface);border:1px solid var(--border)
+  }
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+  .icon-btn svg{width:16px;height:16px}
+
+  /* page header */
+  .page-head{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+    padding:22px 24px 14px
+  }
+  .page-head h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.015em;color:var(--ink)}
+  .page-head .sub{color:var(--ink-3);font-size:13px;margin-top:4px;max-width:60ch}
+  .legend{display:flex;align-items:center;gap:18px;color:var(--ink-2);font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+  .legend .swatch{display:inline-flex;align-items:center;gap:7px;font-weight:500}
+  .legend .swatch i{width:8px;height:8px;border-radius:50%;display:inline-block;
+    box-shadow:0 0 0 3px rgba(15,23,42,.04)}
+  .legend .line-swatch{display:inline-flex;align-items:center;gap:7px;font-weight:500}
+  .legend .line-swatch i{width:22px;height:0;border-top:1.5px solid var(--ink-2);display:inline-block}
+  .legend .line-swatch.dashed i{border-top-style:dashed}
+
+  /* canvas */
+  .canvas-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 24px 24px}
+  .canvas{
+    flex:1;min-height:0;position:relative;
+    background:var(--canvas-bg);
+    border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;
+    background-image:radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px);
+    background-size:var(--grid-size) var(--grid-size);background-position:0 0;
+    box-shadow:var(--shadow-1)
+  }
+
+  /* canvas toolbar */
+  .canvas-tools{
+    position:absolute;top:14px;right:14px;display:flex;flex-direction:column;gap:8px;z-index:3
+  }
+  .canvas-tools .group{
+    display:flex;flex-direction:column;background:var(--surface);
+    border:1px solid var(--border);border-radius:8px;overflow:hidden;
+    box-shadow:var(--shadow-1)
+  }
+  .canvas-tools .group .icon-btn{background:transparent;border:0;border-radius:0;border-bottom:1px solid var(--border)}
+  .canvas-tools .group .icon-btn:last-child{border-bottom:0}
+  .canvas-tools > .icon-btn{box-shadow:var(--shadow-1)}
+
+  /* minimap */
+  .minimap{
+    position:absolute;left:14px;bottom:14px;
+    width:172px;height:104px;
+    background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    overflow:hidden;z-index:3;box-shadow:var(--shadow-1)
+  }
+  .minimap .label{
+    position:absolute;left:8px;top:6px;font-size:10px;color:var(--ink-3);
+    font-weight:600;letter-spacing:.08em;text-transform:uppercase;z-index:2
+  }
+  .minimap .viewport{
+    position:absolute;left:30%;top:28%;width:50%;height:52%;
+    border:1.5px solid var(--accent);border-radius:3px;
+    background:rgba(91,141,239,.10)
+  }
+  .minimap .nub{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
+  .minimap .nub.r{background:var(--alert)}
+  .minimap .nub.y{background:var(--warn)}
+  .minimap .nub.hq{background:var(--accent);width:8px;height:8px}
+
+  /* edges */
+  svg.edges{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+  .edge{fill:none;stroke:var(--edge-stroke);stroke-width:1.5;stroke-linecap:round}
+  .edge.alert{stroke:var(--alert);stroke-width:2}
+  .edge.vpn{stroke:var(--edge-stroke);stroke-dasharray:5 5}
+  .edge-label{
+    font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;fill:var(--ink-3);font-weight:500
+  }
+
+  /* nodes */
+  .node{
+    position:absolute;transform:translate(-50%,-50%);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:13px 15px;
+    min-width:216px;
+    display:flex;align-items:center;gap:12px;
+    z-index:2;cursor:pointer;user-select:none;
+    box-shadow:var(--shadow-2);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  :root[data-theme="light"] .node{ border-color:#d4d7dc; }
+  .node:hover{transform:translate(-50%,-50%) translateY(-1px);box-shadow:var(--shadow-3);border-color:var(--border-2)}
+  .node .dot{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--ring-soft)}
+  .node .meta{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+  .node .title{font-weight:600;font-size:13px;color:var(--ink);letter-spacing:-.005em;line-height:1.25;white-space:nowrap}
+  .node .sub{font-size:11.5px;color:var(--ink-3);font-weight:500}
+  .node .count{font-size:11px;color:var(--ink-2);font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:500;
+    background:var(--surface-2);padding:3px 8px;border-radius:999px;flex:none}
+
+  /* HQ node — accent primary */
+  .node.hq{
+    background:linear-gradient(180deg, #1b2540 0%, #141a2c 100%);
+    color:#fff;border-color:rgba(91,141,239,.45);
+    min-width:220px;padding:14px 16px;gap:12px;
+    display:flex;flex-direction:column;align-items:stretch;
+    box-shadow:0 0 0 1px rgba(91,141,239,.18), 0 8px 28px rgba(0,0,0,.55), 0 0 32px rgba(91,141,239,.18)
+  }
+  .node.hq:hover{transform:translate(-50%,-50%) translateY(-1px)}
+  .node.hq .head{display:flex;align-items:center;gap:10px}
+  .node.hq .glyph{
+    width:32px;height:32px;border-radius:8px;background:var(--accent);color:#0b0e16;
+    display:grid;place-items:center;font-weight:700;font-size:13px;flex:none
+  }
+  .node.hq .title{color:#fff;font-size:14px;white-space:normal}
+  .node.hq .ip{color:#94a3b8;font-size:11.5px;margin-top:2px;font-family:'JetBrains Mono',ui-monospace,monospace}
+  .node.hq .stat{
+    display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;
+    padding:8px 0 0;border-top:1px solid rgba(255,255,255,.08);font-weight:500
+  }
+  .node.hq .stat .dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 0 3px rgba(255,255,255,.05);background:var(--ok)}
+  .node.hq .stat .count{margin-left:auto;color:#94a3b8;background:transparent;padding:0}
+
+  /* status-tinted left border + dot color */
+  .node.alert{border-color:rgba(248,113,113,.4)}
+  .node.warn{border-color:rgba(251,191,36,.35)}
+  .node.ok{border-color:var(--border)}
+  .node.alert::before,
+  .node.warn::before,
+  .node.ok::before{
+    content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;
+  }
+  .node.alert::before{background:var(--alert)}
+  .node.warn::before {background:var(--warn)}
+  .node.ok::before   {background:var(--ok)}
+
+  /* subtle pulse on the offline node’s dot */
+  @keyframes pulseDot{
+    0%{box-shadow:0 0 0 0 rgba(248,113,113,.45)}
+    100%{box-shadow:0 0 0 10px rgba(248,113,113,0)}
+  }
+  .node.alert .dot{animation:pulseDot 1.8s ease-out infinite}
+
+  /* ============== ISOMETRIC SCENE ============== */
+  .iso-scene{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .iso-scene .bldg{cursor:pointer;transition:filter .15s ease}
+  .iso-scene .bldg:hover{filter:brightness(1.06)}
+  /* Strong-contrast three-face shading (light / medium / dark) */
+  .iso-scene .face-top   { fill:#f4f6fa; stroke:#7d8593; stroke-width:1.3; stroke-linejoin:round }
+  .iso-scene .face-south { fill:#b6bcc8; stroke:#7d8593; stroke-width:1.3; stroke-linejoin:round }
+  .iso-scene .face-east  { fill:#878d99; stroke:#6b727f; stroke-width:1.3; stroke-linejoin:round }
+  /* Alert building — red across all faces + strong outline */
+  .iso-scene .bldg.alert .face-top   { fill:#fbd6d6; stroke:var(--alert); stroke-width:2 }
+  .iso-scene .bldg.alert .face-south { fill:#e08888; stroke:var(--alert); stroke-width:2 }
+  .iso-scene .bldg.alert .face-east  { fill:#a85c5c; stroke:#a32020; stroke-width:2 }
+  /* Warn building — amber */
+  .iso-scene .bldg.warn  .face-top   { fill:#f7e1a3; stroke:#b58a2a; stroke-width:1.6 }
+  .iso-scene .bldg.warn  .face-south { fill:#d6b25c; stroke:#b58a2a; stroke-width:1.6 }
+  .iso-scene .bldg.warn  .face-east  { fill:#a3853a; stroke:#9a7826; stroke-width:1.6 }
+  /* Window / floor grid (computed line ends, no transform) */
+  .iso-scene .grid{ stroke:rgba(0,0,0,.22); stroke-width:.9; fill:none; pointer-events:none }
+  .iso-scene .bldg.alert .grid { stroke:rgba(132,30,30,.45) }
+  .iso-scene .bldg.warn  .grid { stroke:rgba(110,80,12,.4) }
+  /* Ground shadow under each building */
+  .iso-scene .shadow{ fill:rgba(0,0,0,.18); pointer-events:none }
+  /* Outdoor camera marker */
+  .iso-scene .cam-bg{ fill:#0f172a; stroke:#ffffff; stroke-width:1.6 }
+  .iso-scene .cam-tip{ fill:#0f172a; stroke:#ffffff; stroke-width:1.4 }
+  .iso-scene .cam-label{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; fill:#1e2433; font-weight:600 }
+
+  [data-theme="dark"] .iso-scene .face-top   { fill:#2a3142; stroke:#4c5468 }
+  [data-theme="dark"] .iso-scene .face-south { fill:#1c2231; stroke:#4c5468 }
+  [data-theme="dark"] .iso-scene .face-east  { fill:#131826; stroke:#3a4258 }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-top   { fill:#552a2a }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-south { fill:#3c1c1c }
+  [data-theme="dark"] .iso-scene .bldg.alert .face-east  { fill:#2a1212 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-top   { fill:#544017 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-south { fill:#3a2c10 }
+  [data-theme="dark"] .iso-scene .bldg.warn  .face-east  { fill:#291f08 }
+  [data-theme="dark"] .iso-scene .grid{ stroke:rgba(255,255,255,.10) }
+  [data-theme="dark"] .iso-scene .shadow{ fill:rgba(0,0,0,.45) }
+  [data-theme="dark"] .iso-scene .cam-bg{ fill:#ffffff; stroke:#0b0e16 }
+  [data-theme="dark"] .iso-scene .cam-tip{ fill:#ffffff; stroke:#0b0e16 }
+  [data-theme="dark"] .iso-scene .cam-label{ fill:var(--ink-3) }
+
+  /* ============== FLOOR CARDS (Building Detail) ============== */
+  .floor-card{
+    position:absolute;transform:translate(-50%,-50%);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 12px 7px 14px;
+    min-width:300px;
+    display:flex;align-items:center;gap:10px;
+    z-index:3;cursor:pointer;user-select:none;
+    box-shadow:var(--shadow-2);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    font-size:12.5px;
+  }
+  :root[data-theme="light"] .floor-card{ border-color:#d4d7dc }
+  .floor-card:hover{transform:translate(-50%,-50%) translateY(-1px);box-shadow:var(--shadow-3);border-color:var(--border-2)}
+  .floor-card .dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--ring-soft)}
+  .floor-card .num{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:700;color:var(--ink);font-size:11.5px;
+    background:var(--surface-2);padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+  .floor-card .label{color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .floor-card .count{margin-left:auto;font-size:11px;color:var(--ink-2);font-family:'JetBrains Mono',ui-monospace,monospace;
+    background:var(--surface-2);padding:2px 8px;border-radius:999px;flex:none}
+  /* status accents */
+  .floor-card.alert{border-color:#fecaca}
+  .floor-card.warn { border-color:#fde2a3 }
+  .floor-card.alert::before,
+  .floor-card.warn::before,
+  .floor-card.ok::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;
+  }
+  .floor-card.alert::before{background:var(--alert)}
+  .floor-card.warn::before {background:var(--warn)}
+  .floor-card.ok::before   {background:var(--ok)}
+  /* alert num colored */
+  .floor-card.alert .num{color:var(--alert);background:rgba(248,113,113,.12)}
+  .floor-card.warn  .num{color:#b58a2a;background:rgba(214,179,93,.18)}
+  [data-theme="dark"] .floor-card.warn .num{color:#fbbf24;background:rgba(251,191,36,.14)}
+  /* guest / locked variant */
+  .floor-card.locked{cursor:not-allowed;opacity:.55}
+  .floor-card.locked .lock{margin-left:6px;color:var(--ink-3)}
+
+  /* leader line from building to card */
+  .iso-scene .leader{ stroke:#9099a8; stroke-width:1; stroke-dasharray:3 3; fill:none; opacity:.7 }
+  [data-theme="dark"] .iso-scene .leader{ stroke:#4c5468 }
+
+  /* floor slabs use the same iso face classes; alert/warn override applies */
+  .iso-scene .bldg.alert .grid{ stroke:rgba(150,30,30,.4) }
+  .iso-scene .floor-divider{ stroke:rgba(0,0,0,.18); stroke-width:1.1; fill:none }
+  [data-theme="dark"] .iso-scene .floor-divider{ stroke:rgba(255,255,255,.10) }
+
+  /* ============== FLOOR PLAN (2D) ============== */
+  .plan{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  .plan .floor-bg{ fill:#fbfbfb; stroke:#2a3038; stroke-width:5; stroke-linejoin:miter }
+  .plan .wall{ stroke:#2a3038; stroke-width:5; stroke-linecap:butt; fill:none }
+  .plan .door{ stroke:#fbfbfb; stroke-width:6 } /* paints a gap over a wall */
+  .plan .door-swing{ stroke:#9099a8; stroke-width:1; stroke-dasharray:3 3; fill:none }
+  .plan .room-label{
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    fill:#5b6470; letter-spacing:.08em; text-transform:uppercase; text-anchor:middle;
+    pointer-events:none;
+  }
+  .plan .room-sub{
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9.5px;
+    fill:#8a93a0; text-anchor:middle; pointer-events:none;
+  }
+  .plan .room-fill{ fill:rgba(15,23,42,.015) }
+  .plan .room-fill.alt{ fill:rgba(15,23,42,.035) }
+
+  [data-theme="dark"] .plan .floor-bg{ fill:#0f1421; stroke:#4c5468 }
+  [data-theme="dark"] .plan .wall{ stroke:#4c5468 }
+  [data-theme="dark"] .plan .door{ stroke:#0f1421 }
+  [data-theme="dark"] .plan .door-swing{ stroke:#3a4258 }
+  [data-theme="dark"] .plan .room-label{ fill:var(--ink-2) }
+  [data-theme="dark"] .plan .room-sub{ fill:var(--ink-3) }
+  [data-theme="dark"] .plan .room-fill{ fill:rgba(255,255,255,.018) }
+  [data-theme="dark"] .plan .room-fill.alt{ fill:rgba(255,255,255,.035) }
+
+  /* Camera icon (placed absolutely as inline elements over the canvas) */
+  .cam{
+    position:absolute; transform:translate(-50%,-50%);
+    z-index:3; user-select:none;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    cursor:pointer; transition:transform .12s ease;
+  }
+  .cam:hover{ transform:translate(-50%,-50%) scale(1.05) }
+  .cam .icon{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--surface); border:2px solid var(--ok);
+    display:grid; place-items:center; color:var(--ok);
+    box-shadow:0 2px 6px rgba(0,0,0,.18);
+    position:relative;
+  }
+  .cam .icon svg{ width:16px; height:16px }
+  .cam.alert .icon{ border-color:var(--alert); color:var(--alert) }
+  /* Status dot in bottom-right corner of icon */
+  .cam .icon::after{
+    content:""; position:absolute; right:-1px; bottom:-1px;
+    width:9px; height:9px; border-radius:50%;
+    background:var(--ok); border:2px solid var(--surface);
+  }
+  .cam.alert .icon::after{ background:var(--alert) }
+  /* FOV cone — small wedge behind the icon, hinting at coverage */
+  .cam .fov{
+    position:absolute; left:50%; top:50%;
+    width:64px; height:64px; transform:translate(-50%,-50%) rotate(var(--rot, 0deg));
+    background:conic-gradient(from -25deg, rgba(34,197,94,.18) 0deg, rgba(34,197,94,.18) 50deg, transparent 50deg);
+    border-radius:50%;
+    z-index:-1; pointer-events:none;
+  }
+  .cam.alert .fov{
+    background:conic-gradient(from -25deg, rgba(248,113,113,.20) 0deg, rgba(248,113,113,.20) 50deg, transparent 50deg);
+  }
+  .cam .name{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:5px; padding:2px 7px;
+    font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px;
+    color:var(--ink-2); font-weight:600; letter-spacing:.02em;
+    box-shadow:0 1px 2px rgba(0,0,0,.06);
+    white-space:nowrap;
+  }
+  .cam.alert .name{ color:var(--alert); border-color:#fecaca }
+
+  /* Edit-mode treatments */
+  .canvas.edit .cam{ cursor:move }
+  .canvas.edit .cam .icon{
+    box-shadow:0 0 0 3px rgba(91,141,239,.22), 0 2px 6px rgba(0,0,0,.18);
+  }
+  .canvas.edit .cam::before{
+    content:""; position:absolute; left:50%; top:50%;
+    width:48px; height:48px; transform:translate(-50%,-50%);
+    border:1.5px dashed var(--accent); border-radius:8px;
+    pointer-events:none;
+  }
+
+  /* Mode toggle (View / Edit) — segmented pill */
+  .mode-toggle{
+    position:absolute; top:14px; left:14px; z-index:4;
+    display:flex; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:3px; font-size:12px; box-shadow:var(--shadow-1);
+  }
+  .mode-toggle button{
+    flex:none; padding:6px 14px; border-radius:6px; color:var(--ink-2); font-weight:500;
+    display:flex; align-items:center; gap:6px;
+  }
+  .mode-toggle button:hover{ color:var(--ink) }
+  .mode-toggle button.on{ background:var(--ink); color:var(--surface); font-weight:600 }
+  [data-theme="dark"] .mode-toggle button.on{ background:var(--accent); color:#0b0e16 }
+
+  /* Edit-mode banner & "+ Add Camera" floating button */
+  .edit-banner{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:4;
+    display:none; align-items:center; gap:10px;
+    background:var(--accent-soft); border:1px solid rgba(91,141,239,.35);
+    border-radius:999px; padding:5px 14px 5px 8px;
+    font-size:12px; color:var(--accent-2); font-weight:600;
+  }
+  .edit-banner .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent) }
+  .canvas.edit .edit-banner{ display:inline-flex }
+
+  .add-cam-btn{
+    position:absolute; bottom:14px; left:14px; z-index:4;
+    display:none; align-items:center; gap:8px;
+    background:var(--accent); color:#fff; border-radius:8px;
+    padding:9px 14px; font-size:12.5px; font-weight:600;
+    box-shadow:0 6px 18px rgba(91,141,239,.35);
+    cursor:pointer;
+  }
+  .add-cam-btn:hover{ background:var(--accent-2) }
+  [data-theme="dark"] .add-cam-btn{ color:#0b0e16 }
+  .canvas.edit .add-cam-btn{ display:inline-flex }
+
+  /* Mode-mode role badge (showing current role's permissions) */
+  .role-hint{
+    position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:4;
+    display:none; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:999px; padding:5px 12px;
+    font-size:11px; color:var(--ink-3); font-weight:500;
+    box-shadow:var(--shadow-1);
+  }
+  .canvas.edit .role-hint{ display:inline-flex }
+</style>
+</head>
+<body style="background-color: rgb(237, 237, 237)">
+<div class="app" data-screen-label="06 Floor 3 — Office">
+
+  <!-- ============== SIDEBAR ============== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <div class="name">SSM</div>
+        <div class="ver mono">v1.0 · Surveillance Smart-Monitor</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Navigation</div>
+      <div class="nav-item">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="6.5" y1="6.5" x2="10.5" y2="10.5"/><line x1="17.5" y1="6.5" x2="13.5" y2="10.5"/><line x1="6.5" y1="17.5" x2="10.5" y2="13.5"/><line x1="17.5" y1="17.5" x2="13.5" y2="13.5"/></svg>
+        <span>Home — Topology</span>
+      </div>
+      <div class="nav-item active">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Sites</span>
+        <span class="count">4</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="label">Sites</div>
+      <div class="tree">
+        <div class="leaf active">Site A — HQ Bangkok<span class="dot r"></span></div>
+        <div class="leaf">Site B — Chiang Mai DC<span class="dot g"></span></div>
+        <div class="leaf">Site C — Phuket Branch<span class="dot g"></span></div>
+        <div class="leaf">Site D — Khon Kaen<span class="dot y"></span></div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="sidebar-foot">
+      <div class="theme-toggle" id="themeToggle">
+        <button data-theme="light" class="on" aria-pressed="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+          Light
+        </button>
+        <button data-theme="dark" aria-pressed="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Dark
+        </button>
+      </div>
+      <div class="user-chip">
+        <div class="avatar">AD</div>
+        <div class="who">
+          <span class="name">Anan D.</span>
+          <span class="role">Admin</span>
+        </div>
+        <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============== MAIN ============== -->
+  <main class="main">
+
+    <!-- breadcrumb + global utilities -->
+    <div class="topbar">
+      <nav class="crumbs">
+        <a href="#">Home</a>
+        <span class="sep">/</span>
+        <a href="#">Sites</a>
+        <span class="sep">/</span>
+        <a href="#">Site A — HQ Bangkok</a>
+        <span class="sep">/</span>
+        <a href="#">Building A — Main Tower</a>
+        <span class="sep">/</span>
+        <span class="here">Floor 3</span>
+      </nav>
+      <div class="right">
+        <span class="pill alert"><span class="dot-i"></span>1 site offline</span>
+        <span class="pill poll"><span class="dot-i"></span>Polling · 30s</span>
+        <button class="icon-btn" title="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="icon-btn" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- page header -->
+    <div class="page-head">
+      <div>
+        <h1>Floor 3 — Office</h1>
+        <div class="sub">Open-plan workspace · 5 cameras · 1 offline</div>
+      </div>
+      <div class="legend">
+        <span class="swatch"><i style="background:var(--ok)"></i>Online</span>
+        <span class="swatch"><i style="background:var(--alert)"></i>Offline</span>
+        <span class="line-swatch"><i style="width:18px;height:6px;border:0;border-radius:2px;background:#2a3038"></i>Wall</span>
+        <span class="line-swatch"><i style="width:18px;height:6px;border:0;border-radius:2px;background:#ffffff;border:1px solid #2a3038"></i>Door</span>
+      </div>
+    </div>
+
+    <!-- canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas" id="canvas">
+
+        <!-- canvas controls -->
+        <div class="canvas-tools">
+          <div class="group">
+            <button class="icon-btn" title="Zoom in">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="icon-btn" title="Zoom out">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button class="icon-btn" title="Fit to view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4"/><path d="M20 9V5a1 1 0 0 0-1-1h-4"/><path d="M4 15v4a1 1 0 0 0 1 1h4"/><path d="M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+            </button>
+          </div>
+          <button class="icon-btn" title="Re-layout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </button>
+          <button class="icon-btn" title="Lock pan/zoom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </button>
+        </div>
+
+        <!-- Mode toggle (top-left) -->
+        <div class="mode-toggle" id="modeToggle">
+          <button data-mode="view" class="on" aria-pressed="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            View
+          </button>
+          <button data-mode="edit" aria-pressed="false">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Edit
+          </button>
+        </div>
+
+        <!-- Edit-mode banner (visible only when canvas.edit) -->
+        <div class="edit-banner"><span class="dot"></span>Edit mode · drag icons to reposition</div>
+
+        <!-- 2D Floor Plan SVG -->
+        <svg class="plan" id="floorPlan" viewBox="0 0 1000 600" preserveAspectRatio="none">
+          <!-- subtle room fills, painted before walls -->
+          <rect class="room-fill"     x="80"  y="60"  width="280" height="240"/>
+          <rect class="room-fill alt" x="360" y="60"  width="280" height="240"/>
+          <rect class="room-fill"     x="640" y="60"  width="280" height="240"/>
+          <rect class="room-fill alt" x="80"  y="300" width="840" height="40"/>
+          <rect class="room-fill"     x="80"  y="340" width="420" height="200"/>
+          <rect class="room-fill alt" x="500" y="340" width="420" height="200"/>
+
+          <!-- outer wall (with floor fill) -->
+          <rect class="floor-bg" x="80" y="60" width="840" height="480"/>
+
+          <!-- internal walls -->
+          <line class="wall" x1="360" y1="60"  x2="360" y2="300"/>
+          <line class="wall" x1="640" y1="60"  x2="640" y2="300"/>
+          <line class="wall" x1="80"  y1="300" x2="920" y2="300"/>
+          <line class="wall" x1="80"  y1="340" x2="920" y2="340"/>
+          <line class="wall" x1="500" y1="340" x2="500" y2="540"/>
+
+          <!-- doors: erase wall stroke with floor-bg color -->
+          <line class="door" x1="200" y1="300" x2="240" y2="300"/>
+          <line class="door" x1="480" y1="300" x2="520" y2="300"/>
+          <line class="door" x1="780" y1="300" x2="820" y2="300"/>
+          <line class="door" x1="200" y1="340" x2="240" y2="340"/>
+          <line class="door" x1="700" y1="340" x2="740" y2="340"/>
+          <line class="door" x1="500" y1="430" x2="500" y2="460"/>
+
+          <!-- room labels -->
+          <text class="room-label" x="220" y="178">Reception</text>
+          <text class="room-sub"   x="220" y="196">301 · pax 4</text>
+
+          <text class="room-label" x="500" y="178">Open Office</text>
+          <text class="room-sub"   x="500" y="196">302 · pax 24</text>
+
+          <text class="room-label" x="780" y="178">Manager</text>
+          <text class="room-sub"   x="780" y="196">303 · pax 2</text>
+
+          <text class="room-label" x="290" y="438">Meeting Room</text>
+          <text class="room-sub"   x="290" y="456">304 · seats 10</text>
+
+          <text class="room-label" x="710" y="438">Break Room</text>
+          <text class="room-sub"   x="710" y="456">305 · pax 12</text>
+
+          <text class="room-sub" x="500" y="325" style="font-size:9px;letter-spacing:.18em">— CORRIDOR —</text>
+        </svg>
+
+        <!-- Cameras (HTML overlays; positions stay aligned because SVG uses preserveAspectRatio="none") -->
+        <div class="cam ok"    data-cam="01" style="left:22%;top:22%;--rot:130deg">
+          <div class="fov"></div>
+          <div class="icon" title="CAM-01 · Reception">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <span class="name">CAM-01</span>
+        </div>
+
+        <div class="cam ok"    data-cam="02" style="left:50%;top:28%;--rot:185deg">
+          <div class="fov"></div>
+          <div class="icon" title="CAM-02 · Open Office">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <span class="name">CAM-02</span>
+        </div>
+
+        <div class="cam ok"    data-cam="03" style="left:78%;top:18%;--rot:135deg">
+          <div class="fov"></div>
+          <div class="icon" title="CAM-03 · Manager Office">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <span class="name">CAM-03</span>
+        </div>
+
+        <div class="cam ok"    data-cam="04" style="left:29%;top:78%;--rot:325deg">
+          <div class="fov"></div>
+          <div class="icon" title="CAM-04 · Meeting Room">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <span class="name">CAM-04</span>
+        </div>
+
+        <div class="cam alert" data-cam="05" style="left:72%;top:80%;--rot:300deg">
+          <div class="fov"></div>
+          <div class="icon" title="CAM-05 · Break Room — OFFLINE">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <span class="name">CAM-05</span>
+        </div>
+
+        <!-- Edit-mode controls (shown only when canvas.edit) -->
+        <button class="add-cam-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add camera
+        </button>
+        <div class="role-hint">Admin · drag to reposition · drop onto plan to add</div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>
+  // Theme toggle — persists choice in localStorage
+  (function(){
+    var root = document.documentElement;
+    var toggle = document.getElementById('themeToggle');
+    if(!toggle) return;
+    var saved = null;
+    try{ saved = localStorage.getItem('ssm.theme'); }catch(e){}
+    if(saved === 'light' || saved === 'dark') apply(saved);
+    toggle.addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-theme]');
+      if(!btn) return;
+      apply(btn.dataset.theme);
+      try{ localStorage.setItem('ssm.theme', btn.dataset.theme); }catch(e){}
+    });
+    function apply(theme){
+      root.setAttribute('data-theme', theme);
+      toggle.querySelectorAll('button[data-theme]').forEach(function(b){
+        var on = b.dataset.theme === theme;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+  })();
+</script>
+<script>
+  // ============== FLOOR PLAN — VIEW / EDIT MODE TOGGLE ==============
+  (function(){
+    var canvas = document.getElementById('canvas');
+    var toggle = document.getElementById('modeToggle');
+    if(!toggle || !canvas) return;
+    toggle.addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-mode]');
+      if(!btn) return;
+      var mode = btn.dataset.mode;
+      canvas.classList.toggle('edit', mode === 'edit');
+      toggle.querySelectorAll('button[data-mode]').forEach(function(b){
+        var on = b.dataset.mode === mode;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    });
+  })();
+</script>
+</body>
+</html>
