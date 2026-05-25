@@ -190,6 +190,7 @@
     <Compile Include="Controllers\auditLogsController.cs" />
     <Compile Include="Controllers\buildingsController.cs" />
     <Compile Include="Controllers\camerasController.cs" />
+    <Compile Include="Controllers\floorPlansController.cs" />
     <Compile Include="Controllers\floorsController.cs" />
     <Compile Include="Controllers\hierarchyController.cs" />
     <Compile Include="Controllers\nvrsController.cs" />

@@ -9,6 +9,7 @@ using HttpGetAttribute = System.Web.Http.HttpGetAttribute;
 using HttpPostAttribute = System.Web.Http.HttpPostAttribute;
 using HttpPutAttribute = System.Web.Http.HttpPutAttribute;
 using HttpDeleteAttribute = System.Web.Http.HttpDeleteAttribute;
+using HttpPatchAttribute = System.Web.Http.HttpPatchAttribute;
 using RouteAttribute = System.Web.Http.RouteAttribute;
 
 namespace BNO_Survei_MonitorAPI.Controllers
@@ -244,6 +245,52 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         return Ok(new { success = true, deleted = rows, id });
                     }
                 }
+            }
+            catch (Exception ex) { return InternalServerError(ex); }
+        }
+        #endregion
+
+        #region PATCH : cameras/{id}/position
+        public class PositionRequest
+        {
+            public decimal? x { get; set; }
+            public decimal? y { get; set; }
+        }
+
+        [HttpPatch]
+        [Route("api/cameras/{id}/position")]
+        public IHttpActionResult PatchPosition(int id, [FromBody] PositionRequest req)
+        {
+            if (req == null || !req.x.HasValue || !req.y.HasValue)
+                return BadRequest("x and y are required");
+
+            if (req.x < 0 || req.x > 1 || req.y < 0 || req.y > 1)
+                return BadRequest("x and y must be between 0.0 and 1.0");
+
+            var identity = RequestContext.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
+            var userIdStr = identity?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int? setBy = int.TryParse(userIdStr, out int uid) ? (int?)uid : null;
+
+            try
+            {
+                using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+                {
+                    con.Open();
+                    using (var cmd = new SqlCommand(@"
+                        UPDATE cameras
+                        SET position_x = @x, position_y = @y,
+                            position_set_at = GETUTCDATE(), position_set_by = @setBy
+                        WHERE id = @id", con))
+                    {
+                        cmd.Parameters.AddWithValue("@x", req.x.Value);
+                        cmd.Parameters.AddWithValue("@y", req.y.Value);
+                        cmd.Parameters.AddWithValue("@setBy", setBy.HasValue ? (object)setBy.Value : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@id", id);
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows == 0) return NotFound();
+                    }
+                }
+                return Ok(new { success = true, id, x = req.x, y = req.y });
             }
             catch (Exception ex) { return InternalServerError(ex); }
         }
