@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -16,6 +16,15 @@ const STATUS_COLOR: Record<Status, string> = {
   alert: 'var(--alert)',
 }
 
+const SITE_LABELS: Record<string, string> = {
+  'site-a': 'Site A — HQ Bangkok',
+  'site-b': 'Site B — Chiang Mai DC',
+  'site-c': 'Site C — Phuket Branch',
+  'site-d': 'Site D — Khon Kaen',
+  'site-e': 'Site E — Hat Yai',
+  'site-f': 'Site F — Udon Thani',
+}
+
 const BUILDINGS: Building[] = [
   { id: 'a', status: 'alert', title: 'Building A — Main Tower',    sub: '8 floors · 2 cams offline',      count: '42 dev' },
   { id: 'b', status: 'ok',    title: 'Building B — Annex',         sub: '4 floors',                        count: '18 dev' },
@@ -24,13 +33,15 @@ const BUILDINGS: Building[] = [
 ]
 
 export default function SitesPage() {
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const { siteId } = useParams<{ siteId: string }>()
+  const siteLabel  = SITE_LABELS[siteId ?? ''] ?? siteId ?? 'Unknown Site'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
         <div>
-          <h1>Site A — HQ Bangkok</h1>
+          <h1>{siteLabel}</h1>
           <p className="page-sub">Click a building to drill in.</p>
         </div>
         <div className="topo-legend">

@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Handle, Position, type NodeProps } from 'reactflow'
 import type { SiteData } from './mockData'
 
@@ -8,14 +9,20 @@ const STATUS_COLOR = {
   alert: 'var(--alert)',
 } as const
 
-function SiteNode({ data }: NodeProps<SiteData>) {
+function SiteNode({ id, data }: NodeProps<SiteData>) {
+  const navigate = useNavigate()
+
   return (
     <>
       <Handle type="target" position={Position.Top}    id="t" isConnectable={false} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Bottom} id="b" isConnectable={false} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left}   id="l" isConnectable={false} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Right}  id="r" isConnectable={false} style={{ opacity: 0 }} />
-      <div className={`topo-site topo-site-${data.status}`}>
+      <div
+        className={`topo-site topo-site-${data.status}`}
+        onClick={() => navigate(`/dashboard/sites/${id}`)}
+        title={`ดูตึกของ ${data.label}`}
+      >
         <span className="topo-dot" style={{ background: STATUS_COLOR[data.status] }} />
         <div className="topo-site-meta">
           <div className="topo-site-title">{data.label}</div>

@@ -13,7 +13,8 @@ export default function DashboardPage() {
       <Route element={<AppLayout />}>
         <Route index element={<Navigate to="topology" replace />} />
         <Route path="topology" element={<TopologyPage />} />
-        <Route path="sites"    element={<SitesPage />} />
+        <Route path="sites/:siteId" element={<SitesPage />} />
+        <Route path="sites"         element={<Navigate to="topology" replace />} />
         <Route path="cameras"  element={<Placeholder title="Cameras" />} />
         <Route path="nvrs"     element={<Placeholder title="NVRs" />} />
         <Route path="switches" element={<Placeholder title="PoE Switches" />} />
