@@ -210,7 +210,7 @@ namespace BNO_Survei_MonitorAPI.Services
             string pkCol = PkColFor(d.DeviceType);
 
             string sql = alive
-                ? $"UPDATE {table} SET status='online', fail_count=0,                      last_seen=GETDATE() WHERE {pkCol}=@id"
+                ? $"UPDATE {table} SET status='online',  fail_count=0,                       last_seen=@now WHERE {pkCol}=@id"
                 : $"UPDATE {table} SET status='offline', fail_count=ISNULL(fail_count,0)+1              WHERE {pkCol}=@id";
 
             using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
@@ -218,6 +218,8 @@ namespace BNO_Survei_MonitorAPI.Services
                 con.Open();
                 using (var cmd = new SqlCommand(sql, con))
                 {
+                    if (alive)
+                        cmd.Parameters.Add("@now", System.Data.SqlDbType.DateTime2).Value = DateTime.UtcNow;
                     cmd.Parameters.AddWithValue("@id", d.DeviceId);
                     cmd.ExecuteNonQuery();
                 }
