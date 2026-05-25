@@ -1,0 +1,126 @@
+/* ── Topology legend ─────────────────────────────────────────── */
+.topo-legend {
+  display: flex; align-items: center; gap: 18px;
+  color: var(--ink-2); font-size: 12px; flex-wrap: wrap; justify-content: flex-end;
+}
+.legend-swatch { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
+.legend-swatch i {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; box-shadow: 0 0 0 3px rgba(15,23,42,0.04);
+}
+.legend-line   { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
+.legend-line i { width: 22px; height: 0; border-top: 1.5px solid var(--ink-2); display: inline-block; }
+.legend-line.dashed i { border-top-style: dashed; }
+
+/* ── HQ Node ─────────────────────────────────────────────────── */
+.topo-hq {
+  background: linear-gradient(180deg, #1b2540 0%, #141a2c 100%);
+  border: 1px solid rgba(91,141,239,0.45);
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 220px;
+  box-shadow: 0 0 0 1px rgba(91,141,239,0.18), 0 8px 28px rgba(0,0,0,0.55), 0 0 32px rgba(91,141,239,0.18);
+}
+.topo-hq-head  { display: flex; align-items: center; gap: 10px; }
+.topo-hq-glyph {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--accent); color: #0b0e16;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 13px; flex: none;
+}
+.topo-hq-label { font-weight: 600; color: #fff; font-size: 14px; }
+.topo-hq-ip    { color: #94a3b8; font-size: 11.5px; margin-top: 2px; }
+.topo-hq-stat  {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #cbd5e1; font-weight: 500;
+  padding: 8px 0 0; margin-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ── Site Node ───────────────────────────────────────────────── */
+.topo-site {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 15px;
+  min-width: 210px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow-2);
+  position: relative; overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.topo-site:hover { box-shadow: var(--shadow-3); transform: translateY(-1px); }
+
+.topo-site::before {
+  content: ''; position: absolute;
+  left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px;
+}
+.topo-site-ok::before    { background: var(--ok); }
+.topo-site-warn::before  { background: var(--warn); }
+.topo-site-alert::before { background: var(--alert); }
+.topo-site-alert { border-color: rgba(248,113,113,0.4); }
+.topo-site-warn  { border-color: rgba(251,191,36,0.35); }
+
+.topo-site-meta  { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.topo-site-title { font-weight: 600; font-size: 13px; color: var(--ink); white-space: nowrap; }
+.topo-site-sub   { font-size: 11.5px; color: var(--ink-3); font-weight: 500; }
+.topo-site-count {
+  font-size: 11px; color: var(--ink-2);
+  font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  background: var(--surface-2); padding: 3px 8px;
+  border-radius: 999px; flex: none; white-space: nowrap;
+}
+
+/* ── Status dot ──────────────────────────────────────────────── */
+.topo-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--ring-soft);
+  display: inline-block; flex: none;
+}
+@keyframes pulseDot {
+  0%   { box-shadow: 0 0 0 0   rgba(248,113,113,0.45); }
+  100% { box-shadow: 0 0 0 10px rgba(248,113,113,0); }
+}
+.topo-site-alert .topo-dot { animation: pulseDot 1.8s ease-out infinite; }
+
+/* ── React Flow overrides ────────────────────────────────────── */
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.react-flow__node.selected .topo-site { box-shadow: 0 0 0 2px var(--accent), var(--shadow-3); }
+.react-flow__node.selected .topo-hq   { box-shadow: 0 0 0 2px var(--accent-2), 0 8px 28px rgba(0,0,0,0.55); }
+
+.react-flow__edge-path     { stroke-linecap: round; }
+.react-flow__edge-textbg   { fill-opacity: 0.85 !important; }
+
+.react-flow__controls {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-1) !important;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--ink-2) !important;
+  width: 34px !important; height: 34px !important;
+}
+.react-flow__controls-button:hover { background: var(--surface-2) !important; }
+.react-flow__controls-button:last-child { border-bottom: 0 !important; }
+.react-flow__controls-button svg { stroke: currentColor !important; fill: none !important; }
+
+.react-flow__minimap {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-1) !important;
+}
+.react-flow__minimap-mask { fill: rgba(0,0,0,0.12) !important; }

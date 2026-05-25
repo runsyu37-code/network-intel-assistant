@@ -202,7 +202,7 @@
 .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
 
 /* ── Page content ────────────────────────────────────────────── */
-.page-content { flex: 1; overflow: auto; }
+.page-content { flex: 1; min-height: 0; overflow: hidden; }
 
 .page-head {
   display: flex;
