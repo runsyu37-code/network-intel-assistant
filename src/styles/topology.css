@@ -84,6 +84,76 @@
 }
 .topo-site-alert .topo-dot { animation: pulseDot 1.8s ease-out infinite; }
 
+/* ── Site mindmap nodes ──────────────────────────────────────── */
+.smap-hq {
+  background: linear-gradient(135deg, #1b2540, #141a2c);
+  border: 1px solid rgba(91,141,239,0.45);
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 200px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 0 0 1px rgba(91,141,239,0.18), 0 6px 20px rgba(0,0,0,0.5);
+}
+.smap-hq-glyph {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--accent); color: #0b0e16;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 15px; flex: none;
+}
+.smap-hq-label { font-weight: 600; color: #fff; font-size: 13px; }
+.smap-hq-sub   { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+
+.smap-site {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 210px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--shadow-1);
+  position: relative; overflow: hidden;
+}
+.smap-site::before {
+  content: ''; position: absolute;
+  left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px;
+}
+.smap-site-ok::before    { background: var(--ok); }
+.smap-site-warn::before  { background: var(--warn); }
+.smap-site-alert::before { background: var(--alert); }
+.smap-site-alert { border-color: rgba(248,113,113,0.35); }
+.smap-site-warn  { border-color: rgba(251,191,36,0.3); }
+
+.smap-site-meta  { flex: 1; min-width: 0; }
+.smap-site-label { font-weight: 600; font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.smap-site-sub   { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+.smap-alert-badge {
+  font-size: 10px; font-weight: 700;
+  background: var(--alert-soft); color: var(--alert);
+  border: 1px solid rgba(248,113,113,0.3);
+  padding: 1px 6px; border-radius: 999px; flex: none;
+}
+
+.smap-bldg {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  min-width: 160px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: background 0.1s, box-shadow 0.1s;
+}
+.smap-bldg:hover { background: var(--surface); box-shadow: var(--shadow-2); }
+.smap-bldg-alert { border-color: rgba(248,113,113,0.3); }
+.smap-bldg-warn  { border-color: rgba(251,191,36,0.25); }
+
+.smap-bldg-name  { font-size: 12px; font-weight: 500; color: var(--ink); flex: 1; white-space: nowrap; }
+.smap-bldg-stats { font-size: 10.5px; color: var(--ink-3); display: flex; gap: 4px; white-space: nowrap; }
+
+.smap-dot    { width: 8px;  height: 8px;  border-radius: 50%; display: inline-block; flex: none; }
+.smap-dot-sm { width: 6px;  height: 6px; }
+
 /* ── React Flow overrides ────────────────────────────────────── */
 .react-flow__node {
   background: transparent !important;
