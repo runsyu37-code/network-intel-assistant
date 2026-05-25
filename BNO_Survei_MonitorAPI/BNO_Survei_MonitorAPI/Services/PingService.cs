@@ -245,7 +245,11 @@ namespace BNO_Survei_MonitorAPI.Services
                 {
                     if (alive)
                         cmd.Parameters.Add("@now", System.Data.SqlDbType.DateTime2).Value = DateTime.UtcNow;
-                    cmd.Parameters.AddWithValue("@id", d.DeviceId);
+                    // cameras use INT PK — pass as Int32 to avoid NVarChar→INT mismatch (0 rows affected)
+                    if (d.DeviceType == "camera")
+                        cmd.Parameters.Add("@id", System.Data.SqlDbType.Int).Value = int.Parse(d.DeviceId);
+                    else
+                        cmd.Parameters.AddWithValue("@id", d.DeviceId);
                     cmd.ExecuteNonQuery();
                 }
             }
