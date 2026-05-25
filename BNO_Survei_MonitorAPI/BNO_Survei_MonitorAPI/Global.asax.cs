@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BNO_Survei_MonitorAPI.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -18,6 +19,13 @@ namespace BNO_Survei_MonitorAPI
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            PingService.Start();
+        }
+
+        protected void Application_End()
+        {
+            PingService.Stop();
         }
     }
 }
