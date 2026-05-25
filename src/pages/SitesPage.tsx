@@ -17,6 +17,7 @@ const STATUS_COLOR: Record<Status, string> = {
 }
 
 const SITE_LABELS: Record<string, string> = {
+  'hq':     'HQ Bangkok',
   'site-a': 'Site A — HQ Bangkok',
   'site-b': 'Site B — Chiang Mai DC',
   'site-c': 'Site C — Phuket Branch',
