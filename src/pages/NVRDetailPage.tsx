@@ -81,8 +81,8 @@ function ChannelSparkline({ nvr }: { nvr: NVR }) {
         return (
           <g key={i}>
             <rect x={x} y={H - barH} width={W} height={barH} rx="2"
-              fill={isNow ? 'var(--accent)' : 'var(--surface-3)'}
-              stroke={isNow ? 'var(--accent-2)' : 'var(--border)'} strokeWidth=".5"
+              fill={isNow ? 'var(--accent)' : 'rgba(91,141,239,0.38)'}
+              stroke="none"
             />
             {i % 6 === 0 && (
               <text x={x + W / 2} y={H + 12} textAnchor="middle"
