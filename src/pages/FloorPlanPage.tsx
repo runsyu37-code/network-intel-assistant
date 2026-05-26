@@ -315,8 +315,16 @@ export default function FloorPlanPage() {
               <div
                 key={cam.id}
                 className={`cam ${cam.status}`}
-                style={{ left: positions[cam.id]?.left ?? cam.left, top: positions[cam.id]?.top ?? cam.top }}
+                style={{
+                  left: positions[cam.id]?.left ?? cam.left,
+                  top: positions[cam.id]?.top ?? cam.top,
+                  cursor: mode === 'view' ? 'pointer' : undefined,
+                }}
                 onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
+                onClick={mode === 'view' ? () => {
+                  const realId = 'CAM-' + cam.id.split('-')[1].padStart(3, '0')
+                  navigate(`/dashboard/cameras/${realId}`)
+                } : undefined}
                 title={`${cam.id} · ${cam.room}`}
               >
                 <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />

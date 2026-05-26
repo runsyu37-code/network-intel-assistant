@@ -68,6 +68,7 @@ function PingChart({ pings }: { pings: Array<number | null> }) {
   const H = 72
   const W = 7
   const GAP = 1
+  const maxRtt = Math.max(...pings.filter((p): p is number => p !== null), 1)
 
   return (
     <svg
@@ -80,7 +81,7 @@ function PingChart({ pings }: { pings: Array<number | null> }) {
         if (rtt === null) {
           return <rect key={i} x={x} y={H - 7} width={W} height={7} fill="var(--alert)" opacity=".7" rx="1" />
         }
-        const bh = Math.max(3, Math.round(rtt / 200 * H))
+        const bh = Math.max(3, Math.round(rtt / maxRtt * H))
         const fill = rtt > 50 ? 'var(--warn)' : 'var(--ok)'
         return <rect key={i} x={x} y={H - bh} width={W} height={bh} fill={fill} opacity=".8" rx="1" />
       })}
