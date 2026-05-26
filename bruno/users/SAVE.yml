@@ -5,11 +5,14 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/SaveUsers
+  url: http://localhost:50680/api/users
   auth: inherit
   headers:
     - name: Content-Type
       value: application/json
+      enabled: true
+    - name: Authorization
+      value: Bearer {{admin_token}}
       enabled: true
   body:
     mode: json
@@ -17,10 +20,10 @@ http:
       [
         {
           "username": "test_user",
-          "password (plain)": "Test@1234",
+          "password": "Test@1234",
           "display_name": "Test User",
           "role": "viewer",
-          "is_active": 1
+          "is_active": true
         }
       ]
 

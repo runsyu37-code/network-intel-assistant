@@ -1,0 +1,25 @@
+info:
+  name: LOGIN
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:50680/api/auth/login
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "admin",
+        "password": "YourPassword"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

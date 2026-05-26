@@ -5,7 +5,11 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/DeleteRooms/RM_T
+  url: http://localhost:50680/api/rooms/delete/RM_T
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
   auth: inherit
 
 settings:

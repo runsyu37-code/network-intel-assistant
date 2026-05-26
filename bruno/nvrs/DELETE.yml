@@ -5,7 +5,11 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/DeleteNvrs/NVR_T
+  url: http://localhost:50680/api/nvrs/delete/NVR_T
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
   auth: inherit
 
 settings:

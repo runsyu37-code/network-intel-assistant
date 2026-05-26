@@ -1,12 +1,11 @@
 info:
-  name: UPDATE
+  name: PATCH_POSITION
   type: http
-  seq: 3
+  seq: 5
 
 http:
-  method: POST
-  url: http://localhost:50680/api/users/1
-  auth: inherit
+  method: PATCH
+  url: http://localhost:50680/api/cameras/1/position
   headers:
     - name: Content-Type
       value: application/json
@@ -18,11 +17,8 @@ http:
     mode: json
     json: |-
       {
-        "username": "admin",
-        "display_name": "Administrator (Updated)",
-        "role": "admin",
-        "is_active": true,
-        "password": "NewPassword@1234"
+        "x": 0.45,
+        "y": 0.30
       }
 
 settings:

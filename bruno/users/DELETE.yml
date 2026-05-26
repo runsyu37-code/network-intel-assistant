@@ -5,8 +5,12 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/DeleteUsers/4
+  url: http://localhost:50680/api/users/delete/4
   auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
 
 settings:
   encodeUrl: true

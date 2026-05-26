@@ -5,7 +5,11 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/DeleteAlertLogs/1
+  url: http://localhost:50680/api/alert-logs/delete/1
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
   auth: inherit
 
 settings:

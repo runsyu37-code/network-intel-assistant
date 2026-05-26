@@ -5,9 +5,12 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/UpdatePoeSwitches/SW001
+  url: http://localhost:50680/api/poe-switches/SW001
   auth: inherit
   headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
     - name: Content-Type
       value: application/json
       enabled: true

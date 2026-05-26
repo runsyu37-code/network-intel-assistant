@@ -5,8 +5,13 @@ info:
 
 http:
   method: GET
-  url: https://localhost:44342/api/GetBuildings
+  url: http://localhost:50680/api/buildings
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
   auth: inherit
+
 
 settings:
   encodeUrl: true

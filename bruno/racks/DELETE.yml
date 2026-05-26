@@ -5,7 +5,11 @@ info:
 
 http:
   method: POST
-  url: https://localhost:44342/api/DeleteRacks/RK_T
+  url: http://localhost:50680/api/racks/delete/RK_T
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
   auth: inherit
 
 settings:
