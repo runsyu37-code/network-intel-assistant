@@ -1,0 +1,27 @@
+info:
+  name: RBAC01 - viewer POST /api/sites → 403
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"Site_ID":"TEST-RBAC","name":"RBAC Test Site"}]
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: FILL_IN_VIEWER_TOKEN
+
+# EXPECT: 403 Forbidden
+# FAIL if: 200 (viewer was able to insert a site)

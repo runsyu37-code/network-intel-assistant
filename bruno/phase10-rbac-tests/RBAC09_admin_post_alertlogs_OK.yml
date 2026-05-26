@@ -1,0 +1,27 @@
+info:
+  name: RBAC09 - admin POST /api/alertLogs → NOT 403 (admin allowed)
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:50680/api/alertLogs
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"camera_id":1,"alert_type":"test","severity":"low","message":"rbac admin test"}]
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_ADMIN_TOKEN
+
+# EXPECT: 200 OK or 400 (validation) — anything except 403
+# FAIL if: 403 (admin is incorrectly blocked)

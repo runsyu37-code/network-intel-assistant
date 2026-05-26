@@ -1,0 +1,28 @@
+info:
+  name: RBAC05 - user POST /api/sites → NOT 403 (user role allowed)
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites
+  headers:
+    - name: Authorization
+      value: Bearer {{user_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"Site_ID":"TEST-RBAC-USR","name":"User Role Test Site"}]
+
+runtime:
+  variables:
+    - name: user_token
+      value: FILL_IN_USER_TOKEN
+
+# EXPECT: 200 OK (user role is allowed on infrastructure)
+# FAIL if: 403 (would mean user role is incorrectly blocked)
+# NOTE: may get 500/conflict if Site_ID already exists — that's fine, not 403

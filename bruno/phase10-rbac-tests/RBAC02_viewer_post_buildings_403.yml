@@ -1,0 +1,26 @@
+info:
+  name: RBAC02 - viewer POST /api/buildings → 403
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/buildings
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"Building_ID":"BLD-RBAC","name":"RBAC Test Building","Site_ID":"HQ"}]
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: FILL_IN_VIEWER_TOKEN
+
+# EXPECT: 403 Forbidden

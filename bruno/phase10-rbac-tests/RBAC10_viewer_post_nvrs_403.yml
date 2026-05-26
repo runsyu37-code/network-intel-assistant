@@ -1,0 +1,26 @@
+info:
+  name: RBAC10 - viewer POST /api/nvrs → 403
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: http://localhost:50680/api/nvrs
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"NVR_ID":"NVR-RBAC","name":"RBAC Test NVR","ip_address":"1.1.1.1","Site_ID":"HQ"}]
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: FILL_IN_VIEWER_TOKEN
+
+# EXPECT: 403 Forbidden

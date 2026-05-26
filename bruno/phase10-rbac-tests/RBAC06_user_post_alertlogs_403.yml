@@ -1,0 +1,27 @@
+info:
+  name: RBAC06 - user POST /api/alertLogs → 403 (log tables are admin-only)
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://localhost:50680/api/alertLogs
+  headers:
+    - name: Authorization
+      value: Bearer {{user_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"camera_id":1,"alert_type":"test","severity":"low","message":"rbac test"}]
+
+runtime:
+  variables:
+    - name: user_token
+      value: FILL_IN_USER_TOKEN
+
+# EXPECT: 403 Forbidden
+# WHY: alert_logs is system-generated, user role must not insert manually

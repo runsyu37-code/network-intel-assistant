@@ -1,0 +1,26 @@
+info:
+  name: RBAC07 - user POST /api/auditLogs → 403 (admin-only)
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: http://localhost:50680/api/auditLogs
+  headers:
+    - name: Authorization
+      value: Bearer {{user_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"user_id":1,"action":"test","entity_type":"test","entity_id":"1","detail":"rbac test"}]
+
+runtime:
+  variables:
+    - name: user_token
+      value: FILL_IN_USER_TOKEN
+
+# EXPECT: 403 Forbidden

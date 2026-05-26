@@ -17,13 +17,24 @@ http:
     mode: json
     json: |-
       {
-        "device_name": "should-be-blocked"
+        "Site_ID": "S001",
+        "Building_ID": "B001",
+        "Floor_ID": "F001",
+        "device_name": "should-be-blocked",
+        "ip_address": "10.10.1.101",
+        "status": "online",
+        "fail_count": 0
       }
 
-# SETUP: set viewer_token in Bruno environment (login as viewer account first)
+runtime:
+  variables:
+    - name: viewer_token
+      value: PASTE_VIEWER_TOKEN_HERE
+
+# SETUP: สร้าง viewer account ก่อน แล้ว login → copy token มาใส่ viewer_token ด้านบน
 # EXPECT: 403 Forbidden
 # PASS if: status 403
-# FAIL if: status 200 (viewer was able to update camera)
+# FAIL if: status 200 หรือ 404 (viewer ผ่าน role check ได้)
 
 settings:
   encodeUrl: true

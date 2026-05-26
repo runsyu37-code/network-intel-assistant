@@ -1,0 +1,26 @@
+info:
+  name: RBAC04 - viewer POST /api/cameras → 403
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:50680/api/cameras
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [{"camera_name":"rbac-test","ip_address":"1.1.1.1","Room_ID":"R-TEST","NVR_ID":"NVR-TEST","NVR_CH":99}]
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: FILL_IN_VIEWER_TOKEN
+
+# EXPECT: 403 Forbidden

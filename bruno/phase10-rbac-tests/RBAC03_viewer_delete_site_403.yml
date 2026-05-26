@@ -1,0 +1,20 @@
+info:
+  name: RBAC03 - viewer DELETE /api/sites/delete/TEST → 403
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites/delete/TEST
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: FILL_IN_VIEWER_TOKEN
+
+# EXPECT: 403 Forbidden
+# NOTE: site TEST likely does not exist — but 403 must fire BEFORE 404
