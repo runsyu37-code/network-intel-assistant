@@ -1,0 +1,31 @@
+info:
+  name: TEST1 - Error sanitization (no stack trace)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:50680/api/cameras/99999
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "device_name": "trigger-error"
+      }
+
+# EXPECT: 404 Not Found OR 500 with {"message":"An internal error occurred"}
+# PASS if: response body contains NO stack trace, no "at BNO_", no table/column names
+# FAIL if: response body contains "camerasController", "SqlException", "dbo.", file paths
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

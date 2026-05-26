@@ -1,0 +1,28 @@
+info:
+  name: TEST2 - English error strings (no garbled Thai)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/cameras
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: "null"
+
+# EXPECT: 400 Bad Request
+# PASS if: response body is "No data provided" (readable English)
+# FAIL if: response body contains garbled bytes like "ร ยนโ€ร ยธยก..."
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
