@@ -1,4 +1,4 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -58,10 +58,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult SaveauditLogs([FromBody] List<auditLogsModel> modelList)
         {
             if (modelList == null || modelList.Count == 0)
-                return BadRequest("à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¸¡à¸²");
+                return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.action) || string.IsNullOrWhiteSpace(x.table_name)))
-                return BadRequest("action à¹à¸¥à¸° table_name à¸«à¹‰à¸²à¸¡à¸§à¹ˆà¸²à¸‡");
+                return BadRequest("action and table_name are required");
 
             int insertCount = 0;
             try
@@ -73,20 +73,24 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         INSERT INTO [dbo].[audit_logs] ([user_id],[action],[table_name],[record_id],[old_value],[new_value])
                         VALUES (@user_id,@action,@table_name,@record_id,@old_value,@new_value);";
 
-                    foreach (var item in modelList)
+                    using (var tx = con.BeginTransaction())
                     {
-                        using (var cmd = new SqlCommand(insertSql, con))
+                        foreach (var item in modelList)
                         {
-                            AddParameters(cmd, item);
-                            cmd.ExecuteNonQuery();
-                            insertCount++;
+                            using (var cmd = new SqlCommand(insertSql, con, tx))
+                            {
+                                AddParameters(cmd, item);
+                                cmd.ExecuteNonQuery();
+                                insertCount++;
+                            }
                         }
+                        tx.Commit();
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"à¹€à¸žà¸´à¹ˆà¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹ƒà¸«à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ {insertCount} records" });
+                return Ok(new { success = true, inserted = insertCount });
             }
-            catch (SqlException ex) { return InternalServerError(ex); }
-            catch (Exception ex)    { return InternalServerError(ex); }
+            catch (SqlException) { return InternalServerError(new Exception("Database error during save")); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
 
         private void AddParameters(SqlCommand cmd, auditLogsModel item)
@@ -106,7 +110,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult UpdateauditLogs(int id, [FromBody] auditLogsModel model)
         {
             if (model == null)
-                return BadRequest("à¸«à¹‰à¸²à¸¡ Null");
+                return BadRequest("Value cannot be null");
 
             try
             {
@@ -139,7 +143,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 }
                 return Ok(new { success = true, id });
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
 
@@ -163,8 +167,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     }
                 }
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
     }
 }
+

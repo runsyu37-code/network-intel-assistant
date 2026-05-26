@@ -1,4 +1,5 @@
 using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Constants;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -114,13 +115,13 @@ namespace BNO_Survei_MonitorAPI.Controllers
             using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
-                using (var cmd = new SqlCommand(@"
-                    SELECT CAST(id AS NVARCHAR(20)) AS device_id, 'camera' AS device_type, device_name, status, last_seen, Site_ID
+                using (var cmd = new SqlCommand($@"
+                    SELECT CAST(id AS NVARCHAR(20)) AS device_id, '{DeviceTypes.Camera}' AS device_type, device_name, status, last_seen, Site_ID
                     FROM cameras
                     UNION ALL
-                    SELECT NVR_ID, 'nvr', device_name, status, last_seen, Site_ID FROM nvrs
+                    SELECT NVR_ID, '{DeviceTypes.Nvr}', device_name, status, last_seen, Site_ID FROM nvrs
                     UNION ALL
-                    SELECT SW_ID, 'poe-switch', device_name, status, last_seen, Site_ID FROM poe_switches
+                    SELECT SW_ID, '{DeviceTypes.PoeSwitch}', device_name, status, last_seen, Site_ID FROM poe_switches
                     ORDER BY status, device_name", con))
                 using (var r = cmd.ExecuteReader())
                     while (r.Read())

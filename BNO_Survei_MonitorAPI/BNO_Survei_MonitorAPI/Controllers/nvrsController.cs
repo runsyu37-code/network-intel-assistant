@@ -1,4 +1,4 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -87,10 +87,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult Savenvrs([FromBody] List<nvrsModel> modelList)
         {
             if (modelList == null || modelList.Count == 0)
-                return BadRequest("à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¸¡à¸²");
+                return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.NVR_ID)))
-                return BadRequest("NVR_ID à¸«à¹‰à¸²à¸¡à¸§à¹ˆà¸²à¸‡");
+                return BadRequest("NVR_ID is required");
 
             int insertCount = 0;
             try
@@ -102,20 +102,24 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         INSERT INTO [dbo].[nvrs] ([NVR_ID],[Site_ID],[Building_ID],[Floor_ID],[Room_ID],[Rack_ID],[u_position],[u_subposition],[u_size],[device_name],[brand],[model],[serial_no],[mac_address],[os_version],[ip_internet],[ip_cctv],[vlan_id],[subnet_mask],[gateway],[total_channels],[active_channels],[hdd_total_tb],[hdd_used_pct],[recording_res],[retention_days],[record_status],[status],[fail_count],[last_seen],[notes])
                         VALUES (@NVR_ID,@Site_ID,@Building_ID,@Floor_ID,@Room_ID,@Rack_ID,@u_position,@u_subposition,@u_size,@device_name,@brand,@model,@serial_no,@mac_address,@os_version,@ip_internet,@ip_cctv,@vlan_id,@subnet_mask,@gateway,@total_channels,@active_channels,@hdd_total_tb,@hdd_used_pct,@recording_res,@retention_days,@record_status,@status,@fail_count,@last_seen,@notes);";
 
-                    foreach (var item in modelList)
+                    using (var tx = con.BeginTransaction())
                     {
-                        using (var cmd = new SqlCommand(insertSql, con))
+                        foreach (var item in modelList)
                         {
-                            AddParameters(cmd, item);
-                            cmd.ExecuteNonQuery();
-                            insertCount++;
+                            using (var cmd = new SqlCommand(insertSql, con, tx))
+                            {
+                                AddParameters(cmd, item);
+                                cmd.ExecuteNonQuery();
+                                insertCount++;
+                            }
                         }
+                        tx.Commit();
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"à¹€à¸žà¸´à¹ˆà¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹ƒà¸«à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ {insertCount} records" });
+                return Ok(new { success = true, inserted = insertCount });
             }
-            catch (SqlException ex) { return InternalServerError(ex); }
-            catch (Exception ex)    { return InternalServerError(ex); }
+            catch (SqlException) { return InternalServerError(new Exception("Database error during save")); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
 
         private void AddParameters(SqlCommand cmd, nvrsModel item)
@@ -160,7 +164,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.NVR_ID))
-                return BadRequest("à¸«à¹‰à¸²à¸¡ Null");
+                return BadRequest("Value cannot be null");
 
             try
             {
@@ -242,7 +246,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 }
                 return Ok(new { success = true, NVR_ID });
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
 
@@ -252,7 +256,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {
             if (string.IsNullOrWhiteSpace(NVR_ID))
-                return BadRequest("NVR_ID à¸«à¹‰à¸²à¸¡à¸§à¹ˆà¸²à¸‡");
+                return BadRequest("NVR_ID is required");
 
             try
             {
@@ -269,8 +273,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     }
                 }
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
     }
 }
+

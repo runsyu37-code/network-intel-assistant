@@ -1,4 +1,5 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Constants;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -25,7 +26,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
             string status       = null)
         {
             var types = string.IsNullOrWhiteSpace(device_type)
-                ? new HashSet<string> { "camera", "nvr", "switch" }
+                ? new HashSet<string> { DeviceTypes.Camera, DeviceTypes.Nvr, DeviceTypes.PoeSwitch }
                 : new HashSet<string>(device_type.Split(',').Select(t => t.Trim().ToLower()));
 
             var parts = new List<string>();
@@ -64,9 +65,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 parts.Add(q);
             }
 
-            if (types.Contains("switch"))
+            if (types.Contains(DeviceTypes.PoeSwitch))
             {
-                string q = @"SELECT 'switch' AS device_type,
+                string q = $@"SELECT '{DeviceTypes.PoeSwitch}' AS device_type,
                              SW_ID AS device_id,
                              device_name, ip_address, status,
                              Site_ID, Building_ID, Floor_ID,
@@ -124,7 +125,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     }
                 }
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
 
             return Json(list);
         }

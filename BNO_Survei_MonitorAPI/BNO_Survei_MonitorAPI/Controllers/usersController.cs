@@ -1,4 +1,4 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -24,7 +24,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
-                string sql = "SELECT [User_ID],[username],[pw_hash],[display_name],[role],[is_active],[last_login],[created_at],[updated_at] FROM [dbo].[users] WHERE 1=1";
+                string sql = "SELECT [User_ID],[username],[display_name],[role],[is_active],[last_login],[created_at],[updated_at] FROM [dbo].[users] WHERE 1=1";
                 if (!string.IsNullOrWhiteSpace(role)) sql += " AND role = @role";
                 if (User_ID.HasValue)                 sql += " AND User_ID = @User_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
@@ -38,7 +38,6 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         {
                             User_ID      = Convert.ToInt32(reader["User_ID"]),
                             username     = reader["username"].ToString(),
-                            pw_hash      = reader["pw_hash"].ToString(),
                             display_name = reader["display_name"] == DBNull.Value ? null : reader["display_name"].ToString(),
                             role         = reader["role"].ToString(),
                             is_active    = Convert.ToBoolean(reader["is_active"]),
@@ -58,11 +57,17 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Saveusers([FromBody] List<usersModel> modelList)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (modelList == null || modelList.Count == 0)
-                return BadRequest("à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸ªà¹ˆà¸‡à¸¡à¸²");
+                return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.username)))
-                return BadRequest("username à¸«à¹‰à¸²à¸¡à¸§à¹ˆà¸²à¸‡");
+                return BadRequest("username is required");
+
+            if (modelList.Any(x => string.IsNullOrWhiteSpace(x.password)))
+                return BadRequest("password is required");
 
             int insertCount = 0;
             try
@@ -74,26 +79,35 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         INSERT INTO [dbo].[users] ([username],[pw_hash],[display_name],[role],[is_active],[last_login])
                         VALUES (@username,@pw_hash,@display_name,@role,@is_active,@last_login);";
 
-                    foreach (var item in modelList)
+                    using (var tx = con.BeginTransaction())
                     {
-                        using (var cmd = new SqlCommand(insertSql, con))
+                        foreach (var item in modelList)
                         {
-                            AddParameters(cmd, item);
-                            cmd.ExecuteNonQuery();
-                            insertCount++;
+                            using (var cmd = new SqlCommand(insertSql, con, tx))
+                            {
+                                AddParameters(cmd, item);
+                                cmd.ExecuteNonQuery();
+                                insertCount++;
+                            }
                         }
+                        tx.Commit();
                     }
                 }
-                return Ok(new { success = true, inserted = insertCount, message = $"à¹€à¸žà¸´à¹ˆà¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹ƒà¸«à¸¡à¹ˆà¸ªà¸³à¹€à¸£à¹‡à¸ˆ {insertCount} records" });
+                return Ok(new { success = true, inserted = insertCount });
             }
-            catch (SqlException ex) { return InternalServerError(ex); }
-            catch (Exception ex)    { return InternalServerError(ex); }
+            catch (SqlException) { return InternalServerError(new Exception("Database error during save")); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
+
+        private static readonly HashSet<string> ValidRoles =
+            new HashSet<string>(StringComparer.Ordinal) { "admin", "user", "viewer" };
 
         private void AddParameters(SqlCommand cmd, usersModel item)
         {
-            cmd.Parameters.AddWithValue("@username",     string.IsNullOrWhiteSpace(item.username)     ? (object)DBNull.Value : item.username);
-            cmd.Parameters.AddWithValue("@pw_hash",      string.IsNullOrWhiteSpace(item.pw_hash)      ? (object)DBNull.Value : item.pw_hash);
+            if (!ValidRoles.Contains(item.role))
+                throw new ArgumentException($"Invalid role value: {item.role}");
+            cmd.Parameters.AddWithValue("@username", string.IsNullOrWhiteSpace(item.username) ? (object)DBNull.Value : item.username);
+            cmd.Parameters.AddWithValue("@pw_hash",  BCrypt.Net.BCrypt.HashPassword(item.password));
             cmd.Parameters.AddWithValue("@display_name", string.IsNullOrWhiteSpace(item.display_name) ? (object)DBNull.Value : item.display_name);
             cmd.Parameters.AddWithValue("@role",         string.IsNullOrWhiteSpace(item.role)         ? (object)DBNull.Value : item.role);
             cmd.Parameters.AddWithValue("@is_active",    item.is_active);
@@ -106,8 +120,14 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updateusers(int User_ID, [FromBody] usersModel model)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (model == null || string.IsNullOrWhiteSpace(model.username))
-                return BadRequest("à¸«à¹‰à¸²à¸¡ Null");
+                return BadRequest("username is required");
+
+            if (!string.IsNullOrWhiteSpace(model.role) && !ValidRoles.Contains(model.role))
+                return BadRequest($"Invalid role value: {model.role}");
 
             try
             {
@@ -117,7 +137,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     string sql = @"
                         UPDATE [dbo].[users]
                         SET username     = @username,
-                            pw_hash      = @pw_hash,
+                            pw_hash      = CASE WHEN @newPwHash IS NULL THEN pw_hash ELSE @newPwHash END,
                             display_name = @display_name,
                             role         = @role,
                             is_active    = @is_active,
@@ -127,9 +147,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
                     using (var cmd = new SqlCommand(sql, con))
                     {
-                        cmd.Parameters.AddWithValue("@User_ID",      User_ID);
-                        cmd.Parameters.AddWithValue("@username",     string.IsNullOrWhiteSpace(model.username)     ? (object)DBNull.Value : model.username);
-                        cmd.Parameters.AddWithValue("@pw_hash",      string.IsNullOrWhiteSpace(model.pw_hash)      ? (object)DBNull.Value : model.pw_hash);
+                        cmd.Parameters.AddWithValue("@User_ID",   User_ID);
+                        cmd.Parameters.AddWithValue("@username",  string.IsNullOrWhiteSpace(model.username) ? (object)DBNull.Value : model.username);
+                        cmd.Parameters.AddWithValue("@newPwHash", string.IsNullOrWhiteSpace(model.password) ? (object)DBNull.Value : BCrypt.Net.BCrypt.HashPassword(model.password));
                         cmd.Parameters.AddWithValue("@display_name", string.IsNullOrWhiteSpace(model.display_name) ? (object)DBNull.Value : model.display_name);
                         cmd.Parameters.AddWithValue("@role",         string.IsNullOrWhiteSpace(model.role)         ? (object)DBNull.Value : model.role);
                         cmd.Parameters.AddWithValue("@is_active",    model.is_active);
@@ -141,7 +161,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 }
                 return Ok(new { success = true, User_ID });
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
 
@@ -150,6 +170,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/users/delete/{User_ID}")]
         public IHttpActionResult Deleteusers(int User_ID)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
             try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
@@ -165,8 +187,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     }
                 }
             }
-            catch (Exception ex) { return InternalServerError(ex); }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }
         #endregion
     }
 }
+

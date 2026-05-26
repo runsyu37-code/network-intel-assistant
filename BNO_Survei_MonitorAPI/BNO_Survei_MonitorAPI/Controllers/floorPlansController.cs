@@ -41,7 +41,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         {
                             floorPlanId    = r["floor_plan_id"],
                             floorId        = r["floor_id"].ToString(),
-                            imagePath      = r["image_path"].ToString(),
+                            imagePath      = $"/api/floors/{r["floor_id"]}/floor-plan/image",
                             imageWidth     = r["image_width"]     == DBNull.Value ? (int?)null : Convert.ToInt32(r["image_width"]),
                             imageHeight    = r["image_height"]    == DBNull.Value ? (int?)null : Convert.ToInt32(r["image_height"]),
                             fileSizeBytes  = r["file_size_bytes"] == DBNull.Value ? (long?)null : Convert.ToInt64(r["file_size_bytes"]),
@@ -191,11 +191,50 @@ namespace BNO_Survei_MonitorAPI.Controllers
                 success     = true,
                 floorPlanId = newId,
                 floorId,
-                imagePath   = relativePath,
+                imagePath   = $"/api/floors/{floorId}/floor-plan/image",
                 imageWidth  = width > 0  ? (int?)width  : null,
                 imageHeight = height > 0 ? (int?)height : null,
                 fileSizeBytes = bytes.Length
             });
+        }
+
+        // ---------------------------------------------------------------
+        // GET /api/floors/{floorId}/floor-plan/image
+        // Serves the actual image bytes through the API pipeline (requires JWT).
+        // Direct IIS access to ~/uploads/ is blocked via hiddenSegment in web.config.
+        // ---------------------------------------------------------------
+        [HttpGet]
+        [Route("api/floors/{floorId}/floor-plan/image")]
+        public IHttpActionResult GetFloorPlanImage(string floorId)
+        {
+            string imagePath;
+            using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+            {
+                con.Open();
+                using (var cmd = new SqlCommand(
+                    "SELECT image_path FROM floor_plans WHERE floor_id = @fid AND is_active = 1", con))
+                {
+                    cmd.Parameters.AddWithValue("@fid", floorId);
+                    var result = cmd.ExecuteScalar();
+                    if (result == null || result == DBNull.Value) return NotFound();
+                    imagePath = result.ToString();
+                }
+            }
+
+            var fullPath = System.Web.HttpContext.Current.Server.MapPath("~/" + imagePath);
+            if (!System.IO.File.Exists(fullPath)) return NotFound();
+
+            var bytes = System.IO.File.ReadAllBytes(fullPath);
+            var ext = System.IO.Path.GetExtension(fullPath).ToLowerInvariant();
+            var mimeType = ext == ".png" ? "image/png" : "image/jpeg";
+
+            var response = new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new System.Net.Http.ByteArrayContent(bytes)
+            };
+            response.Content.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+            return ResponseMessage(response);
         }
 
         // ---------------------------------------------------------------

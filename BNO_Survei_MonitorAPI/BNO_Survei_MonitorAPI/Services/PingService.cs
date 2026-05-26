@@ -305,13 +305,14 @@ namespace BNO_Survei_MonitorAPI.Services
         private static void ResolveOpenAlerts(DeviceInfo d)
         {
             const string sql = @"
-                UPDATE alert_logs SET resolved_at=GETDATE()
+                UPDATE alert_logs SET resolved_at=@resolvedAt
                 WHERE device_type=@dt AND device_id=@did AND resolved_at IS NULL";
             using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
                 using (var cmd = new SqlCommand(sql, con))
                 {
+                    cmd.Parameters.Add("@resolvedAt", System.Data.SqlDbType.DateTime2).Value = DateTime.UtcNow;
                     cmd.Parameters.AddWithValue("@dt",  d.DeviceType);
                     cmd.Parameters.AddWithValue("@did", d.DeviceId);
                     cmd.ExecuteNonQuery();
