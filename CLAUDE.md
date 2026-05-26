@@ -60,8 +60,8 @@ Floor ID format: `a-f1` through `a-f6` (Building A, Floor 1–6).
 ## Polish Backlog (เก็บตก — after all pages done)
 - [x] Topbar breadcrumb: show full path (Home / Site / Building / Floor)
 - [x] Sidebar active state: highlight when inside nested routes (sites/*/buildings/*)
-- [ ] Isometric building cross-section (Building Detail) — wireframe has SVG script
-- [ ] Floor Plan Edit mode: real drag-and-drop camera repositioning
+- [x] Isometric building cross-section (Building Detail) — wireframe has SVG script
+- [x] Floor Plan Edit mode: real drag-and-drop camera repositioning
 - [ ] Connect all pages to real C# API (replace mock arrays with React Query hooks)
 - [x] Rack Detail: navigate from Racks List per-site grouping
 - [x] Camera detail page (individual camera info + ping history chart)

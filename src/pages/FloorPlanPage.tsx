@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server } from 'lucide-react'
 
@@ -206,6 +206,48 @@ export default function FloorPlanPage() {
 
   const floor = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
 
+  const [positions, setPositions] = useState<Record<string, { left: string; top: string }>>(() =>
+    Object.fromEntries(floor.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
+  )
+  const canvasRef  = useRef<HTMLDivElement>(null)
+  const dragging   = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number } | null>(null)
+
+  useEffect(() => {
+    setPositions(Object.fromEntries(floor.cameras.map(c => [c.id, { left: c.left, top: c.top }])))
+  }, [floorId])
+
+  function startDrag(id: string, e: React.MouseEvent) {
+    e.preventDefault()
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect   = canvas.getBoundingClientRect()
+    const pos    = positions[id]
+    dragging.current = {
+      id,
+      startX:   e.clientX,
+      startY:   e.clientY,
+      origLeft: parseFloat(pos.left) / 100 * rect.width,
+      origTop:  parseFloat(pos.top)  / 100 * rect.height,
+    }
+  }
+
+  function onDragMove(e: React.MouseEvent) {
+    if (!dragging.current) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect    = canvas.getBoundingClientRect()
+    const dx      = e.clientX - dragging.current.startX
+    const dy      = e.clientY - dragging.current.startY
+    const newLeft = Math.max(2, Math.min(98, (dragging.current.origLeft + dx) / rect.width  * 100))
+    const newTop  = Math.max(2, Math.min(98, (dragging.current.origTop  + dy) / rect.height * 100))
+    setPositions(p => ({
+      ...p,
+      [dragging.current!.id]: { left: `${newLeft.toFixed(1)}%`, top: `${newTop.toFixed(1)}%` },
+    }))
+  }
+
+  function stopDrag() { dragging.current = null }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
@@ -220,7 +262,14 @@ export default function FloorPlanPage() {
       </div>
 
       <div className="canvas-wrap" style={{ flex: 1, minHeight: 0 }}>
-        <div className={`canvas${mode === 'edit' ? ' edit' : ''}`} style={{ position: 'relative' }}>
+        <div
+          ref={canvasRef}
+          className={`canvas${mode === 'edit' ? ' edit' : ''}`}
+          style={{ position: 'relative' }}
+          onMouseMove={mode === 'edit' ? onDragMove : undefined}
+          onMouseUp={stopDrag}
+          onMouseLeave={stopDrag}
+        >
 
           {/* Mode toggle */}
           <div className="mode-toggle">
@@ -246,7 +295,8 @@ export default function FloorPlanPage() {
             <div
               key={cam.id}
               className={`cam ${cam.status}`}
-              style={{ left: cam.left, top: cam.top }}
+              style={{ left: positions[cam.id]?.left ?? cam.left, top: positions[cam.id]?.top ?? cam.top }}
+              onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
               title={`${cam.id} · ${cam.room}`}
             >
               <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
