@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
@@ -23,6 +24,7 @@ const NVRS: NVR[] = [
 ]
 
 export default function NVRsPage() {
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const filtered = NVRS.filter(n =>
     !q || [n.id, n.name, n.ip, n.site].some(v => v.toLowerCase().includes(q.toLowerCase()))
@@ -63,7 +65,7 @@ export default function NVRsPage() {
               <tr><td colSpan={7} className="dl-empty">No NVRs found</td></tr>
             )}
             {filtered.map(n => (
-              <tr key={n.id}>
+              <tr key={n.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/nvrs/${n.id}`)}>
                 <td>
                   <span className="dl-status">
                     <span className="s-dot" style={{ background: STATUS_COLOR[n.status] }} />

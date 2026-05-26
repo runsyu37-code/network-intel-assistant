@@ -176,3 +176,46 @@
   font-size: 11px;
   color: var(--ink-4);
 }
+
+/* ── NVR / Switch detail shared layout ──────────────────────── */
+.nvr-detail {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0 28px;
+  align-items: flex-start;
+}
+.nvr-info-col {
+  width: 288px; flex: none;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.nvr-chart-col {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.cam-card-title {
+  display: flex; align-items: center; gap: 6px;
+}
+
+.cr-label {
+  color: var(--ink-3); font-weight: 500;
+  width: 80px; flex: none; font-size: 12px; line-height: 1.4;
+}
+.cr-val {
+  color: var(--ink); font-weight: 500;
+  flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.4;
+}
+.cr-mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px;
+}
+.ps-item { display: flex; flex-direction: column; gap: 3px; }
+.ps-val {
+  font-size: 18px; font-weight: 700; color: var(--ink);
+  font-family: 'JetBrains Mono', monospace; letter-spacing: -.02em;
+}
+.ps-label {
+  font-size: 10px; font-weight: 600; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: .06em;
+}

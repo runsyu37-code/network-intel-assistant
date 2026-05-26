@@ -44,9 +44,7 @@ const RACK_LABEL: Record<string, string> = {
 }
 
 const SIMPLE_PAGE: Record<string, string> = {
-  nvrs:     'NVRs',
-  switches: 'PoE Switches',
-  users:    'Users',
+  users: 'Users',
 }
 
 function useBreadcrumbs(): Crumb[] {
@@ -90,6 +88,16 @@ function useBreadcrumbs(): Crumb[] {
   if (page === 'cameras') {
     if (id) return [home, { label: 'Cameras', to: '/dashboard/cameras' }, { label: id }]
     return [home, { label: 'Cameras' }]
+  }
+
+  if (page === 'nvrs') {
+    if (id) return [home, { label: 'NVRs', to: '/dashboard/nvrs' }, { label: id }]
+    return [home, { label: 'NVRs' }]
+  }
+
+  if (page === 'switches') {
+    if (id) return [home, { label: 'PoE Switches', to: '/dashboard/switches' }, { label: id }]
+    return [home, { label: 'PoE Switches' }]
   }
 
   const simple = SIMPLE_PAGE[page]

@@ -2,47 +2,20 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server } from 'lucide-react'
 
-/*
- * FLOOR PLAN IMAGE SETUP
- * ─────────────────────────────────────────────────────────────────
- * วางไฟล์รูปผังห้องไว้ใน:  public/floorplans/<floorId>.<ext>
- *
- * ตัวอย่าง:
- *   public/floorplans/a-f3.jpg   ← Building A, Floor 3
- *   public/floorplans/a-f2.png
- *   public/floorplans/b-f1.jpg
- *
- * รองรับ: .jpg  .jpeg  .png  .svg  .webp
- *
- * ถ้าไม่มีไฟล์ → code จะ fallback เป็น SVG vector plan อัตโนมัติ
- * ─────────────────────────────────────────────────────────────────
- */
 const PLAN_EXTS = ['jpg', 'jpeg', 'png', 'svg', 'webp']
 
 type CamStatus = 'ok' | 'alert'
 
 interface Camera {
-  id: string
-  status: CamStatus
-  left: string
-  top: string
-  rot: number
-  room: string
+  id: string; status: CamStatus; left: string; top: string; rot: number; room: string
 }
 
 interface RackMarker {
-  id: string       // rackId used in navigate
-  label: string
-  left: string
-  top: string
-  status: 'ok' | 'warn' | 'alert'
+  id: string; label: string; left: string; top: string; status: 'ok' | 'warn' | 'alert'
 }
 
 interface FloorData {
-  title: string
-  sub: string
-  cameras: Camera[]
-  racks?: RackMarker[]
+  title: string; sub: string; cameras: Camera[]; racks?: RackMarker[]
 }
 
 const FLOORS: Record<string, FloorData> = {
@@ -60,16 +33,16 @@ const FLOORS: Record<string, FloorData> = {
     title: 'Floor 5 — Meeting Rooms',
     sub: 'Conference floors · 5 cameras · 1 warning',
     cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '22%', top: '22%', rot: 130, room: 'Conf A' },
-      { id: 'CAM-02', status: 'ok',    left: '50%', top: '25%', rot: 180, room: 'Conf B' },
-      { id: 'CAM-03', status: 'ok',    left: '78%', top: '20%', rot: 135, room: 'Conf C' },
-      { id: 'CAM-04', status: 'ok',    left: '30%', top: '75%', rot: 330, room: 'Break Area' },
-      { id: 'CAM-05', status: 'ok',    left: '70%', top: '78%', rot: 300, room: 'Corridor' },
+      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Conf A' },
+      { id: 'CAM-02', status: 'ok', left: '50%', top: '25%', rot: 180, room: 'Conf B' },
+      { id: 'CAM-03', status: 'ok', left: '78%', top: '20%', rot: 135, room: 'Conf C' },
+      { id: 'CAM-04', status: 'ok', left: '30%', top: '75%', rot: 330, room: 'Break Area' },
+      { id: 'CAM-05', status: 'ok', left: '70%', top: '78%', rot: 300, room: 'Corridor' },
     ],
   },
   'a-f4': {
     title: 'Floor 4 — Office',
-    sub: 'Open-plan workspace · 8 cameras · all online',
+    sub: 'Open-plan workspace · 5 cameras · all online',
     cameras: [
       { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Reception' },
       { id: 'CAM-02', status: 'ok', left: '50%', top: '28%', rot: 185, room: 'Open Office' },
@@ -101,7 +74,7 @@ const FLOORS: Record<string, FloorData> = {
     ],
     racks: [
       { id: 'rack-a1', label: 'Rack A1', left: '42%', top: '50%', status: 'alert' },
-      { id: 'rack-a2', label: 'Rack A2', left: '58%', top: '50%', status: 'ok'    },
+      { id: 'rack-a2', label: 'Rack A2', left: '58%', top: '50%', status: 'ok' },
     ],
   },
   'a-f1': {
@@ -117,7 +90,7 @@ const FLOORS: Record<string, FloorData> = {
 
 const DEFAULT_FLOOR: FloorData = {
   title: 'Floor Plan',
-  sub: '— cameras · view mode',
+  sub: '— view mode',
   cameras: [
     { id: 'CAM-01', status: 'ok', left: '25%', top: '25%', rot: 130, room: 'Area A' },
     { id: 'CAM-02', status: 'ok', left: '60%', top: '30%', rot: 200, room: 'Area B' },
@@ -129,38 +102,15 @@ function FloorPlanBackground({ floorId }: { floorId: string }) {
   const [imgOk, setImgOk] = useState(false)
   const [extIdx, setExtIdx] = useState(0)
 
-  const tryNext = () => {
-    if (extIdx + 1 < PLAN_EXTS.length) setExtIdx(i => i + 1)
-  }
-
+  const tryNext = () => { if (extIdx + 1 < PLAN_EXTS.length) setExtIdx(i => i + 1) }
   const src = `/floorplans/${floorId}.${PLAN_EXTS[extIdx]}`
 
   return (
     <>
-      {/* Hidden probe image — tries each extension until one loads */}
-      <img
-        key={src}
-        src={src}
-        alt=""
-        onLoad={() => setImgOk(true)}
-        onError={tryNext}
-        style={{ display: 'none' }}
-      />
-
+      <img key={src} src={src} alt="" onLoad={() => setImgOk(true)} onError={tryNext} style={{ display: 'none' }} />
       {imgOk ? (
-        /* ── Image floor plan ── */
-        <img
-          src={src}
-          alt="Floor plan"
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'contain',
-            zIndex: 1, pointerEvents: 'none',
-          }}
-        />
+        <img src={src} alt="Floor plan" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', zIndex: 1, pointerEvents: 'none' }} />
       ) : (
-        /* ── SVG vector fallback ── */
         <svg className="plan" viewBox="0 0 1000 600" preserveAspectRatio="none">
           <rect className="room-fill"     x="80"  y="60"  width="280" height="240" />
           <rect className="room-fill alt" x="360" y="60"  width="280" height="240" />
@@ -197,31 +147,78 @@ function FloorPlanBackground({ floorId }: { floorId: string }) {
   )
 }
 
-const RACK_STATUS_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
+const RACK_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 
 export default function FloorPlanPage() {
-  const { floorId } = useParams<{ floorId: string }>()
-  const navigate = useNavigate()
+  const { floorId }  = useParams<{ floorId: string }>()
+  const navigate     = useNavigate()
   const [mode, setMode] = useState<'view' | 'edit'>('view')
+  const [zoom, setZoom] = useState(1.0)
 
-  const floor = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
+  const floorData = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
 
+  const [cameras, setCameras] = useState<Camera[]>(floorData.cameras)
   const [positions, setPositions] = useState<Record<string, { left: string; top: string }>>(() =>
-    Object.fromEntries(floor.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
+    Object.fromEntries(floorData.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
   )
+
   const canvasRef  = useRef<HTMLDivElement>(null)
   const dragging   = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number } | null>(null)
+  const wasDragged = useRef(false)
+  const zoomRef    = useRef(zoom)
+  useEffect(() => { zoomRef.current = zoom }, [zoom])
 
+  // Reset on floor change
   useEffect(() => {
-    setPositions(Object.fromEntries(floor.cameras.map(c => [c.id, { left: c.left, top: c.top }])))
+    const f = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
+    setCameras(f.cameras)
+    setPositions(Object.fromEntries(f.cameras.map(c => [c.id, { left: c.left, top: c.top }])))
+    setZoom(1.0)
+    setMode('view')
   }, [floorId])
+
+  // ESC = exit edit mode first (capture phase, before global AppLayout handler)
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (document.activeElement as HTMLElement)?.tagName?.toUpperCase()
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (e.key === 'Escape' && mode === 'edit') {
+        e.stopImmediatePropagation()
+        setMode('view')
+      } else if (e.key === '=' || e.key === '+') {
+        setZoom(z => Math.min(3.0, parseFloat((z + 0.2).toFixed(2))))
+      } else if (e.key === '-') {
+        setZoom(z => Math.max(0.4, parseFloat((z - 0.2).toFixed(2))))
+      } else if (e.key === '0') {
+        setZoom(1.0)
+      }
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [mode])
+
+  // Mouse-wheel zoom on canvas
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      setZoom(z => Math.max(0.4, Math.min(3.0, parseFloat((z - e.deltaY * 0.0012).toFixed(3)))))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  const clamp = (z: number) => Math.max(0.4, Math.min(3.0, z))
 
   function startDrag(id: string, e: React.MouseEvent) {
     e.preventDefault()
+    e.stopPropagation()
+    wasDragged.current = false
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect   = canvas.getBoundingClientRect()
-    const pos    = positions[id]
+    const rect = canvas.getBoundingClientRect()
+    const pos  = positions[id] ?? { left: '50%', top: '50%' }
     dragging.current = {
       id,
       startX:   e.clientX,
@@ -235,25 +232,46 @@ export default function FloorPlanPage() {
     if (!dragging.current) return
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect    = canvas.getBoundingClientRect()
-    const dx      = e.clientX - dragging.current.startX
-    const dy      = e.clientY - dragging.current.startY
+    const rect = canvas.getBoundingClientRect()
+    const z    = zoomRef.current
+    const dx   = (e.clientX - dragging.current.startX) / z
+    const dy   = (e.clientY - dragging.current.startY) / z
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) wasDragged.current = true
     const newLeft = Math.max(2, Math.min(98, (dragging.current.origLeft + dx) / rect.width  * 100))
     const newTop  = Math.max(2, Math.min(98, (dragging.current.origTop  + dy) / rect.height * 100))
-    setPositions(p => ({
-      ...p,
-      [dragging.current!.id]: { left: `${newLeft.toFixed(1)}%`, top: `${newTop.toFixed(1)}%` },
-    }))
+    setPositions(p => ({ ...p, [dragging.current!.id]: { left: `${newLeft.toFixed(1)}%`, top: `${newTop.toFixed(1)}%` } }))
   }
 
   function stopDrag() { dragging.current = null }
+
+  // Click on plan background in edit mode → place new camera
+  function onPlanClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (mode !== 'edit') return
+    if (wasDragged.current) { wasDragged.current = false; return }
+    const target = e.target as HTMLElement
+    if (target.closest('.cam') || target.dataset['rack']) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect    = canvas.getBoundingClientRect()
+    const z       = zoomRef.current
+    const logX    = (e.clientX - rect.left) / z
+    const logY    = (e.clientY - rect.top)  / z
+    const leftPct = Math.max(3, Math.min(97, (logX / rect.width)  * 100))
+    const topPct  = Math.max(3, Math.min(97, (logY / rect.height) * 100))
+    const leftStr = `${leftPct.toFixed(1)}%`
+    const topStr  = `${topPct.toFixed(1)}%`
+    const newId   = `CAM-${String(cameras.length + 1).padStart(2, '0')}`
+    const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera' }
+    setCameras(prev => [...prev, newCam])
+    setPositions(prev => ({ ...prev, [newId]: { left: leftStr, top: topStr } }))
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
         <div>
-          <h1>{floor.title}</h1>
-          <p className="page-sub">{floor.sub}</p>
+          <h1>{floorData.title}</h1>
+          <p className="page-sub">{floorData.sub}</p>
         </div>
         <div className="topo-legend">
           <span className="legend-swatch"><i style={{ background: 'var(--ok)'    }} />Online</span>
@@ -265,13 +283,84 @@ export default function FloorPlanPage() {
         <div
           ref={canvasRef}
           className={`canvas${mode === 'edit' ? ' edit' : ''}`}
-          style={{ position: 'relative' }}
+          style={{ position: 'relative', overflow: 'hidden' }}
           onMouseMove={mode === 'edit' ? onDragMove : undefined}
           onMouseUp={stopDrag}
           onMouseLeave={stopDrag}
+          onClick={onPlanClick}
         >
 
-          {/* Mode toggle */}
+          {/* Zoom layer — floor plan + camera overlays scale together */}
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              transform: `scale(${zoom})`,
+              transformOrigin: '0 0',
+              pointerEvents: 'none',
+            }}
+          >
+            <FloorPlanBackground floorId={floorId ?? ''} />
+          </div>
+
+          {/* Camera overlays — positioned in logical (un-zoomed) space, then zoom via parent */}
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              transform: `scale(${zoom})`,
+              transformOrigin: '0 0',
+              cursor: mode === 'edit' ? 'crosshair' : 'default',
+            }}
+          >
+            {cameras.map(cam => (
+              <div
+                key={cam.id}
+                className={`cam ${cam.status}`}
+                style={{ left: positions[cam.id]?.left ?? cam.left, top: positions[cam.id]?.top ?? cam.top }}
+                onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
+                title={`${cam.id} · ${cam.room}`}
+              >
+                <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
+                <div className="cam-icon"><Video size={16} /></div>
+                <span className="cam-name">{cam.id}</span>
+              </div>
+            ))}
+
+            {floorData.racks?.map(r => (
+              <div
+                key={r.id}
+                data-rack={r.id}
+                onClick={() => navigate(`/dashboard/racks/${r.id}`)}
+                title={`Open ${r.label}`}
+                style={{
+                  position: 'absolute', left: r.left, top: r.top,
+                  transform: 'translate(-50%,-50%)',
+                  zIndex: 3, cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  transition: 'transform .12s ease',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'translate(-50%,-50%) scale(1.08)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = 'translate(-50%,-50%)')}
+              >
+                <div style={{
+                  width: 32, height: 32, borderRadius: 7,
+                  background: 'var(--surface)', border: `2px solid ${RACK_COLOR[r.status]}`,
+                  display: 'grid', placeItems: 'center', color: RACK_COLOR[r.status],
+                  boxShadow: '0 2px 8px rgba(0,0,0,.18)',
+                }}>
+                  <Server size={16} />
+                </div>
+                <span style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 5, padding: '2px 7px',
+                  fontFamily: 'monospace', fontSize: 10, color: 'var(--ink-2)', fontWeight: 600,
+                  whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+                }}>{r.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Fixed UI overlays (not zoomed) ── */}
+
           <div className="mode-toggle">
             <button className={mode === 'view' ? 'on' : ''} onClick={() => setMode('view')}>
               <Eye size={13} /> View
@@ -281,88 +370,41 @@ export default function FloorPlanPage() {
             </button>
           </div>
 
-          {/* Edit-mode banner */}
           <div className="edit-banner">
             <span className="eb-dot" />
-            Edit mode · drag icons to reposition
+            Edit mode · click floor plan to add · drag to move · Esc to exit
           </div>
 
-          {/* Floor plan: image if available, SVG fallback otherwise */}
-          <FloorPlanBackground floorId={floorId ?? ''} />
-
-          {/* Camera overlays */}
-          {floor.cameras.map(cam => (
-            <div
-              key={cam.id}
-              className={`cam ${cam.status}`}
-              style={{ left: positions[cam.id]?.left ?? cam.left, top: positions[cam.id]?.top ?? cam.top }}
-              onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
-              title={`${cam.id} · ${cam.room}`}
-            >
-              <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
-              <div className="cam-icon">
-                <Video size={16} />
-              </div>
-              <span className="cam-name">{cam.id}</span>
-            </div>
-          ))}
-
-          {/* Rack markers */}
-          {floor.racks?.map(r => (
-            <div
-              key={r.id}
-              onClick={() => navigate(`/dashboard/racks/${r.id}`)}
-              title={`Open ${r.label}`}
-              style={{
-                position: 'absolute', left: r.left, top: r.top,
-                transform: 'translate(-50%,-50%)',
-                zIndex: 3, cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                transition: 'transform .12s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.transform = 'translate(-50%,-50%) scale(1.08)')}
-              onMouseLeave={e => (e.currentTarget.style.transform = 'translate(-50%,-50%)')}
-            >
-              <div style={{
-                width: 32, height: 32, borderRadius: 7,
-                background: 'var(--surface)', border: `2px solid ${RACK_STATUS_COLOR[r.status]}`,
-                display: 'grid', placeItems: 'center',
-                color: RACK_STATUS_COLOR[r.status],
-                boxShadow: '0 2px 8px rgba(0,0,0,.18)',
-              }}>
-                <Server size={16} />
-              </div>
-              <span style={{
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 5, padding: '2px 7px',
-                fontFamily: 'monospace', fontSize: 10, color: 'var(--ink-2)',
-                fontWeight: 600, whiteSpace: 'nowrap',
-                boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-              }}>{r.label}</span>
-            </div>
-          ))}
-
-          {/* Edit-mode controls */}
-          <button className="add-cam-btn">
+          <button
+            className="add-cam-btn"
+            onClick={e => {
+              e.stopPropagation()
+              const leftStr = '50%', topStr = '50%'
+              const newId   = `CAM-${String(cameras.length + 1).padStart(2, '0')}`
+              const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera' }
+              setCameras(prev => [...prev, newCam])
+              setPositions(prev => ({ ...prev, [newId]: { left: leftStr, top: topStr } }))
+            }}
+          >
             <Plus size={14} /> Add camera
           </button>
-          <div className="role-hint">Admin · drag to reposition · drop onto plan to add</div>
+          <div className="role-hint">Click on floor plan to place · drag to reposition</div>
 
-          {/* Canvas tools (top-right) */}
           <div className="canvas-tools">
-            <div className="group">
-              <button className="icon-btn" title="Zoom in">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+            <div className="ct-group">
+              <button className="icon-btn" title="Zoom in  ( + )" onClick={() => setZoom(z => clamp(parseFloat((z + 0.2).toFixed(2))))}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </button>
-              <button className="icon-btn" title="Zoom out">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+              <div className="ct-label">{Math.round(zoom * 100)}%</div>
+              <button className="icon-btn" title="Zoom out  ( - )" onClick={() => setZoom(z => clamp(parseFloat((z - 0.2).toFixed(2))))}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
               </button>
-              <button className="icon-btn" title="Fit to view">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+              <button className="icon-btn" title="Reset zoom  ( 0 )" onClick={() => setZoom(1.0)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
                   <path d="M4 9V5a1 1 0 0 1 1-1h4" /><path d="M20 9V5a1 1 0 0 0-1-1h-4" />
                   <path d="M4 15v4a1 1 0 0 0 1 1h4" /><path d="M20 15v4a1 1 0 0 1-1 1h-4" />
                 </svg>

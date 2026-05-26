@@ -9,7 +9,9 @@ import RacksListPage from './RacksListPage'
 import CamerasPage from './CamerasPage'
 import CameraDetailPage from './CameraDetailPage'
 import NVRsPage from './NVRsPage'
+import NVRDetailPage from './NVRDetailPage'
 import SwitchesPage from './SwitchesPage'
+import SwitchDetailPage from './SwitchDetailPage'
 import UsersPage from './UsersPage'
 
 export default function DashboardPage() {
@@ -27,7 +29,9 @@ export default function DashboardPage() {
         <Route path="cameras"                 element={<CamerasPage />} />
         <Route path="cameras/:cameraId"       element={<CameraDetailPage />} />
         <Route path="nvrs"                    element={<NVRsPage />} />
+        <Route path="nvrs/:nvrId"             element={<NVRDetailPage />} />
         <Route path="switches"                element={<SwitchesPage />} />
+        <Route path="switches/:switchId"      element={<SwitchDetailPage />} />
         <Route path="users"                   element={<UsersPage />} />
       </Route>
     </Routes>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
@@ -24,6 +25,7 @@ const SWITCHES: Switch[] = [
 ]
 
 export default function SwitchesPage() {
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const filtered = SWITCHES.filter(s =>
     !q || [s.id, s.name, s.ip, s.site].some(v => v.toLowerCase().includes(q.toLowerCase()))
@@ -67,7 +69,7 @@ export default function SwitchesPage() {
               const powerPct = s.budgetW > 0 ? Math.round(s.powerW / s.budgetW * 100) : 0
               const powerHigh = powerPct > 75
               return (
-                <tr key={s.id}>
+                <tr key={s.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/switches/${s.id}`)}>
                   <td>
                     <span className="dl-status">
                       <span className="s-dot" style={{ background: STATUS_COLOR[s.status] }} />
