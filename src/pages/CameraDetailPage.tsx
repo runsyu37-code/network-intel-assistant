@@ -63,28 +63,39 @@ function dayStatus(id: string, status: Status, day: number): Status {
   return r > 0.96 ? 'warn' : 'ok'
 }
 
-/* ── Ping chart ──────────────────────────────────────────────── */
+/* ── Ping line chart ─────────────────────────────────────────── */
 function PingChart({ pings }: { pings: Array<number | null> }) {
-  const H = 72
-  const W = 7
-  const GAP = 1
-  const maxRtt = Math.max(...pings.filter((p): p is number => p !== null), 1)
+  const H = 100
+  const W = 800
+  const PAD = 8
+  const valid = pings.filter((p): p is number => p !== null)
+  const maxRtt = Math.max(...valid, 1)
+
+  const pts = pings.map((rtt, i) => {
+    const x = (i / (pings.length - 1)) * W
+    const y = rtt === null
+      ? H - PAD
+      : PAD + (1 - rtt / maxRtt) * (H - PAD * 2)
+    return [x, y] as [number, number]
+  })
+
+  const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
+  const area = line + ` L${W},${H} L0,${H} Z`
 
   return (
     <svg
-      viewBox={`0 0 ${pings.length * (W + GAP)} ${H}`}
+      viewBox={`0 0 ${W} ${H}`}
       style={{ width: '100%', height: H, display: 'block' }}
       preserveAspectRatio="none"
     >
-      {pings.map((rtt, i) => {
-        const x = i * (W + GAP)
-        if (rtt === null) {
-          return <rect key={i} x={x} y={H - 7} width={W} height={7} fill="var(--alert)" opacity=".7" rx="1" />
-        }
-        const bh = Math.max(3, Math.round(rtt / maxRtt * H))
-        const fill = rtt > 50 ? 'var(--warn)' : 'var(--ok)'
-        return <rect key={i} x={x} y={H - bh} width={W} height={bh} fill={fill} opacity=".8" rx="1" />
-      })}
+      <defs>
+        <linearGradient id="ping-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#ping-fill)" />
+      <path d={line}  fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -96,8 +107,12 @@ export default function CameraDetailPage() {
   const cam = CAMERAS.find(c => c.id === cameraId) ?? CAMERAS[0]
   const pings   = generatePings(cam.id, cam.status)
   const valid   = pings.filter((p): p is number => p !== null)
-  const avgRtt  = valid.length ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : 0
+  const minRtt  = valid.length ? Math.min(...valid) : 0
   const maxRtt  = valid.length ? Math.max(...valid) : 0
+  const avgRtt  = valid.length ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : 0
+  const jitter  = valid.length > 1
+    ? Math.round(valid.slice(1).reduce((s, v, i) => s + Math.abs(v - valid[i]), 0) / (valid.length - 1) * 10) / 10
+    : 0
   const lossRaw = Math.round((pings.filter(p => p === null).length / pings.length) * 100)
 
   const uptimeDays  = Array.from({ length: 30 }, (_, i) => dayStatus(cam.id, cam.status, i))
@@ -217,29 +232,31 @@ export default function CameraDetailPage() {
                 </div>
                 <div className="ping-stats">
                   <div className="ping-stat">
-                    <span className="ping-stat-label">Avg RTT</span>
+                    <span className="ping-stat-label">Min</span>
+                    <span className="ping-stat-val">
+                      {cam.status === 'alert' ? '—' : minRtt}
+                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                    </span>
+                  </div>
+                  <div className="ping-stat">
+                    <span className="ping-stat-label">Max</span>
+                    <span className={`ping-stat-val${maxRtt > 100 ? ' alert' : ''}`}>
+                      {cam.status === 'alert' ? '—' : maxRtt}
+                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                    </span>
+                  </div>
+                  <div className="ping-stat">
+                    <span className="ping-stat-label">Average</span>
                     <span className={`ping-stat-val${avgRtt > 50 ? ' warn' : ''}`}>
                       {cam.status === 'alert' ? '—' : avgRtt}
                       {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
                     </span>
                   </div>
                   <div className="ping-stat">
-                    <span className="ping-stat-label">Max RTT</span>
-                    <span className={`ping-stat-val${maxRtt > 100 ? ' warn' : ''}`}>
-                      {cam.status === 'alert' ? '—' : maxRtt}
+                    <span className="ping-stat-label">Jitter</span>
+                    <span className={`ping-stat-val${jitter > 10 ? ' warn' : ''}`}>
+                      {cam.status === 'alert' ? '—' : jitter}
                       {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
-                    </span>
-                  </div>
-                  <div className="ping-stat">
-                    <span className="ping-stat-label">Packet Loss</span>
-                    <span className={`ping-stat-val${lossRaw > 0 ? ' alert' : ''}`}>
-                      {lossRaw}<span className="ping-stat-unit">%</span>
-                    </span>
-                  </div>
-                  <div className="ping-stat" style={{ marginLeft: 'auto' }}>
-                    <span className="ping-stat-label">Last seen</span>
-                    <span className="ping-stat-val" style={{ fontSize: 14 }}>
-                      {cam.status === 'alert' ? '8m ago' : cam.status === 'warn' ? '5m ago' : 'just now'}
                     </span>
                   </div>
                 </div>

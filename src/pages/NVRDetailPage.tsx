@@ -60,41 +60,54 @@ const NVRS: Record<string, NVR> = {
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
 
-/* Deterministic 24-hour channel-usage sparkline */
 function rng(seed: number, i: number) {
   return (((seed * 1103515245 + i * 12345) >>> 0) & 0x7fffffff) / 0x7fffffff
 }
 
-function ChannelSparkline({ nvr }: { nvr: NVR }) {
+function ChannelBars({ nvr }: { nvr: NVR }) {
   const seed = nvr.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  const N = 24
-  const W = 7, GAP = 2, H = 48
+  const names = ['Lobby Cam A','Lobby Cam B','Server Rm 01','Server Rm 02','Main Gate','Parking A',
+                 'Annex Lobby','Meeting 5A','Office 3A','Office 3B','Office 3C','Break Rm 3',
+                 'Meeting 3','Executive 6A','Corridor B1','Entrance B2']
+  const show = Math.min(nvr.channels, 12)
 
   return (
-    <svg viewBox={`0 0 ${N * (W + GAP)} ${H + 16}`} style={{ width: '100%', height: 'auto' }}>
-      {Array.from({ length: N }, (_, i) => {
-        const base = nvr.usedCh / nvr.channels
-        const val  = Math.max(0.08, Math.min(1, base + (rng(seed, i) - 0.5) * 0.3))
-        const barH = Math.max(4, Math.round(val * H))
-        const x    = i * (W + GAP)
-        const isNow = i === N - 1
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
+      {Array.from({ length: show }, (_, i) => {
+        const active = i < nvr.usedCh
+        const mbps   = active ? Math.round((2.5 + rng(seed, i) * 3.5) * 10) / 10 : 0
+        const pct    = active ? Math.round(mbps / 10 * 100) : 0
         return (
-          <g key={i}>
-            <rect x={x} y={H - barH} width={W} height={barH} rx="2"
-              fill={isNow ? 'var(--accent)' : 'rgba(91,141,239,0.38)'}
-              stroke="none"
-            />
-            {i % 6 === 0 && (
-              <text x={x + W / 2} y={H + 12} textAnchor="middle"
-                fontSize="8" fontFamily="'JetBrains Mono', monospace" fill="var(--ink-4)"
-              >{i === 0 ? '00h' : `${String(i).padStart(2, '0')}h`}</text>
-            )}
-          </g>
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5 }}>
+            <span style={{ width: 22, textAlign: 'right', color: 'var(--ink-4)', fontFamily: 'JetBrains Mono, monospace', flex: 'none' }}>
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <span style={{ width: 112, flex: 'none', color: active ? 'var(--ink-2)' : 'var(--ink-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {active ? (names[i] ?? `CAM-${String(i+1).padStart(2,'0')}`) : '— empty —'}
+            </span>
+            <div style={{ flex: 1, height: 7, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden' }}>
+              {active && <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', opacity: .75, borderRadius: 4 }} />}
+            </div>
+            <span style={{ width: 52, textAlign: 'right', flex: 'none', fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink-3)', fontSize: 10.5 }}>
+              {active ? `${mbps} Mbps` : '—'}
+            </span>
+          </div>
         )
       })}
-    </svg>
+    </div>
   )
 }
+
+const MOCK_EVENTS = [
+  { time: '14:22:01', type: 'alert' as const, msg: 'CH-03 camera connection lost' },
+  { time: '14:18:45', type: 'warn'  as const, msg: 'HDD 1 usage above 75% threshold' },
+  { time: '13:55:02', type: 'ok'    as const, msg: 'Recording schedule applied: 24/7 H.265' },
+  { time: '13:41:18', type: 'warn'  as const, msg: 'CPU temperature 72°C — fan speed increased' },
+  { time: '12:00:00', type: 'ok'    as const, msg: 'Daily health check passed' },
+]
+const EV_LABEL = { alert: 'Offline', warn: 'Warning', ok: 'Info' }
+const EV_COLOR = { alert: 'var(--alert)', warn: 'var(--warn)', ok: 'var(--ok)' }
+const EV_BG    = { alert: 'var(--alert-soft)', warn: 'var(--warn-soft)', ok: 'var(--ok-soft)' }
 
 function StorageBar({ pct, warn }: { pct: number; warn: boolean }) {
   return (
@@ -186,9 +199,9 @@ export default function NVRDetailPage() {
           <div className="nvr-chart-col">
 
             <div className="cam-card">
-              <div className="cam-card-title">Channel Usage — last 24 hours</div>
+              <div className="cam-card-title">Channel Usage — {nvr.usedCh} / {nvr.channels} Active</div>
               <div style={{ marginBottom: 12 }}>
-                <ChannelSparkline nvr={nvr} />
+                <ChannelBars nvr={nvr} />
               </div>
               <div className="stats-grid">
                 <div className="ps-item">
@@ -207,20 +220,28 @@ export default function NVRDetailPage() {
             </div>
 
             <div className="cam-card">
-              <div className="cam-card-title">Connected Cameras ({nvr.connectedCams.length})</div>
-              {nvr.connectedCams.length === 0 ? (
-                <div style={{ color: 'var(--ink-4)', fontSize: 12, padding: '8px 0' }}>No camera data available</div>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                  {nvr.connectedCams.map(c => (
-                    <span key={c} style={{
-                      fontFamily: 'monospace', fontSize: 11, fontWeight: 600,
-                      background: 'var(--surface-2)', border: '1px solid var(--border)',
-                      borderRadius: 5, padding: '2px 8px', color: 'var(--ink-2)',
-                    }}>{c}</span>
-                  ))}
-                </div>
-              )}
+              <div className="cam-card-title">Recent Events</div>
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4 }}>
+                {MOCK_EVENTS.map((ev, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 0',
+                    borderBottom: i < MOCK_EVENTS.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--ink-4)', flex: 'none', width: 60 }}>
+                      {ev.time}
+                    </span>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999, flex: 'none',
+                      background: EV_BG[ev.type], color: EV_COLOR[ev.type],
+                      border: `1px solid ${EV_COLOR[ev.type]}44`,
+                    }}>
+                      {EV_LABEL[ev.type]}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-2)', flex: 1 }}>{ev.msg}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
           </div>
