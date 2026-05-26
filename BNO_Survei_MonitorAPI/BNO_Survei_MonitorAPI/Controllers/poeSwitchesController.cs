@@ -84,6 +84,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult SavepoeSwitches([FromBody] List<poeSwitchesModel> modelList)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -159,6 +163,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (model == null || string.IsNullOrWhiteSpace(model.SW_ID))
                 return BadRequest("Value cannot be null");
 
@@ -247,6 +255,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/poe-switches/delete/{SW_ID}")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (string.IsNullOrWhiteSpace(SW_ID))
                 return BadRequest("SW_ID is required");
 

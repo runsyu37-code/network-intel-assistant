@@ -1,0 +1,41 @@
+info:
+  name: TEST3 - Save user without role returns 400
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "username": "no_role_user",
+          "password": "Test@1234",
+          "display_name": "No Role User",
+          "is_active": true
+        }
+      ]
+
+runtime:
+  variables:
+    - name: admin_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWRtaW5fdGVzdCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImFkbWluIiwianRpIjoiYzJlOTI2YmEtNjFjNy00NzI4LWE5MjktNDVkZDMyODdlZTBhIiwiZXhwIjoxNzc5ODEzOTQ1LCJpc3MiOiJTU00tQVBJIiwiYXVkIjoiU1NNLUZyb250ZW5kIn0.Jii72NkbUe7oi1_9r1a2MLVQ_VgpDv8ifADMC69tB7Y
+
+# EXPECT: 400 Bad Request
+# PASS if: status 400, body = "role is required"
+# FAIL if: status 200 (user created with NULL role) or 500
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

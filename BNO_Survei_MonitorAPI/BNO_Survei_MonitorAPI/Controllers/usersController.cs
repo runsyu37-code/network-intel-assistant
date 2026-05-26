@@ -69,7 +69,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.password)))
                 return BadRequest("password is required");
 
-            var invalidRole = modelList.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.role) && !ValidRoles.Contains(x.role));
+            if (modelList.Any(x => string.IsNullOrWhiteSpace(x.role)))
+                return BadRequest("role is required");
+
+            var invalidRole = modelList.FirstOrDefault(x => !ValidRoles.Contains(x.role));
             if (invalidRole != null)
                 return BadRequest($"Invalid role value: {invalidRole.role}");
 
@@ -128,7 +131,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
             if (model == null || string.IsNullOrWhiteSpace(model.username))
                 return BadRequest("username is required");
 
-            if (!string.IsNullOrWhiteSpace(model.role) && !ValidRoles.Contains(model.role))
+            if (string.IsNullOrWhiteSpace(model.role))
+                return BadRequest("role is required");
+
+            if (!ValidRoles.Contains(model.role))
                 return BadRequest($"Invalid role value: {model.role}");
 
             try

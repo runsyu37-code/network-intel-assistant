@@ -56,7 +56,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult SavepingLogs([FromBody] List<pingLogsModel> modelList)
         {
-            if (modelList == null || modelList.Count == 0)
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.device_type) || string.IsNullOrWhiteSpace(x.device_id)))
@@ -107,7 +110,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult UpdatepingLogs(int id, [FromBody] pingLogsModel model)
         {
-            if (model == null)
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -148,7 +154,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/ping-logs/delete/{id}")]
         public IHttpActionResult DeletepingLogs(int id)
         {
-            try
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

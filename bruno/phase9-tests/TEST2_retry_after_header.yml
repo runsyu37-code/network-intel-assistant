@@ -1,0 +1,30 @@
+info:
+  name: TEST2 - 429 response includes Retry-After header
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/auth/login
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "admin",
+        "password": "WRONG_PASSWORD"
+      }
+
+# SETUP: Run after TEST1 has already triggered lockout
+# EXPECT: 429 + Retry-After header present (value = seconds remaining in lockout)
+# PASS if: status 429, header Retry-After exists and is a number
+# FAIL if: no Retry-After header
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: false
+  maxRedirects: 5

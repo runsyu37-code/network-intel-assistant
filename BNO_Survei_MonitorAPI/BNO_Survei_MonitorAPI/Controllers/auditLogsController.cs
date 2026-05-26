@@ -57,7 +57,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult SaveauditLogs([FromBody] List<auditLogsModel> modelList)
         {
-            if (modelList == null || modelList.Count == 0)
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.action) || string.IsNullOrWhiteSpace(x.table_name)))
@@ -109,7 +112,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult UpdateauditLogs(int id, [FromBody] auditLogsModel model)
         {
-            if (model == null)
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -152,7 +158,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/audit-logs/delete/{id}")]
         public IHttpActionResult DeleteauditLogs(int id)
         {
-            try
+                        if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
+try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

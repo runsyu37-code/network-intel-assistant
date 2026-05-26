@@ -68,6 +68,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Saverooms([FromBody] List<roomsModel> modelList)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -131,6 +135,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updaterooms(string Room_ID, [FromBody] roomsModel model)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (model == null || string.IsNullOrWhiteSpace(model.Room_ID))
                 return BadRequest("Value cannot be null");
 
@@ -195,6 +203,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/rooms/delete/{Room_ID}")]
         public IHttpActionResult Deleterooms(string Room_ID)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (string.IsNullOrWhiteSpace(Room_ID))
                 return BadRequest("Room_ID is required");
 

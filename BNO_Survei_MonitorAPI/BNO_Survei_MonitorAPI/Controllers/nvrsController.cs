@@ -86,6 +86,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Savenvrs([FromBody] List<nvrsModel> modelList)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -163,6 +167,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (model == null || string.IsNullOrWhiteSpace(model.NVR_ID))
                 return BadRequest("Value cannot be null");
 
@@ -255,6 +263,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/nvrs/delete/{NVR_ID}")]
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {
+            if (!RequestContext.Principal.IsInRole("admin") &&
+                !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             if (string.IsNullOrWhiteSpace(NVR_ID))
                 return BadRequest("NVR_ID is required");
 
