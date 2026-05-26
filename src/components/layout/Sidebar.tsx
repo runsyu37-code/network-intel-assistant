@@ -2,10 +2,36 @@ import type { ElementType } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Network, Building2, Camera, HardDrive,
-  PlugZap, Server, Users, Sun, Moon, ChevronRight,
+  PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin,
 } from 'lucide-react'
 import { useThemeStore } from '../../stores/themeStore'
 import { useAuthStore } from '../../stores/authStore'
+
+const BUILDING_LABEL: Record<string, string> = {
+  a: 'Building A', b: 'Building B', c: 'Building C', d: 'Building D',
+}
+const FLOOR_SHORT: Record<string, string> = {
+  'a-f6': 'F6 — Executive', 'a-f5': 'F5 — Meeting Rooms',
+  'a-f4': 'F4 — Office',    'a-f3': 'F3 — Office',
+  'a-f2': 'F2 — Server Room','a-f1': 'F1 — Lobby',
+  'b-f4': 'F4 — Management', 'b-f3': 'F3 — Office',
+  'b-f2': 'F2 — Office',    'b-f1': 'F1 — Lobby',
+  'c-f1': 'F1 — Warehouse',  'd-f2': 'F2 — Security',
+  'd-f1': 'F1 — Gate',
+}
+
+function useLocationCtx(): string | null {
+  const { pathname } = useLocation()
+  const parts = pathname.split('/').filter(Boolean)
+  const page = parts[1]
+  const id   = parts[2]
+  if (page === 'buildings' && id) return BUILDING_LABEL[id] ?? `Building ${id.toUpperCase()}`
+  if (page === 'floors' && id) {
+    const bId = id.split('-')[0]
+    return `${BUILDING_LABEL[bId] ?? 'Building'} · ${FLOOR_SHORT[id] ?? id}`
+  }
+  return null
+}
 
 interface NavItem {
   to: string
@@ -47,7 +73,8 @@ const ADMIN_NAV: NavItem[] = [
 export default function Sidebar() {
   const { pathname } = useLocation()
   const { theme, toggle } = useThemeStore()
-  const user = useAuthStore((s) => s.user)
+  const user        = useAuthStore((s) => s.user)
+  const locationCtx = useLocationCtx()
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'RN'
 
@@ -81,7 +108,17 @@ export default function Sidebar() {
       {NAV.map(({ section, items }) => (
         <nav key={section} className="nav-section">
           <div className="nav-label">{section}</div>
-          {items.map(renderItem)}
+          {items.map(item => (
+            <div key={item.label}>
+              {renderItem(item)}
+              {item.label === 'Sites' && locationCtx && (
+                <div className="nav-ctx">
+                  <MapPin size={11} style={{ flex: 'none' }} />
+                  <span>{locationCtx}</span>
+                </div>
+              )}
+            </div>
+          ))}
         </nav>
       ))}
 
