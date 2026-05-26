@@ -7,9 +7,11 @@ namespace BNO_Survei_MonitorAPI
     {
         public static void Register(HttpConfiguration config)
         {
-                // CORS — allow React dev server + production intranet origin
+                // CORS — read origins from Web.config appSettings (CorsOrigins key)
+            var origins = System.Configuration.ConfigurationManager.AppSettings["CorsOrigins"]
+                ?? "http://localhost:5173";
                 var cors = new EnableCorsAttribute(
-                    origins: "http://localhost:5173,http://localhost:3000,http://localhost:5174",
+                    origins: origins,
                     headers: "*",
                     methods: "*"
                 );

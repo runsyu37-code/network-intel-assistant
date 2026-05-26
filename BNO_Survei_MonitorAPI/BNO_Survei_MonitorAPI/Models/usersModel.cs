@@ -17,6 +17,9 @@ namespace TestAPBNO_Survei_MonitorAPI.Models
         [JsonProperty(PropertyName = "pw_hash")]
         public string pw_hash { get; set; }
 
+        [JsonProperty(PropertyName = "password")]
+        public string password { get; set; }
+
         [JsonProperty(PropertyName = "display_name")]
         public string display_name { get; set; }
 

@@ -13,6 +13,9 @@ BNO_Survei_MonitorAPI/packages/
 # Sensitive config — each machine has its own connectionStrings.config
 connectionStrings.config
 
+# Bruno environment files — contain real tokens/secrets, never commit
+bruno/**/environments/
+
 # Python
 __pycache__/
 *.pyc

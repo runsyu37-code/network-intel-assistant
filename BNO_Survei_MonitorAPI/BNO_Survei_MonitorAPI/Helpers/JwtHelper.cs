@@ -9,8 +9,9 @@ namespace BNO_Survei_MonitorAPI.Helpers
 {
     public static class JwtHelper
     {
-        // Change this to a strong random secret in production (store in Web.config / environment variable)
-        public const string SecretKey = "SSM_JWT_SECRET_KEY_CHANGE_IN_PRODUCTION_2026";
+        public static string SecretKey =>
+            System.Configuration.ConfigurationManager.AppSettings["JwtSecret"]
+            ?? throw new System.InvalidOperationException("JwtSecret not configured in Web.config appSettings");
         public const string Issuer = "SSM-API";
         public const string Audience = "SSM-Frontend";
         public const int ExpiryHours = 8;
