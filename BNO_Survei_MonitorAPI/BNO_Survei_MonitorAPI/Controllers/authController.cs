@@ -140,11 +140,16 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         private string GetClientIp()
         {
+            // X-Forwarded-For intentionally not used: no reverse proxy sits in front of IIS
+            // on this intranet deployment. Trusting that header would allow any client to
+            // spoof a victim IP and trigger their lockout (trivial DoS).
+            // NOTE: In IIS Express (dev), UserHostAddress always returns 127.0.0.1 —
+            // rate limiting during local testing is a shared counter for all localhost requests.
+            // NOTE: Rate limiting state is in-memory and does not survive app pool recycles
+            // or deployments. Acceptable for v1 on a 30-user intranet. Migrate to SQL-backed
+            // storage if deploy frequency increases or external access is ever enabled.
             var ctx = HttpContext.Current;
             if (ctx == null) return "unknown";
-            var forwarded = ctx.Request.Headers["X-Forwarded-For"];
-            if (!string.IsNullOrWhiteSpace(forwarded))
-                return forwarded.Split(',')[0].Trim();
             return ctx.Request.UserHostAddress ?? "unknown";
         }
 
