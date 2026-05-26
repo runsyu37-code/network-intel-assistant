@@ -69,6 +69,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.password)))
                 return BadRequest("password is required");
 
+            var invalidRole = modelList.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.role) && !ValidRoles.Contains(x.role));
+            if (invalidRole != null)
+                return BadRequest($"Invalid role value: {invalidRole.role}");
+
             int insertCount = 0;
             try
             {
@@ -104,8 +108,6 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         private void AddParameters(SqlCommand cmd, usersModel item)
         {
-            if (!ValidRoles.Contains(item.role))
-                throw new ArgumentException($"Invalid role value: {item.role}");
             cmd.Parameters.AddWithValue("@username", string.IsNullOrWhiteSpace(item.username) ? (object)DBNull.Value : item.username);
             cmd.Parameters.AddWithValue("@pw_hash",  BCrypt.Net.BCrypt.HashPassword(item.password));
             cmd.Parameters.AddWithValue("@display_name", string.IsNullOrWhiteSpace(item.display_name) ? (object)DBNull.Value : item.display_name);
