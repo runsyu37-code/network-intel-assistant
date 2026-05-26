@@ -1,0 +1,178 @@
+/* ── Camera Detail layout ───────────────────────────────────── */
+.cam-detail {
+  display: flex;
+  gap: 20px;
+  padding: 20px 24px 28px;
+  align-items: flex-start;
+  min-height: 100%;
+}
+
+.cam-info-col {
+  width: 288px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cam-chart-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Info card ──────────────────────────────────────────────── */
+.cam-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-2);
+}
+:root[data-theme="light"] .cam-card { border-color: #d4d7dc; }
+
+.cam-card-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+
+.cam-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.cam-row:last-child { border-bottom: none; padding-bottom: 0; }
+.cam-row-label {
+  color: var(--ink-3);
+  font-weight: 500;
+  width: 88px;
+  flex: none;
+  line-height: 1.4;
+}
+.cam-row-val {
+  color: var(--ink);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.cam-row-val.mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+/* ── Status badge in header ─────────────────────────────────── */
+.cam-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.cam-status-badge.ok    { background: rgba(22,163,74,.12);  border-color: rgba(22,163,74,.25);  color: var(--ok); }
+.cam-status-badge.warn  { background: rgba(217,119,6,.12);  border-color: rgba(217,119,6,.25);  color: var(--warn); }
+.cam-status-badge.alert { background: rgba(220,38,38,.1);   border-color: rgba(220,38,38,.25);  color: var(--alert); }
+.cam-status-badge .sb-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── Ping chart ─────────────────────────────────────────────── */
+.ping-chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px 16px;
+  box-shadow: var(--shadow-2);
+}
+:root[data-theme="light"] .ping-chart-wrap { border-color: #d4d7dc; }
+
+.ping-chart-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+}
+
+.ping-svg-wrap {
+  background: var(--canvas-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 6px 4px;
+  margin-bottom: 10px;
+}
+
+.ping-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ping-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ping-stat-label { font-size: 10px; color: var(--ink-3); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.ping-stat-val   { font-size: 18px; font-weight: 700; color: var(--ink); font-family: 'JetBrains Mono', monospace; letter-spacing: -.02em; }
+.ping-stat-val.warn  { color: var(--warn); }
+.ping-stat-val.alert { color: var(--alert); }
+.ping-stat-unit { font-size: 11px; font-weight: 500; color: var(--ink-3); margin-left: 2px; }
+
+/* ── 30-day uptime bar ──────────────────────────────────────── */
+.uptime-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-2);
+}
+:root[data-theme="light"] .uptime-wrap { border-color: #d4d7dc; }
+
+.uptime-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.uptime-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.uptime-pct { font-size: 14px; font-weight: 700; color: var(--ok); font-family: 'JetBrains Mono', monospace; }
+.uptime-pct.warn  { color: var(--warn); }
+.uptime-pct.alert { color: var(--alert); }
+
+.uptime-blocks {
+  display: flex;
+  gap: 3px;
+}
+.uptime-block {
+  flex: 1;
+  height: 28px;
+  border-radius: 3px;
+  cursor: default;
+}
+.uptime-block.ok    { background: var(--ok); opacity: .75; }
+.uptime-block.warn  { background: var(--warn); opacity: .75; }
+.uptime-block.alert { background: var(--alert); opacity: .75; }
+.uptime-block:hover { opacity: 1; }
+
+.uptime-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--ink-4);
+}

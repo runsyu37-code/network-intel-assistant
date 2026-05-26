@@ -7,6 +7,7 @@ import FloorPlanPage from './FloorPlanPage'
 import RackDetailPage from './RackDetailPage'
 import RacksListPage from './RacksListPage'
 import CamerasPage from './CamerasPage'
+import CameraDetailPage from './CameraDetailPage'
 import NVRsPage from './NVRsPage'
 import SwitchesPage from './SwitchesPage'
 import UsersPage from './UsersPage'
@@ -24,6 +25,7 @@ export default function DashboardPage() {
         <Route path="racks"                   element={<RacksListPage />} />
         <Route path="racks/:rackId"           element={<RackDetailPage />} />
         <Route path="cameras"                 element={<CamerasPage />} />
+        <Route path="cameras/:cameraId"       element={<CameraDetailPage />} />
         <Route path="nvrs"                    element={<NVRsPage />} />
         <Route path="switches"                element={<SwitchesPage />} />
         <Route path="users"                   element={<UsersPage />} />

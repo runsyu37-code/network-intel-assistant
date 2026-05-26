@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Server } from 'lucide-react'
+import { Server, MapPin } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -21,8 +21,26 @@ const RACKS: Rack[] = [
   { id:'rack-k1', name:'Rack K1', status:'ok',    site:'Khon Kaen',     building:'Building A', room:'Server Room F1', usedU:4,  totalU:18, devices:4,  powerKw:0.28, budgetKw:1.0 },
 ]
 
+const SITE_ORDER = ['HQ Bangkok', 'Chiang Mai DC', 'Phuket Branch', 'Khon Kaen']
+
+function groupBySite(racks: Rack[]): { site: string; racks: Rack[] }[] {
+  const map = new Map<string, Rack[]>()
+  for (const r of racks) {
+    if (!map.has(r.site)) map.set(r.site, [])
+    map.get(r.site)!.push(r)
+  }
+  return SITE_ORDER.filter(s => map.has(s)).map(site => ({ site, racks: map.get(site)! }))
+}
+
+function siteStatus(racks: Rack[]): Status {
+  if (racks.some(r => r.status === 'alert')) return 'alert'
+  if (racks.some(r => r.status === 'warn'))  return 'warn'
+  return 'ok'
+}
+
 export default function RacksListPage() {
   const navigate = useNavigate()
+  const groups   = groupBySite(RACKS)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -40,56 +58,67 @@ export default function RacksListPage() {
 
       <div className="canvas-wrap" style={{ flex: 1, minHeight: 0 }}>
         <div className="canvas" style={{ overflowY: 'auto' }}>
-          <div className="bldg-grid">
-            {RACKS.map(r => {
-              const uPct     = Math.round(r.usedU / r.totalU * 100)
-              const pwrPct   = Math.round(r.powerKw / r.budgetKw * 100)
-              const pwrHigh  = pwrPct > 75
-
-              return (
-                <div
-                  key={r.id}
-                  className={`bldg-card ${r.status}`}
-                  onClick={() => navigate(`/dashboard/racks/${r.id}`)}
-                  style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, minWidth: 260, maxWidth: 300 }}
-                >
-                  {/* header row */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span className="bc-dot" style={{ background: STATUS_COLOR[r.status] }} />
-                    <div className="bc-meta">
-                      <div className="bc-title">{r.name}</div>
-                      <div className="bc-sub">{r.site} · {r.room}</div>
-                    </div>
-                    <Server size={16} style={{ color: 'var(--ink-3)', flex: 'none' }} />
-                  </div>
-
-                  {/* capacity bar */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>
-                      <span>Capacity</span>
-                      <span style={{ fontFamily: 'monospace' }}>{r.usedU}/{r.totalU} U · {r.devices} dev</span>
-                    </div>
-                    <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${uPct}%`, background: 'var(--accent)', borderRadius: 999 }} />
-                    </div>
-                  </div>
-
-                  {/* power bar */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>
-                      <span>Power</span>
-                      <span style={{ fontFamily: 'monospace', color: pwrHigh ? 'var(--warn)' : undefined }}>
-                        {r.powerKw.toFixed(2)} / {r.budgetKw} kW
-                      </span>
-                    </div>
-                    <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pwrPct}%`, background: pwrHigh ? 'var(--warn)' : 'var(--accent)', borderRadius: 999 }} />
-                    </div>
-                  </div>
+          {groups.map(({ site, racks }) => {
+            const st = siteStatus(racks)
+            return (
+              <div key={site} className="rack-site-section">
+                <div className="rack-site-head">
+                  <MapPin size={13} style={{ color: 'var(--ink-3)', flex: 'none' }} />
+                  <span className="rsh-name">{site}</span>
+                  <span className="rsh-dot" style={{ background: STATUS_COLOR[st] }} />
+                  <span className="rsh-count">{racks.length} rack{racks.length > 1 ? 's' : ''}</span>
                 </div>
-              )
-            })}
-          </div>
+
+                <div className="bldg-grid" style={{ padding: 0, paddingBottom: 4 }}>
+                  {racks.map(r => {
+                    const uPct   = Math.round(r.usedU / r.totalU * 100)
+                    const pwrPct = Math.round(r.powerKw / r.budgetKw * 100)
+                    const pwrHigh = pwrPct > 75
+
+                    return (
+                      <div
+                        key={r.id}
+                        className={`bldg-card ${r.status}`}
+                        onClick={() => navigate(`/dashboard/racks/${r.id}`)}
+                        style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10, minWidth: 260, maxWidth: 300 }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span className="bc-dot" style={{ background: STATUS_COLOR[r.status] }} />
+                          <div className="bc-meta">
+                            <div className="bc-title">{r.name}</div>
+                            <div className="bc-sub">{r.building} · {r.room}</div>
+                          </div>
+                          <Server size={16} style={{ color: 'var(--ink-3)', flex: 'none' }} />
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>
+                            <span>Capacity</span>
+                            <span style={{ fontFamily: 'monospace' }}>{r.usedU}/{r.totalU} U · {r.devices} dev</span>
+                          </div>
+                          <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${uPct}%`, background: 'var(--accent)', borderRadius: 999 }} />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>
+                            <span>Power</span>
+                            <span style={{ fontFamily: 'monospace', color: pwrHigh ? 'var(--warn)' : undefined }}>
+                              {r.powerKw.toFixed(2)} / {r.budgetKw} kW
+                            </span>
+                          </div>
+                          <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pwrPct}%`, background: pwrHigh ? 'var(--warn)' : 'var(--accent)', borderRadius: 999 }} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

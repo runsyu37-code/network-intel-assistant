@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
@@ -32,6 +33,7 @@ const CAMERAS: Camera[] = [
 ]
 
 export default function CamerasPage() {
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const filtered = CAMERAS.filter(c =>
     !q || [c.id, c.name, c.ip, c.site, c.building].some(v => v.toLowerCase().includes(q.toLowerCase()))
@@ -76,7 +78,7 @@ export default function CamerasPage() {
               <tr><td colSpan={7} className="dl-empty">No cameras found</td></tr>
             )}
             {filtered.map(c => (
-              <tr key={c.id}>
+              <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/cameras/${c.id}`)}>
                 <td>
                   <span className="dl-status">
                     <span className="s-dot" style={{ background: STATUS_COLOR[c.status] }} />

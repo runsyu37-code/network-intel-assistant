@@ -108,6 +108,27 @@
 }
 .floor-card.alert .fc-dot { animation: pulseFloor 1.8s ease-out infinite; }
 
+/* ── Rack List — site grouping ───────────────────────────────── */
+.rack-site-section {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.rack-site-section:last-child { border-bottom: none; }
+
+.rack-site-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+.rsh-name  { font-weight: 600; font-size: 13px; color: var(--ink); }
+.rsh-dot   { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.rsh-count {
+  font-size: 11px; color: var(--ink-3); font-weight: 500;
+  background: var(--surface-2); padding: 2px 8px; border-radius: 999px;
+  margin-left: 2px;
+}
+
 /* ── Floor list stack on canvas ──────────────────────────────── */
 .floor-stack {
   display: flex; flex-direction: column; gap: 10px;
