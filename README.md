@@ -18,7 +18,7 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 
 ## สถานะโปรเจกต์
 
-> อัปเดต: **2026-05-27** · Deadline: **2026-05-29 (พฤหัส)**
+> อัปเดต: **2026-05-28** · Deadline: **2026-05-29 (พฤหัส)**
 > Branch หลัก: `frontend`
 
 | ส่วน | สถานะ |
@@ -31,6 +31,10 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 | UX — Back navigation | ✅ Camera/Rack/NVR/Switch detail ทุกหน้ามีปุ่ม ← back |
 | UX — Floor plan side panel | ✅ คลิกกล้อง → แสดง IP/model/status + Open Detail |
 | UX — Topology legend panel | ✅ left panel + hide offline toggle |
+| Theme — Buono brand purple | ✅ `--accent #8B44AA` ทุกหน้า (login + sidebar + topology) |
+| Floor plan — camera icons | ✅ จุดวงกลมสี + FOV cone โปรเจคเตอร์ (ไม่มีรูป video) |
+| Floor plan — camera positions | ✅ ติดผนังทุก floor (a-f1 → a-f6) FOV ชี้เข้าห้อง |
+| Login — mock fallback | ✅ เข้าได้แม้ backend error / DB ไม่ตอบ |
 | เชื่อม API จริงทุกหน้า | 🟡 Camera Detail ใช้ API — หน้าอื่นใช้ mock data |
 
 ---
