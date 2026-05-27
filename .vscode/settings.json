@@ -1,0 +1,22 @@
+{
+  "files.exclude": {
+    "node_modules": true,
+    "archive": true,
+    "open design": true,
+    "presentation_F": true,
+    "docs": true,
+    "logo": true,
+    "work_pack": true,
+    "BNO_Survei_Monitor": true,
+    "package-lock.json": true,
+    "tsconfig.node.json": true,
+    "output": true,
+    "**/.git": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "vite.config.ts": "tsconfig*.json",
+    "package.json": "package-lock.json",
+    "index.html": "DEV.md, BACKLOG.md, CLAUDE.md, README.md, ROADMAP.md"
+  }
+}
