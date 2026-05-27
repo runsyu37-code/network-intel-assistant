@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 
 type DevStatus = 'ok' | 'alert' | 'warn' | 'passive'
 type DevType   = 'nvr' | 'switch' | 'patch' | 'pdu' | 'ups' | 'cable' | 'ap'
@@ -137,8 +138,11 @@ function StatusLabel({ status }: { status: DevStatus }) {
 }
 
 export default function RackDetailPage() {
-  const { rackId } = useParams<{ rackId: string }>()
-  const rack = RACKS[rackId ?? ''] ?? DEFAULT_RACK
+  const { rackId }   = useParams<{ rackId: string }>()
+  const navigate     = useNavigate()
+  const location     = useLocation()
+  const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/racks'
+  const rack         = RACKS[rackId ?? ''] ?? DEFAULT_RACK
 
   const capacityPct  = (rack.usedU / rack.totalU * 100).toFixed(0)
   const powerPct     = (rack.powerKw / rack.powerBudgetKw * 100).toFixed(0)
@@ -149,9 +153,14 @@ export default function RackDetailPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
-        <div>
-          <h1>{rack.title}</h1>
-          <p className="page-sub">{rack.sub}</p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <button className="icon-btn" style={{ marginTop: 2, flex: 'none' }} onClick={() => navigate(backTo)}>
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <h1>{rack.title}</h1>
+            <p className="page-sub">{rack.sub}</p>
+          </div>
         </div>
         <div className="topo-legend">
           <span className="legend-swatch"><i style={{ background: 'var(--ok)'    }} />Online</span>

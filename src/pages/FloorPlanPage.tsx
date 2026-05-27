@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
 
 const PLAN_EXTS = ['jpg', 'jpeg', 'png', 'svg', 'webp']
@@ -154,6 +154,7 @@ const CAM_STATUS_LABEL: Record<CamStatus, string>  = { ok: 'Online',   warn: 'Wa
 export default function FloorPlanPage() {
   const { floorId }  = useParams<{ floorId: string }>()
   const navigate     = useNavigate()
+  const location     = useLocation()
   const [mode, setMode]           = useState<'view' | 'edit'>('view')
   const [zoom, setZoom]           = useState(1.0)
   const [selectedCam, setSelectedCam] = useState<Camera | null>(null)
@@ -354,7 +355,7 @@ export default function FloorPlanPage() {
                 <div
                   key={r.id}
                   data-rack={r.id}
-                  onClick={() => navigate(`/dashboard/racks/${r.id}`)}
+                  onClick={() => navigate(`/dashboard/racks/${r.id}`, { state: { from: location.pathname } })}
                   title={`Open ${r.label}`}
                   style={{
                     position: 'absolute', left: r.left, top: r.top,
@@ -509,7 +510,7 @@ export default function FloorPlanPage() {
                   style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => {
                     const realId = 'CAM-' + panelCam.id.split('-')[1].padStart(3, '0')
-                    navigate(`/dashboard/cameras/${realId}`)
+                    navigate(`/dashboard/cameras/${realId}`, { state: { from: location.pathname } })
                   }}
                 >
                   Open Detail

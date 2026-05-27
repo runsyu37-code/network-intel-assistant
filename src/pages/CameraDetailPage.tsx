@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Video, RefreshCw } from 'lucide-react'
 import { getCameraById, getPingLogs } from '../api/cameras'
@@ -112,8 +112,10 @@ function fmtLastSeen(raw: string | null): string {
 /* ── Main component ──────────────────────────────────────────── */
 export default function CameraDetailPage() {
   const { cameraId } = useParams<{ cameraId: string }>()
-  const navigate = useNavigate()
-  const numId = parseInt(cameraId ?? '', 10)
+  const navigate     = useNavigate()
+  const location     = useLocation()
+  const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/cameras'
+  const numId        = parseInt(cameraId ?? '', 10)
   const isNumeric = !isNaN(numId)
 
   const { data: cam, isLoading, isError, refetch, isFetching } = useQuery<CameraApi | null>({
@@ -157,7 +159,7 @@ export default function CameraDetailPage() {
     <div style={{ padding: 48, color: 'var(--alert)', textAlign: 'center' }}>
       Camera {cameraId} not found.
       <div style={{ marginTop: 8 }}>
-        <button className="icon-btn" onClick={() => navigate('/dashboard/cameras')}>
+        <button className="icon-btn" onClick={() => navigate(backTo)}>
           <ArrowLeft size={14} /> Back to list
         </button>
       </div>
@@ -183,7 +185,7 @@ export default function CameraDetailPage() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <button className="icon-btn" style={{ marginTop: 2, flex: 'none' }} onClick={() => navigate('/dashboard/cameras')}>
+          <button className="icon-btn" style={{ marginTop: 2, flex: 'none' }} onClick={() => navigate(backTo)}>
             <ArrowLeft size={16} />
           </button>
           <div>
