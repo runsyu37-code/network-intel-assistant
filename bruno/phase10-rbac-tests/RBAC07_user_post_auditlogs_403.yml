@@ -1,26 +1,24 @@
-info:
-  name: RBAC07 - user POST /api/auditLogs → 403 (admin-only)
+﻿info:
+  name: RBAC07 - user POST /api/audit-logs → 403 (admin-only)
   type: http
   seq: 7
 
 http:
   method: POST
-  url: http://localhost:50680/api/auditLogs
+  url: http://localhost:50680/api/audit-logs
   headers:
     - name: Authorization
       value: Bearer {{user_token}}
-      enabled: true
     - name: Content-Type
       value: application/json
-      enabled: true
-  body:
-    mode: json
-    json: |-
-      [{"user_id":1,"action":"test","entity_type":"test","entity_id":"1","detail":"rbac test"}]
 
 runtime:
   variables:
     - name: user_token
-      value: FILL_IN_USER_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidmlld2VyX3Rlc3QiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ2aWV3ZXIiLCJqdGkiOiI1YjhjMzM0Zi1mMGNmLTQ1ZDQtOWYxYS1iZDJhOWEzMjBmMjkiLCJleHAiOjE3Nzk4NzQ1MjgsImlzcyI6IlNTTS1BUEkiLCJhdWQiOiJTU00tRnJvbnRlbmQifQ.UXd8cQa9fNKd1yFMTIKQ25TBfeAIs-x-DG8pX_yVExk
 
-# EXPECT: 403 Forbidden
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -9,19 +9,16 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{viewer_token}}
-      enabled: true
     - name: Content-Type
       value: application/json
-      enabled: true
-  body:
-    mode: json
-    json: |-
-      [{"Site_ID":"TEST-RBAC","name":"RBAC Test Site"}]
 
 runtime:
   variables:
     - name: viewer_token
-      value: FILL_IN_VIEWER_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidmlld2VyX3Rlc3QiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ2aWV3ZXIiLCJqdGkiOiI3MmJiOTQxZS02ZWIyLTQwZDktOGYzNC1kMTUxYWI1ZDBjYjEiLCJleHAiOjE3Nzk4NzQ0MDEsImlzcyI6IlNTTS1BUEkiLCJhdWQiOiJTU00tRnJvbnRlbmQifQ.uNeYY0vwEoHrZWH96KtkDe814UwVIy3IPPvE9TOhaFs
 
-# EXPECT: 403 Forbidden
-# FAIL if: 200 (viewer was able to insert a site)
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,26 +1,28 @@
-info:
-  name: RBAC08 - user POST /api/pingLogs → 403 (admin-only)
+﻿info:
+  name: RBAC08 - user POST /api/ping-logs → 403 (admin-only)
   type: http
   seq: 8
 
 http:
   method: POST
-  url: http://localhost:50680/api/pingLogs
+  url: http://localhost:50680/api/ping-logs
   headers:
     - name: Authorization
       value: Bearer {{user_token}}
-      enabled: true
     - name: Content-Type
       value: application/json
-      enabled: true
-  body:
-    mode: json
-    json: |-
-      [{"device_id":1,"device_type":"camera","is_online":true,"latency_ms":1}]
 
 runtime:
   variables:
     - name: user_token
-      value: FILL_IN_USER_TOKEN
+      value: |-
+        {
+          "Message": "No HTTP resource was found that matches the request URI 'http://localhost:50680/api/auditLogs'.",
+          "MessageDetail": "No action was found on the controller 'auditLogs' that matches the request."
+        }
 
-# EXPECT: 403 Forbidden
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -9,20 +9,16 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{user_token}}
-      enabled: true
     - name: Content-Type
       value: application/json
-      enabled: true
-  body:
-    mode: json
-    json: |-
-      [{"Site_ID":"TEST-RBAC-USR","name":"User Role Test Site"}]
 
 runtime:
   variables:
     - name: user_token
-      value: FILL_IN_USER_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidmlld2VyX3Rlc3QiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ2aWV3ZXIiLCJqdGkiOiI3MmJiOTQxZS02ZWIyLTQwZDktOGYzNC1kMTUxYWI1ZDBjYjEiLCJleHAiOjE3Nzk4NzQ0MDEsImlzcyI6IlNTTS1BUEkiLCJhdWQiOiJTU00tRnJvbnRlbmQifQ.uNeYY0vwEoHrZWH96KtkDe814UwVIy3IPPvE9TOhaFs
 
-# EXPECT: 403 Forbidden
-# FAIL if: 200 (user role should NOT be allowed to write — all writes are admin-only per confirmed role matrix)
-# NOTE: changed from "200 expected" (Phase 9) to "403 expected" (Phase 10 confirmed matrix)
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

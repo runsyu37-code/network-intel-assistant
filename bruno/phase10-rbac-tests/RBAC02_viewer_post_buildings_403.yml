@@ -9,18 +9,16 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{viewer_token}}
-      enabled: true
     - name: Content-Type
       value: application/json
-      enabled: true
-  body:
-    mode: json
-    json: |-
-      [{"Building_ID":"BLD-RBAC","name":"RBAC Test Building","Site_ID":"HQ"}]
 
 runtime:
   variables:
     - name: viewer_token
-      value: FILL_IN_VIEWER_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidmlld2VyX3Rlc3QiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ2aWV3ZXIiLCJqdGkiOiI1YjhjMzM0Zi1mMGNmLTQ1ZDQtOWYxYS1iZDJhOWEzMjBmMjkiLCJleHAiOjE3Nzk4NzQ1MjgsImlzcyI6IlNTTS1BUEkiLCJhdWQiOiJTU00tRnJvbnRlbmQifQ.UXd8cQa9fNKd1yFMTIKQ25TBfeAIs-x-DG8pX_yVExk
 
-# EXPECT: 403 Forbidden
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
