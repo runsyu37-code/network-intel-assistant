@@ -6,7 +6,7 @@ with JWT authentication and full role-based access control (RBAC).
 
 > **Working from a new machine?** Start with [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) —
 > it covers everything: what is built, what is pending, and how to get the server running.
-> Latest session log: [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md)
+> Latest session log: [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md)
 
 ---
 
@@ -137,7 +137,7 @@ Test collections are in `bruno/`. All tokens are stripped from committed files
 1. Open Bruno → open collection from `bruno/phase10-rbac-tests/`
 2. Login with one of the test accounts above
 3. Paste the token into the appropriate environment variable
-4. Run the collection — all 17 RBAC tests should pass
+4. Run the collection — all 20 RBAC tests should pass
 
 ---
 
@@ -146,7 +146,8 @@ Test collections are in `bruno/`. All tokens are stripped from committed files
 | File | Contents |
 |---|---|
 | [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) | **Start here** — full project state, what's built, what's pending |
-| [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) | Latest session log (Phase 11) |
+| [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md) | Latest session log (Phase 12) |
+| [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) | Phase 11 — adversarial review + backlog |
 | [`review/PHASE10_SESSION_2026-05-27.md`](review/PHASE10_SESSION_2026-05-27.md) | Phase 10 — full RBAC implementation |
 | [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md) | Confirmed role access matrix |
 | [`Web.config.template`](BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/Web.config.template) | Config template for new developer setup |
@@ -159,37 +160,37 @@ Test collections are in `bruno/`. All tokens are stripped from committed files
 API/
 ├── BNO_Survei_MonitorAPI/
 │   └── BNO_Survei_MonitorAPI/
-│       ├── Controllers/          # All API controllers (15 controllers)
+│       ├── Controllers/          # All API controllers (16 controllers)
+│       ├── Filters/              # JwtAuthFilter, RequireRoleAttribute
 │       ├── ConnectDB/            # SqlConnection wrapper
 │       ├── Models/               # Data models
-│       ├── Security/             # Rate limiter, audit logger
+│       ├── Helpers/              # JwtHelper, password hashing
 │       ├── App_Start/            # WebApiConfig (CORS, routing, JWT auth)
 │       ├── Web.config            # ⚠ Gitignored — copy from Web.config.template
 │       └── Web.config.template   # Template for new developers
 ├── bruno/
-│   └── phase10-rbac-tests/       # 17 RBAC test files (tokens stripped)
+│   └── phase10-rbac-tests/       # 20 RBAC test files (RBAC01–20)
 └── review/
     ├── PROJECT_STATUS.md         # Master status document
     ├── ROLE_MATRIX.md
+    ├── PHASE12_SESSION_2026-05-27.md
     ├── PHASE11_SESSION_2026-05-27.md
     └── PHASE10_SESSION_2026-05-27.md
 ```
 
 ---
 
-## Phase 11 Pending Items
+## Current Status (Phase 12 — Complete)
 
-These are accepted fixes not yet implemented:
+All planned backend features are implemented. No open backlog items.
 
-| # | Fix |
+| Phase | Highlights |
 |---|---|
-| 1 | `[RequireRole]` attribute — replace all inline `IsInRole()` calls |
-| 2 | Per-username lockout (currently per-IP) |
-| 3 | `CASE WHEN` for role field on Update in usersController |
-| 4 | Windows Event Log on audit write failure |
-| 5 | Stale record eviction in rate limiter |
+| 10 | RBAC enforcement across all controllers |
+| 11 | Adversarial review — 5 backlog items identified |
+| 12 | All 5 backlog items closed: `RequireRoleAttribute`, per-username lockout, stale eviction, file-log fallback, role optional on update |
 
-See [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) for full context.
+**Phase 13 (pending):** Reflection-based test — verify all write endpoints have `[RequireRole]` or `[AllowAnonymous]` at compile time.
 
 ---
 
