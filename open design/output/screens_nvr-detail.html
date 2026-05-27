@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - NVR Detail</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body { padding: 32px; margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .header { margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .title { font-size: 24px; font-weight: 700; margin: 0; }
+    .version { font-size: 14px; color: var(--ink-3); font-weight: 600; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); padding: 20px; margin-bottom: 20px; }
+    .card-title { font-size: 16px; font-weight: 600; margin-top: 0; margin-bottom: 16px; }
+    
+    /* Storage section */
+    .hdd-list { display: flex; flex-direction: column; gap: 16px; }
+    .hdd-item { background: var(--surface-2); border-radius: 8px; padding: 16px; }
+    .hdd-header { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+    .hdd-name { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .hdd-name svg { width: 16px; height: 16px; }
+    .hdd-stats { font-size: 12px; color: var(--ink-2); }
+    .hdd-pct { font-weight: 700; font-size: 14px; }
+    
+    .progress-bg { height: 6px; background: var(--surface-3); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+    .progress-fill.ok { background: var(--ok); }
+    .progress-fill.alert { background: var(--alert); }
+    
+    /* Channel Table */
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--surface-2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); padding: 10px 16px; text-align: left; }
+    td { font-size: 13px; border-bottom: 1px solid var(--border); padding: 10px 16px; }
+    tr:last-child td { border-bottom: none; }
+    
+    .mini-bw { width: 60px; height: 4px; background: var(--surface-3); border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 8px; overflow: hidden; }
+    .mini-bw-fill { height: 100%; background: var(--accent); }
+    
+    /* Badges */
+    .badge { border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; }
+    .badge.info { background: var(--surface-2); color: var(--ink-2); }
+    .badge.warn { background: var(--warn-soft); color: var(--warn); }
+    .badge.crit { background: var(--alert-soft); color: var(--alert); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">NVR-01</h1>
+    <span class="version mono">V4.30.085</span>
+  </div>
+  
+  <div class="grid">
+    <!-- Left Column -->
+    <div class="col-left">
+      <div class="card">
+        <h2 class="card-title">Storage Status</h2>
+        <div class="hdd-list">
+          <div class="hdd-item">
+            <div class="hdd-header">
+              <div class="hdd-name">HDD1</div>
+              <div class="hdd-stats"><span class="mono">726 GB / 931 GB</span> <span class="hdd-pct" style="color: var(--ok); margin-left: 8px;">78%</span></div>
+            </div>
+            <div class="progress-bg"><div class="progress-fill ok" style="width: 78%;"></div></div>
+          </div>
+          <div class="hdd-item">
+            <div class="hdd-header">
+              <div class="hdd-name" style="color: var(--alert);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                HDD2
+              </div>
+              <div class="hdd-stats"><span class="mono">884 GB / 931 GB</span> <span class="hdd-pct" style="color: var(--alert); margin-left: 8px;">95%</span></div>
+            </div>
+            <div class="progress-bg"><div class="progress-fill alert" style="width: 95%;"></div></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <h2 class="card-title" style="padding: 20px 20px 0;">Channels</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>CH</th>
+              <th>Camera Name</th>
+              <th>Bandwidth</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">CH01</td>
+              <td>CAM-A1-01</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 45%;"></div></div><span class="mono">4.5 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH02</td>
+              <td>CAM-A1-02</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 60%;"></div></div><span class="mono">6.0 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH03</td>
+              <td>CAM-A1-03</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 80%; background: var(--warn);"></div></div><span class="mono">8.2 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH04</td>
+              <td>CAM-A1-04</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 40%;"></div></div><span class="mono">4.0 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--alert);">CH05</td>
+              <td style="color: var(--ink-3);">CAM-A1-05 (Offline)</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 0%;"></div></div><span class="mono">0.0 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH06</td>
+              <td>CAM-A1-06</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 50%;"></div></div><span class="mono">5.0 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH07</td>
+              <td>CAM-A1-07</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 48%;"></div></div><span class="mono">4.8 Mbps</span></td>
+            </tr>
+            <tr>
+              <td class="mono">CH08</td>
+              <td>CAM-A1-08</td>
+              <td><div class="mini-bw"><div class="mini-bw-fill" style="width: 55%;"></div></div><span class="mono">5.5 Mbps</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="col-right">
+      <div class="card" style="padding: 0; overflow: hidden; height: 100%;">
+        <h2 class="card-title" style="padding: 20px 20px 0;">Event Logs</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Sev</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">10:15:22</td>
+              <td><span class="badge crit">CRITICAL</span></td>
+              <td>Channel 5 signal lost</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">09:40:01</td>
+              <td><span class="badge warn">WARN</span></td>
+              <td>HDD2 approaching capacity</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">08:05:10</td>
+              <td><span class="badge info">INFO</span></td>
+              <td>Recording resumed on CH01</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">08:00:00</td>
+              <td><span class="badge info">INFO</span></td>
+              <td>System boot completed</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">07:58:30</td>
+              <td><span class="badge crit">CRITICAL</span></td>
+              <td>Unexpected shutdown</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">Yesterday</td>
+              <td><span class="badge info">INFO</span></td>
+              <td>User admin logged in</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">Yesterday</td>
+              <td><span class="badge warn">WARN</span></td>
+              <td>Network latency high</td>
+            </tr>
+            <tr>
+              <td class="mono" style="color: var(--ink-4);">Yesterday</td>
+              <td><span class="badge info">INFO</span></td>
+              <td>Backup routine started</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

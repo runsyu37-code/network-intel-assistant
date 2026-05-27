@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - Site Drill-down</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body { padding: 32px; margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .header { margin-bottom: 24px; }
+    .breadcrumb { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; }
+    .breadcrumb span { color: var(--ink); }
+    .title { font-size: 24px; font-weight: 700; color: var(--ink); margin: 0; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); padding: 20px; cursor: pointer; transition: border-color 0.2s; }
+    .card:hover { border-color: var(--accent); }
+    
+    .bldg-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .bldg-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .status-dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .status-dot.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+    
+    .bldg-visual { height: 120px; background: var(--surface-2); border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; }
+    .bldg-visual svg { height: 80px; stroke: var(--ink-3); stroke-width: 1.5; fill: none; }
+    
+    .stats-row { display: flex; justify-content: space-between; gap: 12px; }
+    .stat { flex: 1; background: var(--surface-2); border-radius: 8px; padding: 12px; text-align: center; }
+    .stat-val { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .stat-lbl { font-size: 10px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
+    
+    /* Expanded State */
+    .expanded-section { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .floor-card { background: var(--surface-2); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+    .floor-info { display: flex; align-items: center; gap: 16px; }
+    .floor-name { font-weight: 600; font-size: 14px; width: 40px; }
+    .floor-cam-count { font-size: 12px; color: var(--ink-2); width: 60px; }
+    
+    .mini-bar-wrap { width: 100px; height: 6px; background: var(--alert); border-radius: 4px; overflow: hidden; display: flex; }
+    .mini-bar-fill { background: var(--ok); height: 100%; }
+    
+    .btn-view { background: var(--surface); border: 1px solid var(--border); color: var(--ink); border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-view:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="breadcrumb">Home &rsaquo; Sites &rsaquo; <span>สาขาสีลม</span></div>
+    <h1 class="title">สาขาสีลม</h1>
+  </div>
+
+  <div class="grid">
+    <!-- Card 1: Expanded -->
+    <div class="card" style="border-color: var(--accent);">
+      <div class="bldg-header">
+        <div class="bldg-title">อาคาร A <div class="status-dot warn"></div></div>
+      </div>
+      <div class="bldg-visual">
+        <svg viewBox="0 0 100 100">
+          <path d="M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z" />
+          <path d="M50 10 L50 50 L90 70 M10 70 L50 50 M10 30 L50 50 L90 30" />
+          <!-- floors -->
+          <path d="M20 40 L50 55 L80 40 M20 50 L50 65 L80 50 M20 60 L50 75 L80 60" />
+        </svg>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val mono">6</div><div class="stat-lbl">Floors</div></div>
+        <div class="stat"><div class="stat-val mono">48</div><div class="stat-lbl">Cameras</div></div>
+        <div class="stat"><div class="stat-val mono">2</div><div class="stat-lbl">NVRs</div></div>
+      </div>
+      
+      <div class="expanded-section">
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F6</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="8 Online, 0 Offline"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F5</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="7 Online, 1 Offline"><div class="mini-bar-fill" style="width: 87.5%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F4</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="8 Online, 0 Offline"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F3</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="8 Online, 0 Offline"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F2</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="6 Online, 2 Offline"><div class="mini-bar-fill" style="width: 75%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+        <div class="floor-card">
+          <div class="floor-info">
+            <span class="floor-name">F1</span>
+            <span class="floor-cam-count mono">8 CAMs</span>
+            <div class="mini-bar-wrap" title="8 Online, 0 Offline"><div class="mini-bar-fill" style="width: 100%;"></div></div>
+          </div>
+          <button class="btn-view">View Plan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Collapsed -->
+    <div class="card">
+      <div class="bldg-header">
+        <div class="bldg-title">อาคาร B <div class="status-dot ok"></div></div>
+      </div>
+      <div class="bldg-visual">
+        <svg viewBox="0 0 100 100">
+          <path d="M50 20 L80 35 L80 65 L50 80 L20 65 L20 35 Z" />
+          <path d="M50 20 L50 50 L80 65 M20 65 L50 50 M20 35 L50 50 L80 35" />
+          <path d="M30 45 L50 55 L70 45 M30 55 L50 65 L70 55" />
+        </svg>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val mono">4</div><div class="stat-lbl">Floors</div></div>
+        <div class="stat"><div class="stat-val mono">24</div><div class="stat-lbl">Cameras</div></div>
+        <div class="stat"><div class="stat-val mono">1</div><div class="stat-lbl">NVRs</div></div>
+      </div>
+    </div>
+    
+    <!-- Card 3: Collapsed -->
+    <div class="card">
+      <div class="bldg-header">
+        <div class="bldg-title">อาคาร C <div class="status-dot ok"></div></div>
+      </div>
+      <div class="bldg-visual">
+        <svg viewBox="0 0 100 100">
+          <path d="M50 20 L80 35 L80 65 L50 80 L20 65 L20 35 Z" />
+          <path d="M50 20 L50 50 L80 65 M20 65 L50 50 M20 35 L50 50 L80 35" />
+          <path d="M30 45 L50 55 L70 45 M30 55 L50 65 L70 55" />
+        </svg>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val mono">2</div><div class="stat-lbl">Floors</div></div>
+        <div class="stat"><div class="stat-val mono">16</div><div class="stat-lbl">Cameras</div></div>
+        <div class="stat"><div class="stat-val mono">1</div><div class="stat-lbl">NVRs</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

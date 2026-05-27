@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - User Management</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body { padding: 32px; margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+    
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .title-group { display: flex; align-items: center; gap: 12px; }
+    .title { font-size: 24px; font-weight: 700; margin: 0; }
+    .title-icon { width: 24px; height: 24px; stroke: var(--ink-3); stroke-width: 2; fill: none; }
+    
+    .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0 16px; height: 34px; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); overflow: hidden; }
+    
+    .toolbar { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 16px; background: var(--surface); }
+    .input-wrap { position: relative; width: 240px; }
+    .input-wrap svg { position: absolute; left: 12px; top: 9px; width: 16px; height: 16px; stroke: var(--ink-3); fill: none; stroke-width: 2; }
+    .input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 34px; padding: 0 12px 0 36px; color: var(--ink); font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    .select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 34px; padding: 0 12px; color: var(--ink); font-family: 'Inter', sans-serif; }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--surface-2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); padding: 12px 20px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { font-size: 13px; border-bottom: 1px solid var(--border); padding: 12px 20px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    
+    .user-col { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #fff; }
+    
+    .badge { border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; }
+    .badge.active { background: var(--ok-soft); color: var(--ok); }
+    .badge.inactive { background: var(--surface-2); color: var(--ink-3); }
+    
+    .role-admin { background: var(--alert-soft); color: var(--alert); }
+    .role-operator { background: rgba(47, 111, 235, 0.15); color: var(--accent); }
+    .role-viewer { background: var(--surface-2); color: var(--ink-2); }
+    
+    .actions { display: flex; gap: 8px; }
+    .btn-icon { width: 28px; height: 28px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: var(--ink-3); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .btn-icon:hover { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+    .btn-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+    
+    /* Modal overlay */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 400px; overflow: hidden; }
+    .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { margin: 0; font-size: 18px; font-weight: 700; }
+    .modal-close { cursor: pointer; color: var(--ink-3); }
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+    .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 36px; padding: 0 12px; color: var(--ink); box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface-2); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--ink); border-radius: 8px; padding: 0 16px; height: 34px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-group">
+      <svg class="title-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <h1 class="title">User Management</h1>
+    </div>
+    <button class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add User
+    </button>
+  </div>
+  
+  <div class="card">
+    <div class="toolbar">
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="input" placeholder="Search users...">
+      </div>
+      <select class="select">
+        <option>All Roles</option>
+        <option>Admin</option>
+        <option>Operator</option>
+        <option>Viewer</option>
+      </select>
+      <select class="select">
+        <option>All Status</option>
+        <option>Active</option>
+        <option>Inactive</option>
+      </select>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Full Name</th>
+          <th>Role</th>
+          <th>Last Login</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--alert);">A</div>
+              <span style="font-weight: 600;">admin_root</span>
+            </div>
+          </td>
+          <td>สมชาย ใจดี</td>
+          <td><span class="badge role-admin">Admin</span></td>
+          <td style="color: var(--ink-4);">2 hours ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--accent);">O</div>
+              <span style="font-weight: 600;">op_silom</span>
+            </div>
+          </td>
+          <td>วิชัย สาขาสีลม</td>
+          <td><span class="badge role-operator">Operator</span></td>
+          <td style="color: var(--ink-4);">5 mins ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--accent);">O</div>
+              <span style="font-weight: 600;">op_bangna</span>
+            </div>
+          </td>
+          <td>สุดา รักษา</td>
+          <td><span class="badge role-operator">Operator</span></td>
+          <td style="color: var(--ink-4);">1 day ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--ink-3);">V</div>
+              <span style="font-weight: 600;">view_guest1</span>
+            </div>
+          </td>
+          <td>Guest User</td>
+          <td><span class="badge role-viewer">Viewer</span></td>
+          <td style="color: var(--ink-4);">3 days ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--ink-3);">V</div>
+              <span style="font-weight: 600;">view_hq</span>
+            </div>
+          </td>
+          <td>HQ Monitor</td>
+          <td><span class="badge role-viewer">Viewer</span></td>
+          <td style="color: var(--ink-4);">Just now</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr style="opacity: 0.6;">
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--ink-3);">O</div>
+              <span style="font-weight: 600;">op_old</span>
+            </div>
+          </td>
+          <td>พนักงาน เก่า</td>
+          <td><span class="badge role-operator">Operator</span></td>
+          <td style="color: var(--ink-4);">1 month ago</td>
+          <td><span class="badge inactive">Inactive</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--alert);">A</div>
+              <span style="font-weight: 600;">admin_net</span>
+            </div>
+          </td>
+          <td>Network Team</td>
+          <td><span class="badge role-admin">Admin</span></td>
+          <td style="color: var(--ink-4);">12 hours ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="user-col">
+              <div class="avatar" style="background: var(--accent);">O</div>
+              <span style="font-weight: 600;">op_night</span>
+            </div>
+          </td>
+          <td>Night Shift</td>
+          <td><span class="badge role-operator">Operator</span></td>
+          <td style="color: var(--ink-4);">10 hours ago</td>
+          <td><span class="badge active">Active</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Add User Modal -->
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Add New User</h2>
+        <svg class="modal-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" class="form-input" placeholder="e.g. op_new">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" placeholder="e.g. สมศรี ใจภักดี">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="name@company.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-input">
+            <option>Operator</option>
+            <option>Admin</option>
+            <option>Viewer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Temporary Password</label>
+          <input type="password" class="form-input" value="12345678">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline">Cancel</button>
+        <button class="btn">Create User</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

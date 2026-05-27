@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - Network Topology</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0; font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--ink);
+      height: 100vh; overflow: hidden;
+      /* Dot grid background */
+      background-image: radial-gradient(var(--grid-dot, rgba(255,255,255,0.1)) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .canvas {
+      position: relative;
+      width: 100%; height: 100%;
+    }
+    
+    .node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-1);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 10;
+    }
+    .node-hq { top: 20%; left: 50%; width: 180px; background: var(--surface-2); border-color: var(--accent); }
+    .node-site-1 { top: 50%; left: 20%; width: 140px; }
+    .node-site-2 { top: 50%; left: 50%; width: 140px; }
+    .node-site-3 { top: 50%; left: 80%; width: 140px; }
+    
+    .node-bldg-1-1 { top: 80%; left: 10%; width: 100px; padding: 12px; }
+    .node-bldg-1-2 { top: 80%; left: 30%; width: 100px; padding: 12px; }
+    .node-bldg-2-1 { top: 80%; left: 50%; width: 100px; padding: 12px; }
+    .node-bldg-3-1 { top: 80%; left: 70%; width: 100px; padding: 12px; }
+    .node-bldg-3-2 { top: 80%; left: 90%; width: 100px; padding: 12px; }
+
+    .node-icon { width: 32px; height: 32px; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .node-title { font-weight: 600; font-size: 14px; color: var(--ink); text-align: center; }
+    .node-bldg .node-title { font-size: 12px; }
+    .node-meta { font-size: 11px; color: var(--ink-3); display: flex; align-items: center; gap: 4px; }
+    
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .status-dot.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+    .status-dot.alert { background: var(--alert); box-shadow: 0 0 8px var(--alert); }
+    
+    .badge {
+      background: var(--surface-2); color: var(--ink-2);
+      border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 700;
+    }
+    
+    .lines {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;
+    }
+    .line { stroke: var(--border); stroke-width: 2; fill: none; }
+    .line-active { stroke: var(--accent); stroke-width: 3; }
+    .line-warn { stroke: var(--warn); stroke-width: 2; stroke-dasharray: 4 4; }
+
+    .panel-tr { position: absolute; top: 32px; right: 32px; display: flex; flex-direction: column; gap: 20px; align-items: flex-end; z-index: 20; }
+    .panel-bl { position: absolute; bottom: 32px; left: 32px; z-index: 20; }
+
+    .toolbar {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .btn-icon {
+      width: 34px; height: 34px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); color: var(--ink); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); padding: 16px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+    
+    .summary-card { display: flex; gap: 24px; padding: 20px; }
+    .summary-stat { display: flex; flex-direction: column; gap: 4px; }
+    .summary-label { font-size: 10px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .summary-value { font-size: 24px; font-weight: 700; color: var(--ink); }
+    .summary-value.warn { color: var(--warn); }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <svg class="lines">
+      <!-- HQ to Sites -->
+      <path d="M 50% 20% L 20% 50%" class="line line-active" />
+      <path d="M 50% 20% L 50% 50%" class="line" />
+      <path d="M 50% 20% L 80% 50%" class="line line-warn" />
+      
+      <!-- Site 1 to Bldgs -->
+      <path d="M 20% 50% L 10% 80%" class="line" />
+      <path d="M 20% 50% L 30% 80%" class="line" />
+      
+      <!-- Site 2 to Bldgs -->
+      <path d="M 50% 50% L 50% 80%" class="line" />
+      
+      <!-- Site 3 to Bldgs -->
+      <path d="M 80% 50% L 70% 80%" class="line line-warn" />
+      <path d="M 80% 50% L 90% 80%" class="line" />
+    </svg>
+
+    <div class="node node-hq">
+      <svg class="node-icon"><rect x="4" y="4" width="24" height="24" rx="2"/><path d="M4 12h24M4 20h24M10 8h.01M10 16h.01M10 24h.01"/></svg>
+      <div class="node-title">สำนักงานใหญ่</div>
+      <div class="node-meta"><div class="status-dot ok"></div> ONLINE</div>
+      <div class="badge">12 DEVICES</div>
+    </div>
+
+    <div class="node node-site-1">
+      <svg class="node-icon"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 11v10M15 11v10"/></svg>
+      <div class="node-title">สาขาสีลม</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 124 CAMs</div>
+    </div>
+    
+    <div class="node node-site-2">
+      <svg class="node-icon"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 11v10M15 11v10"/></svg>
+      <div class="node-title">สาขาลาดพร้าว</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 86 CAMs</div>
+    </div>
+
+    <div class="node node-site-3">
+      <svg class="node-icon"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 11v10M15 11v10"/></svg>
+      <div class="node-title">สาขาบางนา</div>
+      <div class="node-meta"><div class="status-dot warn"></div> 92 CAMs</div>
+    </div>
+
+    <!-- Buildings -->
+    <div class="node node-bldg node-bldg-1-1">
+      <div class="node-title">อาคาร A</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 6 FLs</div>
+    </div>
+    <div class="node node-bldg node-bldg-1-2">
+      <div class="node-title">อาคาร B</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 4 FLs</div>
+    </div>
+    <div class="node node-bldg node-bldg-2-1">
+      <div class="node-title">Main</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 8 FLs</div>
+    </div>
+    <div class="node node-bldg node-bldg-3-1">
+      <div class="node-title">Tower 1</div>
+      <div class="node-meta"><div class="status-dot warn"></div> 12 FLs</div>
+    </div>
+    <div class="node node-bldg node-bldg-3-2">
+      <div class="node-title">Warehouse</div>
+      <div class="node-meta"><div class="status-dot ok"></div> 1 FL</div>
+    </div>
+  </div>
+
+  <div class="panel-tr">
+    <div class="toolbar">
+      <button class="btn-icon"><svg><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="btn-icon"><svg><path d="M5 12h14"/></svg></button>
+      <button class="btn-icon"><svg><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button>
+      <button class="btn-icon"><svg><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg></button>
+    </div>
+    <div class="card">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Status Legend</div>
+      <div class="legend-item"><div class="status-dot ok"></div> Online (Normal)</div>
+      <div class="legend-item"><div class="status-dot warn"></div> Warning (Issue)</div>
+      <div class="legend-item"><div class="status-dot alert"></div> Offline (Critical)</div>
+    </div>
+  </div>
+
+  <div class="panel-bl">
+    <div class="card summary-card">
+      <div class="summary-stat">
+        <span class="summary-label">Total Sites</span>
+        <span class="summary-value mono">3</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-label">Total CAMs</span>
+        <span class="summary-value mono">302</span>
+      </div>
+      <div class="summary-stat">
+        <span class="summary-label">Alerts</span>
+        <span class="summary-value warn mono">2</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
