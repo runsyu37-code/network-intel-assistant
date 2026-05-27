@@ -9,12 +9,14 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{viewer_token}}
-      enabled: true
 
 runtime:
   variables:
     - name: viewer_token
-      value: FILL_IN_VIEWER_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidXNlcl90ZXN0IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoidXNlciIsImp0aSI6IjMzYWI4NWI2LTA3NTItNGJkZC05OGM2LTMyMDgxZjNlYTlkYiIsImV4cCI6MTc3OTg3NDgwOCwiaXNzIjoiU1NNLUFQSSIsImF1ZCI6IlNTTS1Gcm9udGVuZCJ9.X4IDyEySP67WsezHtqHtyS5CdZYlovvwXTBnRFcdhxg
 
-# EXPECT: 403 Forbidden
-# FAIL if: 200 (viewer should not see device data)
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

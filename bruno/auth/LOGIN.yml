@@ -9,14 +9,9 @@ http:
   headers:
     - name: Content-Type
       value: application/json
-      enabled: true
   body:
-    mode: json
-    json: |-
-      {
-        "username": "admin",
-        "password": "YourPassword"
-      }
+    type: json
+    data: '{"username": "viewer_test", "password": "Test@1234"}'
 
 settings:
   encodeUrl: true
