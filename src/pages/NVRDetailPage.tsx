@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom'
-import { HardDrive, Wifi, MapPin, Server, AlertTriangle } from 'lucide-react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { HardDrive, Wifi, MapPin, Server, AlertTriangle, ArrowLeft } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -136,7 +136,10 @@ function makeChannels(nvr: NVR): Channel[] {
 
 export default function NVRDetailPage() {
   const { nvrId } = useParams<{ nvrId: string }>()
-  const nvr = NVRS[nvrId ?? '']
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const backTo    = (location.state as { from?: string } | null)?.from ?? '/dashboard/nvrs'
+  const nvr       = NVRS[nvrId ?? '']
 
   if (!nvr) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
@@ -152,6 +155,9 @@ export default function NVRDetailPage() {
       {/* Header */}
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="icon-btn" style={{ flex: 'none' }} onClick={() => navigate(backTo)}>
+            <ArrowLeft size={16} />
+          </button>
           <span style={{
             width: 36, height: 36, borderRadius: 9, flex: 'none',
             background: `color-mix(in srgb, ${STATUS_COLOR[nvr.status]} 15%, transparent)`,

@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom'
-import { Network } from 'lucide-react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { Network, ArrowLeft } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
 type PortStatus = 'active' | 'inactive' | 'error'
@@ -211,7 +211,10 @@ function TrafficChart() {
 
 export default function SwitchDetailPage() {
   const { switchId } = useParams<{ switchId: string }>()
-  const sw = SWITCHES[switchId ?? '']
+  const navigate     = useNavigate()
+  const location     = useLocation()
+  const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/switches'
+  const sw           = SWITCHES[switchId ?? '']
 
   if (!sw) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
@@ -228,6 +231,9 @@ export default function SwitchDetailPage() {
       {/* Header */}
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="icon-btn" style={{ flex: 'none' }} onClick={() => navigate(backTo)}>
+            <ArrowLeft size={16} />
+          </button>
           <span style={{
             width: 36, height: 36, borderRadius: 9, flex: 'none',
             background: `color-mix(in srgb, ${STATUS_COLOR[sw.status]} 15%, transparent)`,
