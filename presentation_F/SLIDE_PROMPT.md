@@ -1,47 +1,47 @@
-# Prompt สำหรับคนทำ Slide
+# Slide Maker Prompt
 
 ---
 
-## สิ่งที่ส่งมาให้
+## What's Included
 
-1. **`SLIDES_FINAL.md`** — เนื้อหา 8 slides ครบแล้ว ใช้เป็น script ได้เลย
-2. **ไฟล์ HTML 3 ไฟล์** สำหรับ screenshot ใส่ slide:
+1. **`SLIDES_FINAL.md`** — Full content for 8 slides, ready to use as a script
+2. **3 HTML files** for screenshots to embed in slides:
    - `mpnjkqqr-screens_topology.html` → Slide 2
    - `mpnjkqql-screens_floor.html` → Slide 3
    - `mpnjkqqo-screens_nvr-detail.html` → Slide 4
-   - *(เปิดใน browser แล้ว screenshot Full Page ได้เลย)*
+   - *(Open each in a browser and take a full-page screenshot)*
 
 ---
 
-## Prompt ที่ใช้สั่ง
+## Prompt to Use
 
 ```
-ช่วยทำ presentation จากไฟล์ SLIDES_FINAL.md ให้หน่อย
+Please create a presentation from the file SLIDES_FINAL.md.
 
-สไตล์:
-- เน้นภาพ ข้อความน้อย ดูเข้าใจง่าย
-- โทนสีหลัก: สีม่วง #8B44AF กับขาว/เทาเข้ม
-- ฟอนต์: ทันสมัย เช่น Inter หรือ Poppins
-- พื้นหลัง: สีเข้ม (dark theme) เพราะเป็นระบบ monitoring
+Style guidelines:
+- Visual-first, minimal text, easy to understand at a glance
+- Primary color: purple #8B44AF with white / dark gray
+- Font: modern sans-serif such as Inter or Poppins
+- Background: dark theme (this is a monitoring system)
 
-สำหรับ Slide 2, 3, 4:
-- มีช่อง [screenshot: ชื่อไฟล์.html] บอกไว้
-- ใส่รูป screenshot ของ HTML ไฟล์ที่แนบมาตรงนั้นได้เลย
-- จัดให้รูปใหญ่ เห็นชัด ไม่ต้องย่อมาก
+For Slides 2, 3, and 4:
+- Each has a placeholder [screenshot: filename.html]
+- Insert the screenshot of the corresponding HTML file there
+- Make the image large and clearly visible — do not shrink it
 
-Slide ที่มีแค่ text (1, 5, 6, 7, 8):
-- ใช้ diagram / icon / arrow แทนข้อความเยอะๆ
-- Slide 7 (Alert test) เน้น flow diagram ให้เห็นชัด
+For text-only slides (1, 5, 6, 7, 8):
+- Use diagrams, icons, and arrows instead of dense bullet points
+- Slide 7 (Live Alert Test) should prominently show a flow diagram
 
-ผลลัพธ์ที่ต้องการ: PowerPoint / Google Slides / PDF
-จำนวน: 8 slides
-ภาษา: ไทย (ตามต้นฉบับ)
+Output format: PowerPoint / Google Slides / PDF
+Slide count: 8
+Language: English
 ```
 
 ---
 
-## สรุปสั้น (ถ้าจะบรีฟด้วยปาก)
+## Quick Brief (verbal summary)
 
-> "สไลด์อัปเดตงานอาทิตย์นี้ 8 หน้า เนื้อหาครบในไฟล์ .md แล้ว  
-> Slide 2-4 มีรูป screenshot UI แนบมาให้ใส่  
-> โทนสีม่วงเข้ม พื้นหลังดำ เน้นภาพมากกว่าตัวอักษร"
+> "8-slide weekly progress update. Full content is in the .md file.  
+> Slides 2–4 have UI screenshots attached — just drop them in.  
+> Dark purple theme, image-heavy, minimal text."

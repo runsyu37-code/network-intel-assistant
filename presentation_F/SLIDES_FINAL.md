@@ -3,105 +3,105 @@
 
 ---
 
-## Slide 1 — อาทิตย์นี้ทำอะไรไปแล้ว
+## Slide 1 — What We Did This Week
 
 ```
-Backend ──────────────────────────────── ✅ เสร็จ 100%
+Backend ──────────────────────────────── ✅ 100% Complete
   17 API endpoints · JWT · BCrypt · RBAC
   17/17 Security tests PASS
 
-Frontend ─────────────────────────────── ✅ เสร็จ 100%
-  14 หน้า · 9 endpoints เชื่อม API จริง
+Frontend ─────────────────────────────── ✅ 100% Complete
+  14 pages · 9 endpoints connected to real API
 
-Full-stack ───────────────────────────── ✅ Demo พร้อม
+Full-stack ───────────────────────────── ✅ Demo Ready
   Login → JWT → API → DB → UI
   localhost:3000
 ```
 
 ---
 
-## Slide 2 — UI ที่สร้าง: Network Topology
+## Slide 2 — UI Built: Network Topology
 
 > **[screenshot: mpnjkqqr-screens_topology.html]**
 
-- ดูสถานะ Site / Building ทั้งหมดในหน้าเดียว
-- Live stats: กล้องออนไลน์ / NVR / Switch
-- Recent alerts — อัปเดตทุก 30 วินาที
+- View all Site / Building status in one page
+- Live stats: cameras online / NVR / Switch
+- Recent alerts — refreshes every 30 seconds
 
 ---
 
-## Slide 3 — UI ที่สร้าง: ผังพื้น + กล้อง
+## Slide 3 — UI Built: Floor Plan + Cameras
 
 > **[screenshot: mpnjkqql-screens_floor.html]**
 
-- เห็นตำแหน่งกล้องบนผัง
-- Admin ลากวางกล้องได้ → บันทึก DB ทันที
-- Zoom เข้า-ออก / คลิกกล้องดู detail
+- Camera positions shown on floor plan
+- Admin can drag-and-drop cameras → saved to DB instantly
+- Zoom in/out / click camera to view details
 
 ---
 
-## Slide 4 — UI ที่สร้าง: รายละเอียดอุปกรณ์
+## Slide 4 — UI Built: Device Details
 
-> **[screenshot: mpnjkqqo-screens_nvr-detail.html หรือ mpnjkqqp-screens_switch-detail.html]**
+> **[screenshot: mpnjkqqo-screens_nvr-detail.html or mpnjkqqp-screens_switch-detail.html]**
 
-- ดู channel / port usage รายตัว
+- View channel / port usage per device
 - Ping history chart
-- สถานะ 🟢 Online / 🟡 Warning / 🔴 Offline
+- Status: 🟢 Online / 🟡 Warning / 🔴 Offline
 
 ---
 
-## Slide 5 — สิทธิ์ผู้ใช้ (RBAC)
+## Slide 5 — Role-Based Access Control (RBAC)
 
 ```
-Admin   → ทุกหน้า + แก้ไขได้
+Admin   → All pages + edit access
 User    → Site / Building / Floor / Rack
-Viewer  → Site / Building / ผังพื้น
+Viewer  → Site / Building / Floor Plan only
 
-บังคับทั้ง Backend และ Frontend
+Enforced on both Backend and Frontend
 ```
 
 ---
 
-## Slide 6 — อาทิตย์หน้า: 3 เป้าหมาย
+## Slide 6 — Next Week: 3 Goals
 
 ```
-1. Frontend พร้อมใช้งานจริง
-   → redesign UI 6 หน้า
-   → ดึงข้อมูลจริงทุกหน้า
+1. Frontend fully production-ready
+   → Redesign UI for 6 pages
+   → Fetch real data on every page
 
-2. Full-stack ข้อมูลจริง
-   → ใส่ข้อมูล device จริงลง DB
-   → ดูในเว็บได้เลย
+2. Full-stack with real data
+   → Seed real device data into DB
+   → View it live on the web
 
-3. ทดสอบ Alert live ด้วยอุปกรณ์จริง
+3. Test live alerts with real hardware
 ```
 
 ---
 
-## Slide 7 — อาทิตย์หน้า: ทดสอบ Alert Live
+## Slide 7 — Next Week: Live Alert Test
 
 ```
   PoE Switch ──┐
-               ├──► เครื่อง Test ──► เว็บ SSM
-  กล้อง CCTV ──┘
+               ├──► Test Machine ──► SSM Web
+  CCTV Camera ──┘
 
-  ทดสอบ: ถอดสาย / ปิดกล้อง
+  Test: unplug cable / power off camera
             ↓
-  เว็บต้องขึ้น 🔴 Offline + แจ้งเตือน
+  Web must show 🔴 Offline + send alert
 
-  คำถามที่จะตอบ:
-  → ระบบตรวจจับได้จริงมั้ย?
-  → แจ้งเตือนเร็วแค่ไหน?
+  Questions to answer:
+  → Can the system detect it reliably?
+  → How fast is the alert?
 ```
 
 ---
 
-## Slide 8 — เป้าหมายสุดท้ายอาทิตย์หน้า
+## Slide 8 — Final Goal Next Week
 
 ```
-ต่ออุปกรณ์จริง
+Connect real hardware
       ↓
-เว็บแสดงสถานะ + แจ้งเตือนได้
+Web shows live status + alerts
       ↓
-ระบบ SSM ใช้งานได้จริง ✅
+SSM System fully operational ✅
 ```
