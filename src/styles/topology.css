@@ -120,12 +120,12 @@
 
 /* ── HQ Node ─────────────────────────────────────────────────── */
 .topo-hq {
-  background: linear-gradient(180deg, #1b2540 0%, #141a2c 100%);
-  border: 1px solid rgba(91,141,239,0.45);
+  background: linear-gradient(180deg, #1f1438 0%, #150f28 100%);
+  border: 1px solid rgba(139,68,170,0.45);
   border-radius: 10px;
   padding: 14px 16px;
   min-width: 220px;
-  box-shadow: 0 0 0 1px rgba(91,141,239,0.18), 0 8px 28px rgba(0,0,0,0.55), 0 0 32px rgba(91,141,239,0.18);
+  box-shadow: 0 0 0 1px rgba(139,68,170,0.18), 0 8px 28px rgba(0,0,0,0.55), 0 0 32px rgba(139,68,170,0.18);
 }
 .topo-hq-head  { display: flex; align-items: center; gap: 10px; }
 .topo-hq-glyph {
@@ -192,13 +192,13 @@
 
 /* ── Site mindmap nodes ──────────────────────────────────────── */
 .smap-hq {
-  background: linear-gradient(135deg, #1b2540, #141a2c);
-  border: 1px solid rgba(91,141,239,0.45);
+  background: linear-gradient(135deg, #1f1438, #150f28);
+  border: 1px solid rgba(139,68,170,0.45);
   border-radius: 10px;
   padding: 12px 16px;
   min-width: 200px;
   display: flex; align-items: center; gap: 12px;
-  box-shadow: 0 0 0 1px rgba(91,141,239,0.18), 0 6px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 0 0 1px rgba(139,68,170,0.18), 0 6px 20px rgba(0,0,0,0.5);
 }
 .smap-hq-glyph {
   width: 34px; height: 34px; border-radius: 8px;

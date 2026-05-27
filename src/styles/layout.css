@@ -72,7 +72,7 @@
   padding: 1px 7px;
   border-radius: 999px;
 }
-.nav-item.active .nav-count { background: rgba(91,141,239,0.18); color: var(--accent-2); }
+.nav-item.active .nav-count { background: var(--accent-soft); color: var(--accent-2); }
 
 .sidebar-spacer { flex: 1; }
 

@@ -27,3 +27,6 @@ MEGA/*_filled*.xlsx
 MEGA/*_real*.xlsx
 MEGA/*_prod*.xlsx
 import_report.csv
+
+# Backend .NET Framework 4.8 project (lives in backend branch / worktree)
+BNO_Survei_MonitorAPI/

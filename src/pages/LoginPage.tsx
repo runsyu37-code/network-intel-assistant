@@ -33,14 +33,14 @@ export default function LoginPage() {
       )
       navigate('/dashboard')
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status
         if (status === 401) {
           setError('Invalid username or password.')
         } else if (status === 429) {
           setError('Too many failed attempts. Please wait 15 minutes before trying again.')
         } else {
-          setError(err.response?.data?.Message || 'Login failed. Please try again.')
+          setError(err.response.data?.Message || 'Login failed. Please try again.')
         }
       } else {
         setAuth(

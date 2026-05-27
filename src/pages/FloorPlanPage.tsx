@@ -24,67 +24,67 @@ const FLOORS: Record<string, FloorData> = {
     title: 'Floor 6 — Executive Office',
     sub: 'Executive workspace · 4 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Executive Suite', ip: '192.168.1.161', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 200, room: 'Board Room',      ip: '192.168.1.162', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '20%', rot: 135, room: 'Director Room',   ip: '192.168.1.163', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:31' },
-      { id: 'CAM-04', status: 'ok', left: '40%', top: '75%', rot: 330, room: 'Lounge',          ip: '192.168.1.164', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-01', status: 'ok', left: '11%', top: '13%', rot: 135, room: 'Executive Suite', ip: '192.168.1.161', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '50%', top: '12%', rot: 180, room: 'Board Room',      ip: '192.168.1.162', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '89%', top: '13%', rot: 225, room: 'Director Room',   ip: '192.168.1.163', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-04', status: 'ok', left: '24%', top: '88%', rot: 0,   room: 'Lounge',          ip: '192.168.1.164', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
     ],
   },
   'a-f5': {
     title: 'Floor 5 — Meeting Rooms',
     sub: 'Conference floors · 5 cameras · 1 warning',
     cameras: [
-      { id: 'CAM-01', status: 'ok',   left: '22%', top: '22%', rot: 130, room: 'Conf A',    ip: '192.168.1.151', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok',   left: '50%', top: '25%', rot: 180, room: 'Conf B',    ip: '192.168.1.152', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'warn', left: '78%', top: '20%', rot: 135, room: 'Conf C',    ip: '192.168.1.153', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 11:00' },
-      { id: 'CAM-04', status: 'ok',   left: '30%', top: '75%', rot: 330, room: 'Break Area', ip: '192.168.1.154', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
-      { id: 'CAM-05', status: 'ok',   left: '70%', top: '78%', rot: 300, room: 'Corridor',   ip: '192.168.1.155', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-01', status: 'ok',   left: '10%', top: '22%', rot: 90,  room: 'Conf A',     ip: '192.168.1.151', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok',   left: '50%', top: '12%', rot: 180, room: 'Conf B',     ip: '192.168.1.152', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'warn', left: '90%', top: '22%', rot: 270, room: 'Conf C',     ip: '192.168.1.153', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 11:00' },
+      { id: 'CAM-04', status: 'ok',   left: '10%', top: '73%', rot: 90,  room: 'Break Area', ip: '192.168.1.154', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-05', status: 'ok',   left: '72%', top: '88%', rot: 0,   room: 'Corridor',   ip: '192.168.1.155', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
     ],
   },
   'a-f4': {
     title: 'Floor 4 — Office',
     sub: 'Open-plan workspace · 5 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Reception',    ip: '192.168.1.141', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '50%', top: '28%', rot: 185, room: 'Open Office',  ip: '192.168.1.142', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '18%', rot: 135, room: 'Manager',      ip: '192.168.1.143', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-04', status: 'ok', left: '29%', top: '78%', rot: 325, room: 'Meeting Room', ip: '192.168.1.144', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
-      { id: 'CAM-05', status: 'ok', left: '72%', top: '80%', rot: 300, room: 'Break Room',   ip: '192.168.1.145', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-01', status: 'ok', left: '10%', top: '13%', rot: 135, room: 'Reception',    ip: '192.168.1.141', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '50%', top: '12%', rot: 180, room: 'Open Office',  ip: '192.168.1.142', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '90%', top: '28%', rot: 270, room: 'Manager',      ip: '192.168.1.143', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-04', status: 'ok', left: '10%', top: '71%', rot: 90,  room: 'Meeting Room', ip: '192.168.1.144', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-05', status: 'ok', left: '90%', top: '71%', rot: 270, room: 'Break Room',   ip: '192.168.1.145', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
     ],
   },
   'a-f3': {
     title: 'Floor 3 — Office',
     sub: 'Open-plan workspace · 5 cameras · 1 offline',
     cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '22%', top: '22%', rot: 130, room: 'Reception',    ip: '192.168.1.131', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok',    left: '50%', top: '28%', rot: 185, room: 'Open Office',  ip: '192.168.1.132', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok',    left: '78%', top: '18%', rot: 135, room: 'Manager',      ip: '192.168.1.133', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-04', status: 'ok',    left: '29%', top: '78%', rot: 325, room: 'Meeting Room', ip: '192.168.1.134', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
-      { id: 'CAM-05', status: 'alert', left: '72%', top: '80%', rot: 300, room: 'Break Room',   ip: '192.168.1.135', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 10:14' },
+      { id: 'CAM-01', status: 'ok',    left: '22%', top: '13%', rot: 180, room: 'Reception',    ip: '192.168.1.131', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok',    left: '55%', top: '12%', rot: 180, room: 'Open Office',  ip: '192.168.1.132', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok',    left: '89%', top: '13%', rot: 225, room: 'Manager',      ip: '192.168.1.133', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-04', status: 'ok',    left: '20%', top: '59%', rot: 180, room: 'Meeting Room', ip: '192.168.1.134', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-05', status: 'alert', left: '70%', top: '59%', rot: 180, room: 'Break Room',   ip: '192.168.1.135', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 10:14' },
     ],
   },
   'a-f2': {
     title: 'Floor 2 — Server Room',
     sub: 'IT infrastructure · 9 devices · 2 cams offline',
     cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '20%', top: '25%', rot: 130, room: 'Server Hall',          ip: '192.168.1.121', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'alert', left: '55%', top: '22%', rot: 180, room: 'Rack A',               ip: '192.168.1.122', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 09:00' },
-      { id: 'CAM-03', status: 'ok',    left: '80%', top: '30%', rot: 220, room: 'UPS Room',             ip: '192.168.1.123', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-04', status: 'alert', left: '30%', top: '75%', rot: 0,   room: 'Access Control',       ip: '192.168.1.124', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 08:45' },
-      { id: 'CAM-05', status: 'ok',    left: '70%', top: '70%', rot: 315, room: 'Exit',                 ip: '192.168.1.125', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-01', status: 'ok',    left: '11%', top: '13%', rot: 135, room: 'Server Hall',    ip: '192.168.1.121', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'alert', left: '55%', top: '12%', rot: 180, room: 'Rack A',         ip: '192.168.1.122', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 09:00' },
+      { id: 'CAM-03', status: 'ok',    left: '90%', top: '22%', rot: 270, room: 'UPS Room',       ip: '192.168.1.123', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-04', status: 'alert', left: '10%', top: '72%', rot: 90,  room: 'Access Control', ip: '192.168.1.124', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 08:45' },
+      { id: 'CAM-05', status: 'ok',    left: '88%', top: '88%', rot: 315, room: 'Exit',           ip: '192.168.1.125', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
     ],
     racks: [
-      { id: 'rack-a1', label: 'Rack A1', left: '42%', top: '50%', status: 'alert' },
-      { id: 'rack-a2', label: 'Rack A2', left: '58%', top: '50%', status: 'ok'    },
+      { id: 'rack-a1', label: 'Rack A1', left: '32%', top: '73%', status: 'alert' },
+      { id: 'rack-a2', label: 'Rack A2', left: '68%', top: '73%', status: 'ok'    },
     ],
   },
   'a-f1': {
     title: 'Floor 1 — Lobby · Reception',
     sub: 'Ground floor · 3 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '30%', rot: 130, room: 'Main Entrance',  ip: '192.168.1.111', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 180, room: 'Reception Desk', ip: '192.168.1.112', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '70%', rot: 300, room: 'Elevator Hall',  ip: '192.168.1.113', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-01', status: 'ok', left: '10%', top: '32%', rot: 90,  room: 'Main Entrance',  ip: '192.168.1.111', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '48%', top: '12%', rot: 180, room: 'Reception Desk', ip: '192.168.1.112', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '90%', top: '65%', rot: 270, room: 'Elevator Hall',  ip: '192.168.1.113', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
     ],
   },
 }
@@ -93,9 +93,9 @@ const DEFAULT_FLOOR: FloorData = {
   title: 'Floor Plan',
   sub: '— view mode',
   cameras: [
-    { id: 'CAM-01', status: 'ok', left: '25%', top: '25%', rot: 130, room: 'Area A', ip: '192.168.1.101', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
-    { id: 'CAM-02', status: 'ok', left: '60%', top: '30%', rot: 200, room: 'Area B', ip: '192.168.1.102', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
-    { id: 'CAM-03', status: 'ok', left: '75%', top: '70%', rot: 300, room: 'Area C', ip: '192.168.1.103', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
+    { id: 'CAM-01', status: 'ok', left: '11%', top: '13%', rot: 135, room: 'Area A', ip: '192.168.1.101', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
+    { id: 'CAM-02', status: 'ok', left: '89%', top: '13%', rot: 225, room: 'Area B', ip: '192.168.1.102', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
+    { id: 'CAM-03', status: 'ok', left: '89%', top: '88%', rot: 315, room: 'Area C', ip: '192.168.1.103', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
   ],
 }
 
@@ -346,7 +346,7 @@ export default function FloorPlanPage() {
                   title={`${cam.id} · ${cam.room}`}
                 >
                   <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
-                  <div className="cam-icon"><Video size={16} /></div>
+                  <div className="cam-icon" />
                   <span className="cam-name">{cam.id}</span>
                 </div>
               ))}

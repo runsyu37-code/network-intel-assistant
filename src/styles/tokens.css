@@ -1,64 +1,63 @@
-/* SSM Design Tokens — extracted from wireframe */
+/* SSM Design Tokens — Buono brand palette (purple #8B44AA) */
 /* Light theme (default) */
 :root,
 :root[data-theme="light"] {
-  --bg:          #f7f8fa;
+  --bg:          #f8f5fc;
   --surface:     #ffffff;
-  --surface-2:   #f3f5f8;
-  --surface-3:   #eceff3;
-  --border:      #e6e8ec;
-  --border-2:    #d4d7dc;
-  --ink:         #0f172a;
-  --ink-2:       #475569;
-  --ink-3:       #94a3b8;
-  --ink-4:       #cbd2db;
-  --accent:      #2563eb;
-  --accent-2:    #1d4ed8;
-  --accent-soft: #eff6ff;
+  --surface-2:   #f4f0f9;
+  --surface-3:   #ede7f5;
+  --border:      #e4ddef;
+  --border-2:    #d1c6e0;
+  --ink:         #1a0d2e;
+  --ink-2:       #4a3866;
+  --ink-3:       #9180aa;
+  --ink-4:       #c8bcd8;
+  --accent:      #8B44AA;
+  --accent-2:    #6E2F8C;
+  --accent-soft: #f5eefa;
   --ok:          #16a34a;
   --ok-soft:     #ecfdf5;
   --warn:        #d97706;
   --warn-soft:   #fffbeb;
   --alert:       #dc2626;
   --alert-soft:  #fef2f2;
-  --canvas-bg:   #f0f2f5;
-  --edge-stroke: #cbd2db;
-  --grid-dot:    #d0d5dd;
+  --canvas-bg:   #ede8f5;
+  --edge-stroke: #d1c6e0;
+  --grid-dot:    #cfc4df;
   --grid-size:   24px;
-  --ring-soft:   rgba(15, 23, 42, 0.04);
-  --shadow-1:    0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.02);
-  --shadow-2:    0 2px 8px rgba(15, 23, 42, 0.08);
-  --shadow-3:    0 6px 18px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --ring-soft:   rgba(139, 68, 170, 0.06);
+  --shadow-1:    0 1px 2px rgba(26, 13, 46, 0.05), 0 0 0 1px rgba(139, 68, 170, 0.04);
+  --shadow-2:    0 2px 8px rgba(26, 13, 46, 0.10);
+  --shadow-3:    0 6px 18px rgba(26, 13, 46, 0.14), 0 2px 6px rgba(26, 13, 46, 0.07);
 }
 
 /* Dark theme */
 :root[data-theme="dark"] {
-  --bg:          #0b0e16;
-  --surface:     #11151f;
-  --surface-2:   #161b27;
-  --surface-3:   #1c2230;
-  --border:      #232938;
-  --border-2:    #2e3547;
-  --ink:         #f1f3f8;
-  --ink-2:       #b3bbcc;
-  --ink-3:       #7c8499;
-  --ink-4:       #4d556a;
-  --accent:      #5b8def;
-  --accent-2:    #7aa2ff;
-  --accent-soft: rgba(91, 141, 239, 0.14);
+  --bg:          #0d0a17;
+  --surface:     #150f22;
+  --surface-2:   #1c1630;
+  --surface-3:   #231d3d;
+  --border:      #302550;
+  --border-2:    #3f3268;
+  --ink:         #f0eaf8;
+  --ink-2:       #c0aed8;
+  --ink-3:       #8a74a8;
+  --ink-4:       #5a4878;
+  --accent:      #b06fd4;
+  --accent-2:    #cc99ee;
+  --accent-soft: rgba(176, 111, 212, 0.15);
   --ok:          #34d399;
   --ok-soft:     rgba(52, 211, 153, 0.14);
   --warn:        #fbbf24;
   --warn-soft:   rgba(251, 191, 36, 0.14);
   --alert:       #f87171;
   --alert-soft:  rgba(248, 113, 113, 0.14);
-  --accent-2:    #7aa2ff;
   --canvas-bg:   var(--surface);
-  --edge-stroke: #3a4258;
-  --grid-dot:    rgba(255, 255, 255, 0.06);
+  --edge-stroke: #3f3268;
+  --grid-dot:    rgba(176, 111, 212, 0.08);
   --grid-size:   24px;
-  --ring-soft:   rgba(255, 255, 255, 0.04);
-  --shadow-1:    0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-2:    0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.45);
-  --shadow-3:    0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 40px rgba(0, 0, 0, 0.55);
+  --ring-soft:   rgba(176, 111, 212, 0.06);
+  --shadow-1:    0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(176, 111, 212, 0.05);
+  --shadow-2:    0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.50);
+  --shadow-3:    0 2px 6px rgba(0, 0, 0, 0.55), 0 18px 40px rgba(0, 0, 0, 0.60);
 }
