@@ -1,4 +1,4 @@
-﻿info:
+info:
   name: RBAC06 - user POST /api/alertLogs → 403 (log tables are admin-only)
   type: http
   seq: 6
@@ -15,7 +15,7 @@ http:
 runtime:
   variables:
     - name: user_token
-      value: FILL_IN_TOKEN
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidXNlcl90ZXN0IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoidXNlciIsImp0aSI6IjEwM2M1ZDliLWViYTgtNDljYy1hNzE3LTgwMmNiNmE5NGYwYyIsImV4cCI6MTc3OTg5NTU5MCwiaXNzIjoiU1NNLUFQSSIsImF1ZCI6IlNTTS1Gcm9udGVuZCJ9.rf_1BYTC6aw7IBj16HFX54BdokTt1hq8mEdyZPiOhaQ
 
 settings:
   encodeUrl: true

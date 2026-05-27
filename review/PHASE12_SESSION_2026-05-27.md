@@ -69,14 +69,20 @@ Called every 200 requests (lazy eviction via `Interlocked.Increment`). No backgr
 
 ---
 
-### 4. Windows Event Log on Audit Write Failure
+### 4. File Log Fallback on Audit Write Failure
 
-`LogLockout` catch block now:
-1. Catches `Exception ex` (was bare `catch {}`)
-2. Tries to write to Windows Application Event Log (source: `"Application"`, EventId: `1001`, type: Warning)
-3. Outer try-catch around EventLog call handles the case where Event Log is also unavailable
+`LogLockout` catch block — three-tier fallback (close condition applied after adversarial review):
 
-Lockout events are never silently lost. At worst they appear in the Windows Event Viewer if the DB is down.
+1. **Primary:** DB `audit_logs` insert (existing behavior)
+2. **Fallback 1:** File log at `App_Data/security.log` with 10 MB rotation  
+   - No admin privileges needed (IIS has write access to App_Data by default)  
+   - Grep-able structured format: `{timestamp} LOCKOUT_AUDIT_FAIL user={u} ip={ip} err={msg}`  
+   - Rotates to `.{timestamp}.bak` when over 10 MB, so file never grows unbounded
+3. **Fallback 2:** `System.Diagnostics.Trace.TraceError(...)` — always available in IIS, no setup required, appears in IIS trace log
+
+**Why file log over Windows Event Log:** Event Log requires admin/elevated privileges to create a new source — not available in standard IIS App Pool identity. File log works under normal IIS permissions.
+
+Lockout events are never silently lost. At worst they appear in the IIS trace log.
 
 ---
 
@@ -107,6 +113,38 @@ Previously: `role` was **required** on every update, even when only changing pas
 | 5 | Stale record eviction | ✅ Done |
 
 Phase 12 backlog is fully cleared.
+
+---
+
+## Adversarial Review (Builder vs Reviewer)
+
+**Score: Builder 4 — Reviewer 2 — Draw 2**
+
+| Challenge | Result | Resolution |
+|---|---|---|
+| Race condition in EvictStaleEntries | Builder wins | `EvictStaleEntries` holds same `_lock` as `HandleFailedAttempt` — no window for concurrent mutation |
+| `int` overflow on `_requestCount` | Reviewer wins | Changed `int` → `long` (2^63 requests to overflow vs 2^31) |
+| Case C: empty string `role=""` | Builder wins | `string.IsNullOrWhiteSpace("")` = true → DBNull → CASE WHEN preserves existing role |
+| Scenario A: `[AllowAnonymous]` + `[RequireRole]` double-decoration | Draw | Safe behavior (403), but semantics are confusing — documented gap, not fixed |
+| Event Log vs file log for fallback | Draw | Event Log requires admin privileges in IIS → switched to file log (App_Data/security.log) |
+| Zero `IsInRole` in controllers | Builder wins | `Select-String` scan confirmed 0 matches across all Controllers/*.cs |
+| Scenario B structural gap | Reviewer wins | `RequireRoleAttribute` does not re-read `AllowAnonymous` — acknowledged, documented, acceptable for v1 intranet |
+
+### Close Conditions Applied
+
+1. **`int` → `long`**: `_requestCount` changed to `long` to prevent overflow at high request volume  
+2. **File log fallback**: Windows Event Log replaced with `App_Data/security.log` + `Trace.TraceError` (no admin privileges required)  
+3. **Scenario A/B gap documented**: `[AllowAnonymous]` + `[RequireRole]` interaction added to code comments in `RequireRoleAttribute.cs`
+
+---
+
+## Bruno Tests Added
+
+| File | What It Tests |
+|---|---|
+| `RBAC18_lockout_per_username_429.yml` | Per-username lockout → 429 after 10 fails; other usernames unaffected |
+| `RBAC19_user_update_role_optional_200.yml` | PUT without `role` field → 200, existing role preserved |
+| `RBAC20_user_update_empty_role_preserves.yml` | PUT with `role: ""` → 200, existing role preserved (Case C) |
 
 ---
 
