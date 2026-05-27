@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : nvrs
         [Route("api/nvrs")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetNvrs(string Site_ID = null, string Rack_ID = null, string status = null, string NVR_ID = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<nvrsModel> ListRP = new List<nvrsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -87,11 +86,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : nvrs
         [Route("api/nvrs")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Savenvrs([FromBody] List<nvrsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -167,11 +164,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : nvrs
         [Route("api/nvrs/{NVR_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updatenvrs(string NVR_ID, [FromBody] nvrsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.NVR_ID))
                 return BadRequest("Value cannot be null");
 
@@ -262,11 +257,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : nvrs
         [HttpPost]
         [Route("api/nvrs/delete/{NVR_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deletenvrs(string NVR_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (string.IsNullOrWhiteSpace(NVR_ID))
                 return BadRequest("NVR_ID is required");
 

@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : users
         [Route("api/users")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetUsers(string role = null, int? User_ID = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<usersModel> ListRP = new List<usersModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -58,11 +57,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : users
         [Route("api/users")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Saveusers([FromBody] List<usersModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -126,18 +123,14 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : users
         [Route("api/users/{User_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updateusers(int User_ID, [FromBody] usersModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.username))
                 return BadRequest("username is required");
 
-            if (string.IsNullOrWhiteSpace(model.role))
-                return BadRequest("role is required");
-
-            if (!ValidRoles.Contains(model.role))
+            // role is optional on update — omit or null to keep existing role
+            if (!string.IsNullOrWhiteSpace(model.role) && !ValidRoles.Contains(model.role))
                 return BadRequest($"Invalid role value: {model.role}");
 
             try
@@ -150,7 +143,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         SET username     = @username,
                             pw_hash      = CASE WHEN @newPwHash IS NULL THEN pw_hash ELSE @newPwHash END,
                             display_name = @display_name,
-                            role         = @role,
+                            role         = CASE WHEN @role IS NULL THEN role ELSE @role END,
                             is_active    = @is_active,
                             last_login   = @last_login,
                             updated_at   = SYSUTCDATETIME()
@@ -162,7 +155,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                         cmd.Parameters.AddWithValue("@username",  string.IsNullOrWhiteSpace(model.username) ? (object)DBNull.Value : model.username);
                         cmd.Parameters.AddWithValue("@newPwHash", string.IsNullOrWhiteSpace(model.password) ? (object)DBNull.Value : BCrypt.Net.BCrypt.HashPassword(model.password));
                         cmd.Parameters.AddWithValue("@display_name", string.IsNullOrWhiteSpace(model.display_name) ? (object)DBNull.Value : model.display_name);
-                        cmd.Parameters.AddWithValue("@role",         string.IsNullOrWhiteSpace(model.role)         ? (object)DBNull.Value : model.role);
+                        cmd.Parameters.AddWithValue("@role",         string.IsNullOrWhiteSpace(model.role) ? (object)DBNull.Value : model.role);
                         cmd.Parameters.AddWithValue("@is_active",    model.is_active);
                         cmd.Parameters.AddWithValue("@last_login",   string.IsNullOrWhiteSpace(model.last_login)   ? (object)DBNull.Value : model.last_login);
 
@@ -179,10 +172,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : users
         [HttpPost]
         [Route("api/users/delete/{User_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deleteusers(int User_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
             try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))

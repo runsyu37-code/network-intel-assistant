@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : alert_logs
         [Route("api/alert-logs")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetAlertLogs(string device_type = null, bool active_only = false)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<alertLogsModel> ListRP = new List<alertLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -67,12 +66,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : alert_logs
         [Route("api/alert-logs")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult SavealertLogs([FromBody] List<alertLogsModel> modelList)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (modelList == null || modelList.Count == 0)
+            if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.device_type) || string.IsNullOrWhiteSpace(x.device_name)))
@@ -131,12 +128,10 @@ if (modelList == null || modelList.Count == 0)
         #region Update : alert_logs
         [Route("api/alert-logs/{id}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult UpdatealertLogs(int id, [FromBody] alertLogsModel model)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (model == null)
+            if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -196,12 +191,10 @@ if (model == null)
         #region Delete : alert_logs
         [HttpPost]
         [Route("api/alert-logs/delete/{id}")]
+        [RequireRole("admin")]
         public IHttpActionResult DeletealertLogs(int id)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-try
+            try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

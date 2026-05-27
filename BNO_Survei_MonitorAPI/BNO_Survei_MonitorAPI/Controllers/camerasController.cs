@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -19,11 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : cameras
         [Route("api/cameras")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetCameras(string Site_ID = null, string Floor_ID = null, string status = null, int? id = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<camerasModel> ListRP = new List<camerasModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -83,11 +82,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : cameras
         [Route("api/cameras")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Savecameras([FromBody] List<camerasModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -157,11 +154,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : cameras
         [Route("api/cameras/{id}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updatecameras(int id, [FromBody] camerasModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null)
                 return BadRequest("Value cannot be null");
 
@@ -242,11 +237,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : cameras
         [HttpPost]
         [Route("api/cameras/delete/{id}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deletecameras(int id)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
@@ -275,11 +268,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
         [HttpPatch]
         [Route("api/cameras/{id}/position")]
+        [RequireRole("admin")]
         public IHttpActionResult PatchPosition(int id, [FromBody] PositionRequest req)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (req == null || !req.x.HasValue || !req.y.HasValue)
                 return BadRequest("x and y are required");
 

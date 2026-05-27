@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : ping_logs
         [Route("api/ping-logs")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetPingLogs(string device_id = null, string device_type = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<pingLogsModel> ListRP = new List<pingLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -57,12 +56,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : ping_logs
         [Route("api/ping-logs")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult SavepingLogs([FromBody] List<pingLogsModel> modelList)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (modelList == null || modelList.Count == 0)
+            if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.device_type) || string.IsNullOrWhiteSpace(x.device_id)))
@@ -111,12 +108,10 @@ if (modelList == null || modelList.Count == 0)
         #region Update : ping_logs
         [Route("api/ping-logs/{id}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult UpdatepingLogs(int id, [FromBody] pingLogsModel model)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (model == null)
+            if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -155,12 +150,10 @@ if (model == null)
         #region Delete : ping_logs
         [HttpPost]
         [Route("api/ping-logs/delete/{id}")]
+        [RequireRole("admin")]
         public IHttpActionResult DeletepingLogs(int id)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-try
+            try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : audit_logs
         [Route("api/audit-logs")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetAuditLogs(int? user_id = null, string table_name = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<auditLogsModel> ListRP = new List<auditLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -58,12 +57,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : audit_logs
         [Route("api/audit-logs")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult SaveauditLogs([FromBody] List<auditLogsModel> modelList)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (modelList == null || modelList.Count == 0)
+            if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.action) || string.IsNullOrWhiteSpace(x.table_name)))
@@ -113,12 +110,10 @@ if (modelList == null || modelList.Count == 0)
         #region Update : audit_logs
         [Route("api/audit-logs/{id}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult UpdateauditLogs(int id, [FromBody] auditLogsModel model)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (model == null)
+            if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -159,12 +154,10 @@ if (model == null)
         #region Delete : audit_logs
         [HttpPost]
         [Route("api/audit-logs/delete/{id}")]
+        [RequireRole("admin")]
         public IHttpActionResult DeleteauditLogs(int id)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-try
+            try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

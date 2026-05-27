@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : poe_switches
         [Route("api/poe-switches")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetPoeSwitches(string Site_ID = null, string Rack_ID = null, string status = null, string SW_ID = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<poeSwitchesModel> ListRP = new List<poeSwitchesModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -85,11 +84,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : poe_switches
         [Route("api/poe-switches")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult SavepoeSwitches([FromBody] List<poeSwitchesModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -163,11 +160,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : poe_switches
         [Route("api/poe-switches/{SW_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.SW_ID))
                 return BadRequest("Value cannot be null");
 
@@ -254,11 +249,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : poe_switches
         [HttpPost]
         [Route("api/poe-switches/delete/{SW_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (string.IsNullOrWhiteSpace(SW_ID))
                 return BadRequest("SW_ID is required");
 

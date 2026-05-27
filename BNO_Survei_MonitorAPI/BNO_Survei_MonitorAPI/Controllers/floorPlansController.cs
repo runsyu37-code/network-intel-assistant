@@ -1,4 +1,5 @@
 using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Data.SqlClient;
 using System.IO;
@@ -68,12 +69,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         // ---------------------------------------------------------------
         [HttpPost]
         [Route("api/floors/{floorId}/floor-plan")]
+        [RequireRole("admin")]
         public async Task<IHttpActionResult> UploadFloorPlan(string floorId)
         {
-            // Layer 2: admin only
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
             if (!Request.Content.IsMimeMultipartContent())
                 return BadRequest("Multipart form data required");
 
@@ -244,11 +242,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         // ---------------------------------------------------------------
         [HttpDelete]
         [Route("api/floors/{floorId}/floor-plan")]
+        [RequireRole("admin")]
         public IHttpActionResult DeleteFloorPlan(string floorId)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(HttpStatusCode.Forbidden);
-
             using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();

@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -58,11 +59,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : buildings
         [Route("api/buildings")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Savebuildings([FromBody] List<buildingsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -116,11 +115,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : buildings
         [Route("api/buildings/{Building_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updatebuildings(string Building_ID, [FromBody] buildingsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.Building_ID))
                 return BadRequest("Value cannot be null");
 
@@ -167,11 +164,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : buildings
         [HttpPost]
         [Route("api/buildings/delete/{Building_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deletebuildings(string Building_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (string.IsNullOrWhiteSpace(Building_ID))
                 return BadRequest("Building_ID is required");
 

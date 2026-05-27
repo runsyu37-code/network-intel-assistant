@@ -1,4 +1,5 @@
-using BNO_Survei_MonitorAPI.ConnectDB;
+﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -13,11 +14,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : dashboard/summary
         [Route("api/dashboard/summary")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetSummary()
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             var list = new List<object>();
             try
             {

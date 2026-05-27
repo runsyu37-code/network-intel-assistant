@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : rooms
         [Route("api/rooms")]
         [HttpGet]
+        [RequireRole("admin", "user")]
         public IHttpActionResult GetRooms(string Floor_ID = null, string Room_ID = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin") && !RequestContext.Principal.IsInRole("user"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<roomsModel> ListRP = new List<roomsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -69,11 +68,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : rooms
         [Route("api/rooms")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Saverooms([FromBody] List<roomsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -135,11 +132,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : rooms
         [Route("api/rooms/{Room_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updaterooms(string Room_ID, [FromBody] roomsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.Room_ID))
                 return BadRequest("Value cannot be null");
 
@@ -202,11 +197,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : rooms
         [HttpPost]
         [Route("api/rooms/delete/{Room_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deleterooms(string Room_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (string.IsNullOrWhiteSpace(Room_ID))
                 return BadRequest("Room_ID is required");
 

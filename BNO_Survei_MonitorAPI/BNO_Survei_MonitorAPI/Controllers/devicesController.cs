@@ -1,5 +1,6 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
 using BNO_Survei_MonitorAPI.Constants;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -16,6 +17,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : devices (unified search)
         [Route("api/devices")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetDevices(
             string device_type  = null,
             string Site_ID      = null,
@@ -25,9 +27,6 @@ namespace BNO_Survei_MonitorAPI.Controllers
             string ip_address   = null,
             string status       = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             var types = string.IsNullOrWhiteSpace(device_type)
                 ? new HashSet<string> { DeviceTypes.Camera, DeviceTypes.Nvr, DeviceTypes.PoeSwitch }
                 : new HashSet<string>(device_type.Split(',').Select(t => t.Trim().ToLower()));

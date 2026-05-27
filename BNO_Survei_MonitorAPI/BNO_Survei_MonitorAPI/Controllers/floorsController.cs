@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -59,11 +60,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : floors
         [Route("api/floors")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Savefloors([FromBody] List<floorsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
@@ -118,11 +117,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Update : floors
         [Route("api/floors/{Floor_ID}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult Updatefloors(string Floor_ID, [FromBody] floorsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (model == null || string.IsNullOrWhiteSpace(model.Floor_ID))
                 return BadRequest("Value cannot be null");
 
@@ -171,11 +168,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Delete : floors
         [HttpPost]
         [Route("api/floors/delete/{Floor_ID}")]
+        [RequireRole("admin")]
         public IHttpActionResult Deletefloors(string Floor_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             if (string.IsNullOrWhiteSpace(Floor_ID))
                 return BadRequest("Floor_ID is required");
 

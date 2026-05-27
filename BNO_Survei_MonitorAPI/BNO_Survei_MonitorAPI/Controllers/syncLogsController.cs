@@ -1,4 +1,5 @@
 ﻿using BNO_Survei_MonitorAPI.ConnectDB;
+using BNO_Survei_MonitorAPI.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -18,11 +19,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : sync_logs
         [Route("api/sync-logs")]
         [HttpGet]
+        [RequireRole("admin")]
         public IHttpActionResult GetSyncLogs(string device_type = null, string device_id = null, string status = null)
         {
-            if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
             List<syncLogsModel> ListRP = new List<syncLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -61,12 +60,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region Save : sync_logs
         [Route("api/sync-logs")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult SavesyncLogs([FromBody] List<syncLogsModel> modelList)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (modelList == null || modelList.Count == 0)
+            if (modelList == null || modelList.Count == 0)
                 return BadRequest("No data provided");
 
             if (modelList.Any(x => string.IsNullOrWhiteSpace(x.device_type) || string.IsNullOrWhiteSpace(x.device_id)))
@@ -117,12 +114,10 @@ if (modelList == null || modelList.Count == 0)
         #region Update : sync_logs
         [Route("api/sync-logs/{id}")]
         [HttpPost]
+        [RequireRole("admin")]
         public IHttpActionResult UpdatesyncLogs(int id, [FromBody] syncLogsModel model)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-if (model == null)
+            if (model == null)
                 return BadRequest("Value cannot be null");
 
             try
@@ -165,12 +160,10 @@ if (model == null)
         #region Delete : sync_logs
         [HttpPost]
         [Route("api/sync-logs/delete/{id}")]
+        [RequireRole("admin")]
         public IHttpActionResult DeletesyncLogs(int id)
         {
-                        if (!RequestContext.Principal.IsInRole("admin"))
-                return StatusCode(System.Net.HttpStatusCode.Forbidden);
-
-try
+            try
             {
                 using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
                 {

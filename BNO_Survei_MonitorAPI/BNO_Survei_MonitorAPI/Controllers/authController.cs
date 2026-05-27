@@ -27,8 +27,10 @@ namespace BNO_Survei_MonitorAPI.Controllers
         }
 
         private static readonly Dictionary<string, AttemptRecord> _attempts =
-            new Dictionary<string, AttemptRecord>(StringComparer.Ordinal);
+            new Dictionary<string, AttemptRecord>(StringComparer.OrdinalIgnoreCase);
         private static readonly object _lock = new object();
+        private static int _requestCount = 0;
+        private const int EvictionInterval = 200;
 
         private const int MaxFails       = 10;
         private const int WindowMinutes  = 5;
@@ -41,18 +43,23 @@ namespace BNO_Survei_MonitorAPI.Controllers
             if (req == null || string.IsNullOrWhiteSpace(req.username) || string.IsNullOrWhiteSpace(req.password))
                 return BadRequest("username and password are required");
 
-            var ip = GetClientIp();
+            var ip  = GetClientIp();
+            var key = req.username.Trim(); // per-username lockout key (case-insensitive via OrdinalIgnoreCase dict)
+
+            // Lazy stale-entry eviction every N requests
+            if (System.Threading.Interlocked.Increment(ref _requestCount) % EvictionInterval == 0)
+                EvictStaleEntries();
 
             lock (_lock)
             {
-                if (_attempts.TryGetValue(ip, out var rec) && rec.LockedUntil.HasValue)
+                if (_attempts.TryGetValue(key, out var rec) && rec.LockedUntil.HasValue)
                 {
                     if (DateTime.UtcNow < rec.LockedUntil.Value)
                     {
                         var secs = (int)(rec.LockedUntil.Value - DateTime.UtcNow).TotalSeconds;
                         return TooManyRequests(secs);
                     }
-                    _attempts.Remove(ip);
+                    _attempts.Remove(key);
                 }
             }
 
@@ -79,7 +86,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     var displayName = reader["display_name"] == DBNull.Value ? username : reader["display_name"].ToString();
                     reader.Close();
 
-                    lock (_lock) { _attempts.Remove(ip); }
+                    lock (_lock) { _attempts.Remove(key); }
 
                     var updateCmd = new SqlCommand(
                         "UPDATE users SET last_login = GETUTCDATE() WHERE username = @username", con);
@@ -95,14 +102,15 @@ namespace BNO_Survei_MonitorAPI.Controllers
         private IHttpActionResult HandleFailedAttempt(string ip, string username)
         {
             var now = DateTime.UtcNow;
+            var key = username.Trim();
             bool justLocked = false;
 
             lock (_lock)
             {
-                if (!_attempts.TryGetValue(ip, out var rec) || (now - rec.WindowStart).TotalMinutes >= WindowMinutes)
+                if (!_attempts.TryGetValue(key, out var rec) || (now - rec.WindowStart).TotalMinutes >= WindowMinutes)
                 {
                     rec = new AttemptRecord { FailCount = 0, WindowStart = now };
-                    _attempts[ip] = rec;
+                    _attempts[key] = rec;
                 }
 
                 rec.FailCount++;
@@ -119,7 +127,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
             lock (_lock)
             {
-                if (_attempts.TryGetValue(ip, out var current) && current.LockedUntil.HasValue)
+                if (_attempts.TryGetValue(key, out var current) && current.LockedUntil.HasValue)
                 {
                     var secs = Math.Max(0, (int)(current.LockedUntil.Value - now).TotalSeconds);
                     return TooManyRequests(secs);
@@ -127,6 +135,23 @@ namespace BNO_Survei_MonitorAPI.Controllers
             }
 
             return Unauthorized();
+        }
+
+        private static void EvictStaleEntries()
+        {
+            var now = DateTime.UtcNow;
+            lock (_lock)
+            {
+                var toRemove = new System.Collections.Generic.List<string>();
+                foreach (var kvp in _attempts)
+                {
+                    bool lockExpired  = !kvp.Value.LockedUntil.HasValue || kvp.Value.LockedUntil.Value <= now;
+                    bool windowExpired = (now - kvp.Value.WindowStart).TotalMinutes >= WindowMinutes;
+                    if (lockExpired && windowExpired)
+                        toRemove.Add(kvp.Key);
+                }
+                foreach (var k in toRemove) _attempts.Remove(k);
+            }
         }
 
         private IHttpActionResult TooManyRequests(int retryAfterSeconds)
@@ -165,11 +190,23 @@ namespace BNO_Survei_MonitorAPI.Controllers
                           VALUES (NULL, @action, 'auth', NULL, NULL, @val)", con);
                     cmd.Parameters.AddWithValue("@action", "lockout");
                     cmd.Parameters.AddWithValue("@val",
-                        $"IP {ip} locked after {MaxFails} failed attempts (username: '{username}')");
+                        $"username '{username}' locked after {MaxFails} failed attempts (from IP: {ip})");
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Audit DB write failed — fall back to Windows Event Log so the lockout is never silently lost
+                try
+                {
+                    System.Diagnostics.EventLog.WriteEntry(
+                        "Application",
+                        $"[BNO Monitor] Audit log write failed. Event: lockout for username '{username}' (IP: {ip}). Error: {ex.Message}",
+                        System.Diagnostics.EventLogEntryType.Warning,
+                        1001);
+                }
+                catch { /* Event Log also unavailable — accept silent loss at this point */ }
+            }
         }
 
         [HttpGet]
