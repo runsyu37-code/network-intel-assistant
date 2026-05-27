@@ -100,38 +100,69 @@ const PORT_BORDER: Record<PortStatus, string> = {
   error:    'var(--alert)',
 }
 
-function PortMap({ sw }: { sw: SwitchDevice }) {
-  const cols = sw.ports <= 16 ? 8 : 12
+const LED_COLOR: Record<PortStatus, string> = {
+  active:   '#17A34A',
+  inactive: '#444',
+  error:    '#EAB308',
+}
+
+function HardwarePortMap({ sw }: { sw: SwitchDevice }) {
+  const half = Math.ceil(sw.ports / 2)
+  const topPorts  = sw.portMap.filter((_, i) => i % 2 === 0)
+  const botPorts  = sw.portMap.filter((_, i) => i % 2 === 1)
+
+  const PortPin = ({ p }: { p: Port }) => (
+    <div
+      className="hw-port-wrap"
+      title={`Port ${p.num}${p.device ? ` — ${p.device}` : ''}${p.poeW ? ` (${p.poeW}W)` : ''}`}
+    >
+      <div className="hw-port">
+        <div className="hw-port-led" style={{ background: LED_COLOR[p.status], boxShadow: p.status === 'active' ? `0 0 4px ${LED_COLOR[p.status]}` : undefined }} />
+      </div>
+      <div className="hw-port-lbl">{p.num}</div>
+    </div>
+  )
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 5 }}>
-      {sw.portMap.map(p => (
-        <div
-          key={p.num}
-          title={`Port ${p.num}${p.device ? ` — ${p.device}` : ''}${p.poeW ? ` (${p.poeW}W)` : ''}`}
-          style={{
-            borderRadius: 5,
-            border: `1.5px solid ${PORT_BORDER[p.status]}`,
-            background: PORT_BG[p.status],
-            padding: '5px 2px', textAlign: 'center',
-            cursor: 'default',
-          }}
-        >
-          <div style={{
-            fontFamily: 'monospace', fontSize: 9.5, fontWeight: 700,
-            color: p.status === 'active' ? 'var(--ok)' : p.status === 'error' ? 'var(--alert)' : 'var(--ink-4)',
-          }}>{p.num}</div>
-          {p.device && (
-            <div style={{
-              fontSize: 7.5, color: 'var(--ink-3)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              maxWidth: '100%', marginTop: 2,
-            }}>{p.device.replace('CAM-','C').replace('NVR-','N')}</div>
-          )}
-          {p.poeW && p.status === 'active' && (
-            <div style={{ fontSize: 7, color: 'var(--ink-4)', marginTop: 1 }}>{p.poeW}W</div>
-          )}
-        </div>
-      ))}
+    <div className="hw-switch-panel">
+      <div className="hw-port-row">
+        {topPorts.slice(0, half).map(p => <PortPin key={p.num} p={p} />)}
+      </div>
+      <div className="hw-port-row">
+        {botPorts.slice(0, half).map(p => <PortPin key={p.num} p={p} />)}
+      </div>
+    </div>
+  )
+}
+
+function TrafficChart() {
+  return (
+    <div>
+      <svg viewBox="0 0 500 160" style={{ width: '100%', height: 140, overflow: 'visible' }} preserveAspectRatio="none">
+        <line x1="40" y1="10"  x2="500" y2="10"  stroke="var(--border)" strokeDasharray="2 2" />
+        <line x1="40" y1="70"  x2="500" y2="70"  stroke="var(--border)" strokeDasharray="2 2" />
+        <line x1="40" y1="130" x2="500" y2="130" stroke="var(--border)" />
+        <text x="32" y="14"  fontSize="10" fill="var(--ink-3)" textAnchor="end" fontFamily="Inter,sans-serif">1G</text>
+        <text x="32" y="74"  fontSize="10" fill="var(--ink-3)" textAnchor="end" fontFamily="Inter,sans-serif">500M</text>
+        <text x="32" y="134" fontSize="10" fill="var(--ink-3)" textAnchor="end" fontFamily="Inter,sans-serif">0</text>
+        <text x="40"  y="150" fontSize="10" fill="var(--ink-3)" textAnchor="middle" fontFamily="Inter,sans-serif">-24h</text>
+        <text x="270" y="150" fontSize="10" fill="var(--ink-3)" textAnchor="middle" fontFamily="Inter,sans-serif">-12h</text>
+        <text x="500" y="150" fontSize="10" fill="var(--ink-3)" textAnchor="middle" fontFamily="Inter,sans-serif">Now</text>
+        <polyline fill="none" stroke="var(--accent)" strokeWidth="2"
+          points="40,120 100,110 160,80 220,90 280,40 340,60 400,30 460,50 500,20" />
+        <polyline fill="none" stroke="var(--ok)" strokeWidth="2"
+          points="40,125 100,115 160,90 220,100 280,50 340,80 400,50 460,70 500,40" />
+      </svg>
+      <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 8, fontSize: 12, fontWeight: 600 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 12, height: 4, borderRadius: 2, background: 'var(--accent)', display: 'inline-block' }} />
+          TX (Out)
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ width: 12, height: 4, borderRadius: 2, background: 'var(--ok)', display: 'inline-block' }} />
+          RX (In)
+        </span>
+      </div>
     </div>
   )
 }
@@ -220,23 +251,23 @@ export default function SwitchDetailPage() {
 
             <div className="cam-card">
               <div className="cam-card-title">Port Map — {sw.ports} ports</div>
-              <div style={{ marginBottom: 14 }}>
-                <PortMap sw={sw} />
-              </div>
-              <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--ink-3)' }}>
+              <HardwarePortMap sw={sw} />
+              <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--ink-3)', marginTop: 10 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: PORT_BG.active, border: `1.5px solid ${PORT_BORDER.active}`, display: 'inline-block' }} />
-                  Active
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: LED_COLOR.active, display: 'inline-block' }} /> Active
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: PORT_BG.inactive, border: `1.5px solid ${PORT_BORDER.inactive}`, display: 'inline-block' }} />
-                  Inactive
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: LED_COLOR.error, display: 'inline-block' }} /> Error
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: 3, background: PORT_BG.error, border: `1.5px solid ${PORT_BORDER.error}`, display: 'inline-block' }} />
-                  Error
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: LED_COLOR.inactive, display: 'inline-block' }} /> Inactive
                 </span>
               </div>
+            </div>
+
+            <div className="cam-card">
+              <div className="cam-card-title" style={{ marginBottom: 4 }}>Traffic — Last 24h</div>
+              <TrafficChart />
             </div>
 
             <div className="cam-card">
