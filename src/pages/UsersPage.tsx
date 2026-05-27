@@ -3,7 +3,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Form, Input, Modal, Select } from 'antd'
 import { Plus, Pencil, X, Search, RefreshCw } from 'lucide-react'
 import { getUsers } from '../api/users'
-import type { UserApi } from '../api/types'
 import { useAuthStore } from '../stores/authStore'
 
 type Role = 'admin' | 'user' | 'viewer'

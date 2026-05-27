@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - Cameras</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { padding: 32px; margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+    
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .title-group { display: flex; align-items: center; gap: 12px; }
+    .title { font-size: 24px; font-weight: 700; margin: 0; }
+    .title-icon { width: 24px; height: 24px; stroke: var(--ink-3); stroke-width: 2; fill: none; }
+    
+    .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0 16px; height: 34px; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-alert { background: var(--alert); color: #fff; border: none; border-radius: 8px; padding: 0 16px; height: 34px; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); overflow: hidden; }
+    
+    .toolbar { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 16px; background: var(--surface); }
+    .input-wrap { position: relative; width: 240px; }
+    .input-wrap svg { position: absolute; left: 12px; top: 9px; width: 16px; height: 16px; stroke: var(--ink-3); fill: none; stroke-width: 2; }
+    .input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 34px; padding: 0 12px 0 36px; color: var(--ink); font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    .select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 34px; padding: 0 12px; color: var(--ink); font-family: 'Inter', sans-serif; }
+    
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: var(--surface-2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    td { font-size: 13px; border-bottom: 1px solid var(--border); padding: 12px 20px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    
+    .badge { border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; }
+    .badge.ok { background: var(--ok-soft); color: var(--ok); }
+    .badge.warn { background: var(--warn-soft); color: var(--warn); }
+    .badge.alert { background: var(--alert-soft); color: var(--alert); }
+    
+    .actions { display: flex; gap: 8px; }
+    .btn-icon { width: 28px; height: 28px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: var(--ink-3); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .btn-icon:hover { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+    .btn-icon svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+    
+    /* Modals container */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; gap: 40px; z-index: 100; }
+    
+    /* Standard Modal */
+    .modal { width: 480px; border-radius: 12px; background: var(--surface); box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { margin: 0; font-size: 16px; font-weight: 700; }
+    .modal-close { cursor: pointer; color: var(--ink-3); }
+    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    
+    /* Delete Confirm Modal */
+    .modal-delete { width: 380px; border-radius: 12px; background: var(--surface); box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; display: flex; flex-direction: column; text-align: center; }
+    .modal-delete-body { padding: 32px 24px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .icon-warn-large { width: 48px; height: 48px; color: var(--alert); }
+    .delete-title { margin: 0; font-size: 18px; font-weight: 700; }
+    .delete-desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+    .modal-delete-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface-2); }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+    .form-input, .form-select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; color: var(--ink); box-sizing: border-box; font-family: 'Inter', sans-serif; height: 36px; }
+    .form-input.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    
+    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface-2); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--ink); border-radius: 8px; padding: 0 16px; height: 34px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+    
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-group">
+      <svg class="title-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <h1 class="title">Cameras</h1>
+    </div>
+    <button class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Camera
+    </button>
+  </div>
+  
+  <div class="card">
+    <div class="toolbar">
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="input" placeholder="ค้นหากล้อง...">
+      </div>
+      <select class="select">
+        <option>ทุกสาขา</option>
+        <option>สำนักงานใหญ่</option>
+        <option>สาขาสีลม</option>
+        <option>สาขาลาดพร้าว</option>
+      </select>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>สถานะ</th>
+          <th>ชื่อกล้อง</th>
+          <th>IP Address</th>
+          <th>รุ่น</th>
+          <th>ตำแหน่ง</th>
+          <th>NVR</th>
+          <th style="width: 80px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge ok">Online</span></td>
+          <td style="font-weight: 600;">CAM-A1-01</td>
+          <td class="mono">192.168.1.101</td>
+          <td>Hikvision DS-2CD2T47G2</td>
+          <td>ทางเข้าอาคาร A</td>
+          <td>NVR-01</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="badge ok">Online</span></td>
+          <td style="font-weight: 600;">CAM-A1-02</td>
+          <td class="mono">192.168.1.102</td>
+          <td>Hikvision DS-2CD2T47G2</td>
+          <td>โถงรับรอง</td>
+          <td>NVR-01</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="badge alert">Offline</span></td>
+          <td style="font-weight: 600;">CAM-A3-07</td>
+          <td class="mono">192.168.1.137</td>
+          <td>Axis P3245-LVE</td>
+          <td>ลานจอดรถ</td>
+          <td>NVR-02</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="badge warn">Warning</span></td>
+          <td style="font-weight: 600;">CAM-B2-03</td>
+          <td class="mono">192.168.1.203</td>
+          <td>Dahua IPC-HDW2831T</td>
+          <td>ห้องประชุม B</td>
+          <td>NVR-03</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><span class="badge ok">Online</span></td>
+          <td style="font-weight: 600;">CAM-C1-01</td>
+          <td class="mono">192.168.1.301</td>
+          <td>Hikvision DS-2CD2347G2</td>
+          <td>ทางเข้าอาคาร C</td>
+          <td>NVR-04</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="modal-overlay">
+    <!-- Delete Confirm Modal (CAM-A3-07) -->
+    <div class="modal-delete" style="transform: scale(0.95); opacity: 0.9;">
+      <div class="modal-delete-body">
+        <svg class="icon-warn-large" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <h2 class="delete-title">ยืนยันการลบ</h2>
+        <p class="delete-desc">คุณต้องการลบ <strong>CAM-A3-07</strong> ออกจากระบบ?<br>การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+      </div>
+      <div class="modal-delete-footer">
+        <button class="btn-outline">ยกเลิก</button>
+        <button class="btn-alert">ลบ</button>
+      </div>
+    </div>
+
+    <!-- Create Camera Modal -->
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">เพิ่ม กล้อง</h2>
+        <svg class="modal-close" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">ชื่อกล้อง</label>
+          <input type="text" class="form-input" placeholder="e.g. CAM-X-01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">IP Address</label>
+          <input type="text" class="form-input mono" placeholder="192.168.x.x">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รุ่น</label>
+          <input type="text" class="form-input" placeholder="ระบุรุ่น (ถ้ามี)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ตำแหน่ง</label>
+          <input type="text" class="form-input" placeholder="ระบุตำแหน่งติดตั้ง">
+        </div>
+        <div class="form-group">
+          <label class="form-label">NVR</label>
+          <select class="form-select">
+            <option disabled selected>เลือก NVR</option>
+            <option>NVR-01</option>
+            <option>NVR-02</option>
+            <option>NVR-03</option>
+            <option>NVR-04</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">สาขา</label>
+          <select class="form-select">
+            <option disabled selected>เลือกสาขา</option>
+            <option>สำนักงานใหญ่</option>
+            <option>สาขาสีลม</option>
+            <option>สาขาลาดพร้าว</option>
+            <option>สาขาบางนา</option>
+            <option>คลังสินค้า</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline">ยกเลิก</button>
+        <button class="btn">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

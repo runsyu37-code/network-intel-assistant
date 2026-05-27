@@ -105,3 +105,109 @@
   text-align: center; padding: 48px 24px; color: var(--ink-3);
   font-size: 13px;
 }
+
+/* ── CRUD: page header button ────────────────────────────────── */
+.btn-primary {
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 0 16px; height: 34px;
+  font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { opacity: .88; }
+
+.btn-danger {
+  background: var(--alert); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 0 16px; height: 34px;
+  font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-danger:hover { opacity: .88; }
+
+.btn-ghost {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--ink); border-radius: 8px;
+  padding: 0 16px; height: 34px;
+  font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px;
+  cursor: pointer;
+}
+.btn-ghost:hover { background: var(--surface-2); }
+
+/* ── CRUD: Modal overlay + box ───────────────────────────────── */
+.crud-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+
+.crud-modal {
+  width: 480px; border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.crud-modal-hd {
+  padding: 20px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.crud-modal-title { margin: 0; font-size: 16px; font-weight: 700; color: var(--ink); }
+.crud-modal-close { color: var(--ink-3); cursor: pointer; display: flex; }
+.crud-modal-close:hover { color: var(--ink); }
+
+.crud-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.crud-modal-ft {
+  padding: 16px 20px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 12px;
+  background: var(--surface-2);
+}
+
+/* ── CRUD: Form fields ───────────────────────────────────────── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-size: 11px; font-weight: 700; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.form-ctrl {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0 12px; height: 36px;
+  color: var(--ink); box-sizing: border-box;
+  font-family: 'Inter', sans-serif; font-size: 13px;
+  transition: border-color .15s;
+}
+.form-ctrl:focus { outline: none; border-color: var(--accent); }
+.form-ctrl.mono { font-family: 'JetBrains Mono', monospace; }
+textarea.form-ctrl { height: auto; padding: 8px 12px; resize: vertical; min-height: 72px; }
+
+/* ── CRUD: Delete confirm modal ──────────────────────────────── */
+.del-modal {
+  width: 380px; border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  overflow: hidden; display: flex; flex-direction: column; text-align: center;
+}
+.del-modal-body {
+  padding: 32px 24px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.del-modal-icon { color: var(--alert); }
+.del-modal-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); }
+.del-modal-desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+.del-modal-ft {
+  padding: 16px 20px; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 12px;
+  background: var(--surface-2);
+}
+
+/* ── Progress bar (NVRs HDD) ─────────────────────────────────── */
+.prog-wrap { display: flex; align-items: center; gap: 8px; }
+.prog-bar {
+  width: 64px; height: 6px; border-radius: 3px;
+  background: var(--surface-2); overflow: hidden; flex: none;
+}
+.prog-fill { height: 100%; border-radius: 3px; }
+.prog-text { font-family: 'JetBrains Mono', monospace; font-size: 11px; width: 30px; }

@@ -1,0 +1,9 @@
+- [x] Read active DESIGN.md + skill assets (template.html, layouts.md, checklist.md)
+- [x] Bind "Tech / utility" direction's palette to :root (matching screens_users.html)
+- [x] Implement `screens_dashboard.html` (Dashboard Overview)
+- [x] Implement `screens_crud-sites.html` (Sites List + Edit Modal)
+- [x] Implement `screens_crud-cameras.html` (Cameras List + Create Modal + Delete Confirm)
+- [x] Implement `screens_crud-nvrs.html` (NVRs List + Delete Confirm)
+- [x] Implement `screens_crud-switches.html` (Switches List + Edit Modal)
+- [x] Self-check: run references/checklist.md
+- [x] Critique: 5-dim radar, fix any < 3/5

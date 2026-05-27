@@ -1,66 +1,121 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Search, RefreshCw } from 'lucide-react'
-import { getNvrs } from '../api/nvrs'
+import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 
-const STATUS_COLOR: Record<string, string> = {
-  online:  'var(--ok)',
-  warning: 'var(--warn)',
-  offline: 'var(--alert)',
-}
-const STATUS_LABEL: Record<string, string> = {
-  online:  'Online',
-  warning: 'Warning',
-  offline: 'Offline',
+type Status = 'online' | 'warning' | 'offline'
+
+interface NVR {
+  id: string
+  name: string
+  ip: string
+  model: string
+  chUsed: number
+  chTotal: number
+  hddPct: number
+  site: string
+  status: Status
 }
 
-function statusOf(s: string | null): string {
-  const v = (s ?? '').toLowerCase()
-  if (v === 'online')  return 'online'
-  if (v === 'warning') return 'warning'
-  return 'offline'
+const INIT_NVRS: NVR[] = [
+  { id: 'nvr1', name: 'NVR-01', ip: '192.168.1.21', model: 'Hikvision DS-7616NI-K2', chUsed: 16, chTotal: 16, hddPct: 78, site: 'สำนักงานใหญ่',  status: 'online' },
+  { id: 'nvr2', name: 'NVR-02', ip: '192.168.1.22', model: 'Hikvision DS-7616NI-K2', chUsed: 12, chTotal: 16, hddPct: 45, site: 'สำนักงานใหญ่',  status: 'online' },
+  { id: 'nvr3', name: 'NVR-03', ip: '192.168.1.23', model: 'Dahua NVR5216-EI',        chUsed:  8, chTotal: 16, hddPct: 91, site: 'สาขาสีลม',      status: 'warning' },
+  { id: 'nvr4', name: 'NVR-04', ip: '192.168.1.24', model: 'Hikvision DS-7632NI-K2', chUsed: 14, chTotal: 32, hddPct: 62, site: 'สาขาลาดพร้าว', status: 'online' },
+  { id: 'nvr5', name: 'NVR-05', ip: '192.168.1.25', model: 'Dahua NVR5208-EI',        chUsed:  0, chTotal:  8, hddPct:  0, site: 'สาขาบางนา',    status: 'offline' },
+]
+
+const SITES = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
+
+const BADGE: Record<Status, { cls: string; label: string }> = {
+  online:  { cls: 'dl-badge ok',    label: 'Online' },
+  warning: { cls: 'dl-badge warn',  label: 'Warning' },
+  offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
+
+interface FormState { name: string; ip: string; model: string; chTotal: string; site: string }
+const EMPTY_FORM: FormState = { name: '', ip: '', model: '', chTotal: '16', site: SITES[0] }
 
 export default function NVRsPage() {
   const navigate = useNavigate()
-  const [q, setQ] = useState('')
-
-  const { data: nvrs = [], isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['nvrs'],
-    queryFn: () => getNvrs(),
-    refetchInterval: 30_000,
-  })
+  const [nvrs, setNvrs]             = useState<NVR[]>(INIT_NVRS)
+  const [q, setQ]                   = useState('')
+  const [siteFilter, setSiteFilter] = useState('all')
+  const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
+  const [deleteTarget, setDel]      = useState<NVR | null>(null)
+  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
 
   const filtered = nvrs.filter(n => {
+    if (siteFilter !== 'all' && n.site !== siteFilter) return false
     if (!q) return true
-    const s = q.toLowerCase()
-    return [n.NVR_ID, n.device_name, n.ip_cctv ?? '', n.Site_ID].some(v => v.toLowerCase().includes(s))
+    const lower = q.toLowerCase()
+    return [n.name, n.ip, n.model, n.site].some(v => v.toLowerCase().includes(lower))
   })
+
+  function openCreate() {
+    setForm(EMPTY_FORM)
+    setModalMode('create')
+  }
+
+  function openEdit(n: NVR) {
+    setForm({ name: n.name, ip: n.ip, model: n.model, chTotal: String(n.chTotal), site: n.site })
+    setModalMode(n)
+  }
+
+  function handleSave() {
+    if (!form.name.trim() || !form.ip.trim()) return
+    const chTotal = parseInt(form.chTotal) || 16
+    if (modalMode === 'create') {
+      const nvr: NVR = {
+        id: `nvr-${Date.now()}`,
+        name: form.name.trim(),
+        ip: form.ip.trim(),
+        model: form.model.trim(),
+        chUsed: 0, chTotal,
+        hddPct: 0,
+        site: form.site,
+        status: 'online',
+      }
+      setNvrs(prev => [...prev, nvr])
+    } else if (modalMode && typeof modalMode === 'object') {
+      setNvrs(prev => prev.map(n =>
+        n.id === modalMode.id
+          ? { ...n, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chTotal, site: form.site }
+          : n
+      ))
+    }
+    setModalMode(null)
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return
+    setNvrs(prev => prev.filter(n => n.id !== deleteTarget.id))
+    setDel(null)
+  }
+
+  const isEditing = modalMode !== null && modalMode !== 'create'
+  const modalOpen = modalMode !== null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
         <div>
           <h1>NVRs</h1>
-          <p className="page-sub">Network Video Recorders across all sites</p>
+          <p className="page-sub">Network Video Recorders ทั้งหมดในระบบ</p>
         </div>
-        <button
-          className="icon-btn"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', width: 'auto' }}
-          onClick={() => refetch()}
-          disabled={isFetching}
-        >
-          <RefreshCw size={13} style={{ animation: isFetching ? 'spin 1s linear infinite' : 'none' }} />
-          Refresh
+        <button className="btn-primary" onClick={openCreate}>
+          <Plus size={15} /> Add NVR
         </button>
       </div>
 
       <div className="dl-toolbar">
         <div className="dl-search">
           <Search size={14} style={{ color: 'var(--ink-3)', flex: 'none' }} />
-          <input placeholder="Search by name, IP, or site…" value={q} onChange={e => setQ(e.target.value)} />
+          <input placeholder="ค้นหา NVR..." value={q} onChange={e => setQ(e.target.value)} />
         </div>
+        <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
+          <option value="all">ทุกสาขา</option>
+          {SITES.map(s => <option key={s}>{s}</option>)}
+        </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{nvrs.length} total</span>
       </div>
 
@@ -68,61 +123,63 @@ export default function NVRsPage() {
         <table className="dl-table">
           <thead>
             <tr>
-              <th>Status</th>
-              <th>NVR</th>
+              <th>สถานะ</th>
+              <th>ชื่อ NVR</th>
               <th>IP Address</th>
-              <th>Location</th>
-              <th>Model</th>
-              <th>Channels</th>
-              <th>Storage</th>
+              <th>รุ่น</th>
+              <th>ช่องสัญญาณ</th>
+              <th>HDD</th>
+              <th>สาขา</th>
+              <th style={{ width: 80 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && (
-              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--ink-3)' }}>Loading NVRs…</td></tr>
-            )}
-            {isError && !isLoading && (
-              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>Failed to load NVRs — check API connection</td></tr>
-            )}
-            {!isLoading && !isError && filtered.length === 0 && (
-              <tr><td colSpan={7} className="dl-empty">No NVRs found</td></tr>
+            {filtered.length === 0 && (
+              <tr><td colSpan={8} className="dl-empty">ไม่พบ NVR</td></tr>
             )}
             {filtered.map(n => {
-              const st = statusOf(n.status)
-              const usedCh = n.active_channels ?? 0
-              const totalCh = n.total_channels ?? 0
-              const chPct = totalCh > 0 ? (usedCh / totalCh) * 100 : 0
-              const hddPct = n.hdd_used_pct ?? 0
+              const hddAlert = n.hddPct >= 85
               return (
-                <tr key={n.NVR_ID} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/nvrs/${n.NVR_ID}`)}>
-                  <td>
-                    <span className="dl-status">
-                      <span className="s-dot" style={{ background: STATUS_COLOR[st] }} />
-                      {STATUS_LABEL[st]}
-                    </span>
+                <tr
+                  key={n.id}
+                  onClick={() => navigate(`/dashboard/nvrs/${n.id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td><span className={BADGE[n.status].cls}>{BADGE[n.status].label}</span></td>
+                  <td><div className="td-name">{n.name}</div></td>
+                  <td className="td-mono">{n.ip}</td>
+                  <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{n.model || '—'}</td>
+                  <td className="td-mono">{n.chUsed}/{n.chTotal}</td>
+                  <td onClick={e => e.stopPropagation()} style={{ cursor: 'default' }}>
+                    {n.status === 'offline' ? (
+                      <span style={{ color: 'var(--ink-3)' }}>—</span>
+                    ) : (
+                      <div className="prog-wrap">
+                        <div className="prog-bar">
+                          <div
+                            className="prog-fill"
+                            style={{ width: `${n.hddPct}%`, background: hddAlert ? 'var(--alert)' : 'var(--ok)' }}
+                          />
+                        </div>
+                        <span
+                          className="prog-text"
+                          style={{ color: hddAlert ? 'var(--alert)' : undefined, fontWeight: hddAlert ? 700 : undefined }}
+                        >
+                          {n.hddPct}%
+                        </span>
+                      </div>
+                    )}
                   </td>
-                  <td>
-                    <div className="td-name">{n.device_name}</div>
-                    <div className="td-sub">{n.NVR_ID} · {n.Rack_ID || '—'}</div>
-                  </td>
-                  <td className="td-mono">{n.ip_cctv ?? n.ip_internet ?? '—'}</td>
-                  <td>
-                    <div style={{ fontSize: 12, color: 'var(--ink)' }}>{n.Site_ID}</div>
-                    <div className="td-sub">{n.Building_ID}</div>
-                  </td>
-                  <td className="td-mono" style={{ fontSize: 11 }}>{[n.brand, n.model].filter(Boolean).join(' ') || '—'}</td>
-                  <td>
-                    <div style={{ fontSize: 12, color: 'var(--ink)' }}>{usedCh} / {totalCh} ch</div>
-                    <div style={{ marginTop: 4, height: 4, background: 'var(--surface-2)', borderRadius: 999, width: 80, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${chPct}%`, background: 'var(--accent)', borderRadius: 999 }} />
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: 12, color: hddPct > 80 ? 'var(--warn)' : 'var(--ink)' }}>
-                      {n.hdd_total_tb != null ? `${n.hdd_total_tb} TB` : '—'} · {Math.round(hddPct)}%
-                    </div>
-                    <div style={{ marginTop: 4, height: 4, background: 'var(--surface-2)', borderRadius: 999, width: 80, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${hddPct}%`, background: hddPct > 80 ? 'var(--warn)' : 'var(--accent)', borderRadius: 999 }} />
+                  <td style={{ fontSize: 12.5 }}>{n.site}</td>
+                  <td onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="tbl-icon-btn" onClick={() => openEdit(n)} title="Edit">
+                        <Pencil size={13} />
+                      </button>
+                      <button className="tbl-icon-btn" onClick={() => setDel(n)} title="Delete"
+                        style={{ color: 'var(--alert)' }}>
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -131,6 +188,70 @@ export default function NVRsPage() {
           </tbody>
         </table>
       </div>
+
+      {modalOpen && (
+        <div className="crud-overlay" onClick={() => setModalMode(null)}>
+          <div className="crud-modal" onClick={e => e.stopPropagation()}>
+            <div className="crud-modal-hd">
+              <h2 className="crud-modal-title">{isEditing ? 'แก้ไข NVR' : 'เพิ่ม NVR'}</h2>
+              <button className="crud-modal-close" onClick={() => setModalMode(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="crud-modal-body">
+              <div className="form-group">
+                <label className="form-label">ชื่อ NVR</label>
+                <input className="form-ctrl" placeholder="e.g. NVR-06"
+                  value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">IP Address</label>
+                <input className="form-ctrl mono" placeholder="192.168.x.x"
+                  value={form.ip} onChange={e => setForm(f => ({ ...f, ip: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">รุ่น</label>
+                <input className="form-ctrl" placeholder="ระบุรุ่น (ถ้ามี)"
+                  value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">จำนวนช่องสัญญาณ</label>
+                <input className="form-ctrl mono" type="number" placeholder="16"
+                  value={form.chTotal} onChange={e => setForm(f => ({ ...f, chTotal: e.target.value }))} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">สาขา</label>
+                <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
+                  {SITES.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="crud-modal-ft">
+              <button className="btn-ghost" onClick={() => setModalMode(null)}>ยกเลิก</button>
+              <button className="btn-primary" onClick={handleSave}>บันทึก</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="crud-overlay" onClick={() => setDel(null)}>
+          <div className="del-modal" onClick={e => e.stopPropagation()}>
+            <div className="del-modal-body">
+              <AlertTriangle size={48} className="del-modal-icon" />
+              <h2 className="del-modal-title">ยืนยันการลบ</h2>
+              <p className="del-modal-desc">
+                คุณต้องการลบ <strong>{deleteTarget.name}</strong> ออกจากระบบ?<br />
+                การกระทำนี้ไม่สามารถย้อนกลับได้
+              </p>
+            </div>
+            <div className="del-modal-ft">
+              <button className="btn-ghost" onClick={() => setDel(null)}>ยกเลิก</button>
+              <button className="btn-danger" onClick={handleDelete}>ลบ</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
+import OverviewPage from './OverviewPage'
 import TopologyPage from './TopologyPage'
+import SitesCrudPage from './SitesCrudPage'
 import SitesPage from './SitesPage'
 import BuildingDetailPage from './BuildingDetailPage'
 import FloorPlanPage from './FloorPlanPage'
@@ -18,10 +20,10 @@ export default function DashboardPage() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<Navigate to="topology" replace />} />
+        <Route index                          element={<OverviewPage />} />
         <Route path="topology"                element={<TopologyPage />} />
+        <Route path="sites"                   element={<SitesCrudPage />} />
         <Route path="sites/:siteId"           element={<SitesPage />} />
-        <Route path="sites"                   element={<Navigate to="topology" replace />} />
         <Route path="buildings/:buildingId"   element={<BuildingDetailPage />} />
         <Route path="floors/:floorId"         element={<FloorPlanPage />} />
         <Route path="racks"                   element={<RacksListPage />} />

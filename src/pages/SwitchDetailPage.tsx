@@ -89,16 +89,6 @@ const SWITCHES: Record<string, SwitchDevice> = {
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
 
-const PORT_BG: Record<PortStatus, string> = {
-  active:   'color-mix(in srgb, var(--ok) 14%, var(--surface-2))',
-  inactive: 'var(--surface-2)',
-  error:    'color-mix(in srgb, var(--alert) 14%, var(--surface-2))',
-}
-const PORT_BORDER: Record<PortStatus, string> = {
-  active:   'var(--ok)',
-  inactive: 'var(--border)',
-  error:    'var(--alert)',
-}
 
 const LED_COLOR: Record<PortStatus, string> = {
   active:   '#17A34A',

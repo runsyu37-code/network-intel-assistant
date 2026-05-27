@@ -1,7 +1,7 @@
 import type { ElementType } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  Network, Building2, Camera, HardDrive,
+  LayoutDashboard, Network, Building2, Camera, HardDrive,
   PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin,
 } from 'lucide-react'
 import { useThemeStore } from '../../stores/themeStore'
@@ -39,18 +39,20 @@ interface NavItem {
   label: string
   count?: number
   matchPrefixes?: string[]
+  exact?: boolean
 }
 
 const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Monitor',
     items: [
-      { to: '/dashboard/topology', Icon: Network,   label: 'Topology' },
+      { to: '/dashboard',          Icon: LayoutDashboard, label: 'Dashboard', exact: true },
+      { to: '/dashboard/topology', Icon: Network,         label: 'Topology' },
       {
-        to: '/dashboard/sites/hq',
+        to: '/dashboard/sites',
         Icon: Building2,
         label: 'Sites',
-        count: 6,
+        count: 5,
         matchPrefixes: ['/dashboard/sites', '/dashboard/buildings', '/dashboard/floors'],
       },
     ],
@@ -78,7 +80,8 @@ export default function Sidebar() {
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'RN'
 
-  function navClass({ to, matchPrefixes }: NavItem) {
+  function navClass({ to, matchPrefixes, exact }: NavItem) {
+    if (exact) return `nav-item${pathname === to ? ' active' : ''}`
     const prefixes = matchPrefixes ?? [to]
     const active = prefixes.some(p => pathname === p || pathname.startsWith(p + '/'))
     return `nav-item${active ? ' active' : ''}`

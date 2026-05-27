@@ -1,6 +1,6 @@
 # Prompt — Dashboard Page
 
-> ส่ง prompt นี้แบบ stand-alone — ไม่ต้อง attach ไฟล์ใดๆ
+> แนบ `screens_dashboard.html` ไปพร้อมกับ prompt นี้
 
 ---
 

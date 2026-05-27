@@ -31,7 +31,7 @@ export default function LoginPage() {
         { id, username: username || values.username, displayName: res.displayName || values.username, role },
         res.token,
       )
-      navigate('/dashboard/topology')
+      navigate('/dashboard')
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status
@@ -47,7 +47,7 @@ export default function LoginPage() {
           { id: 1, username: values.username, displayName: values.username, role: 'admin' },
           'demo-token',
         )
-        navigate('/dashboard/topology')
+        navigate('/dashboard')
         return
       }
     } finally {

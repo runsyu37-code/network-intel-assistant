@@ -1,0 +1,144 @@
+/* ── Dashboard Overview page ─────────────────────────────────── */
+.db-page {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 20px 24px 32px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.db-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.db-header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -.015em; }
+.db-sub { font-size: 13px; color: var(--ink-3); margin: 0; }
+
+.db-refresh {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-3);
+}
+
+/* ── Stat cards grid ─────────────────────────────────────────── */
+.db-grid4 {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+}
+
+.db-stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; cursor: pointer;
+  text-decoration: none; color: inherit; display: block;
+  box-shadow: var(--shadow-1);
+  transition: background .15s;
+}
+.db-stat-card:hover { background: var(--surface-2); }
+.db-stat-card.alert { border-left: 4px solid var(--alert); }
+
+.db-stat-hd {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.db-stat-icon { color: var(--accent); flex: none; }
+.db-stat-label {
+  font-size: 10px; font-weight: 700; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: .1em;
+}
+
+.db-stat-val {
+  font-size: 32px; font-weight: 700; color: var(--ink);
+  font-family: 'JetBrains Mono', monospace; line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.db-stat-trend { font-size: 11px; font-weight: 700; }
+.db-trend-ok    { color: var(--ok); }
+.db-trend-warn  { color: var(--warn); }
+.db-trend-alert { color: var(--alert); }
+
+/* ── 2-col grid (alerts + offline) ──────────────────────────── */
+.db-grid2 {
+  display: grid; grid-template-columns: 3fr 2fr; gap: 16px;
+}
+
+/* ── Content cards ───────────────────────────────────────────── */
+.db-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: var(--shadow-1);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.db-card-hd {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface); flex-shrink: 0;
+}
+.db-card-title {
+  margin: 0; font-size: 14px; font-weight: 700; color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.db-badge-count {
+  background: var(--surface-2); color: var(--ink-3);
+  border: 1px solid var(--border);
+  border-radius: 999px; font-size: 11px; padding: 2px 8px;
+  font-weight: 600;
+}
+.db-link-all {
+  font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none;
+}
+.db-link-all:hover { text-decoration: underline; }
+
+/* ── Alerts table ────────────────────────────────────────────── */
+.db-table { width: 100%; border-collapse: collapse; }
+.db-table thead th {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--ink-3);
+  padding: 10px 20px; border-bottom: 1px solid var(--border);
+  background: var(--surface-2); text-align: left;
+}
+.db-table tbody td {
+  font-size: 13px; padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-2); vertical-align: middle;
+}
+.db-table tbody tr:last-child td { border-bottom: none; }
+.db-table tbody tr:hover { background: var(--surface-2); }
+
+/* ── Severity badges ─────────────────────────────────────────── */
+.db-badge {
+  border-radius: 999px; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; padding: 2px 8px;
+  display: inline-block; white-space: nowrap;
+}
+.db-badge.critical { background: var(--alert-soft); color: var(--alert); }
+.db-badge.warning  { background: var(--warn-soft);  color: var(--warn); }
+.db-badge.info     { background: var(--surface-2);  color: var(--ink-3); }
+.db-badge.ok       { background: var(--ok-soft);    color: var(--ok); }
+
+/* ── Offline device list ─────────────────────────────────────── */
+.db-status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; flex: none;
+}
+.db-status-dot.red {
+  background: var(--alert);
+  animation: db-pulse-red 2s infinite;
+}
+@keyframes db-pulse-red {
+  0%   { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
+  100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+}
+
+.db-dev-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 20px; border-bottom: 1px solid var(--border);
+}
+.db-dev-row:last-child { border-bottom: none; }
+.db-dev-info { flex: 1; min-width: 0; }
+.db-dev-name { font-weight: 700; font-size: 13px; color: var(--ink); }
+.db-dev-site { font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+.db-dev-dur {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-weight: 600; color: var(--alert); white-space: nowrap; flex: none;
+}
+
+/* ── Per-site table ──────────────────────────────────────────── */
+.db-site-link {
+  color: var(--accent); text-decoration: none; font-weight: 600;
+}
+.db-site-link:hover { text-decoration: underline; }

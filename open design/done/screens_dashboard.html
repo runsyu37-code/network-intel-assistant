@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>SSM - Dashboard</title>
+  <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+  <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { padding: 32px; margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+    
+    .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .title { font-size: 24px; font-weight: 700; margin: 0 0 4px 0; }
+    .subtitle { font-size: 13px; color: var(--ink-3); margin: 0; }
+    
+    .refresh-info { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-3); }
+    .btn-icon { width: 28px; height: 28px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: var(--ink-3); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .btn-icon:hover { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+    
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; text-decoration: none; color: inherit; display: block; box-shadow: var(--shadow-1); transition: background 0.2s; }
+    .stat-card:hover { background: var(--surface-2); }
+    .stat-card.alert { border-left: 4px solid var(--alert); }
+    
+    .stat-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .stat-icon { width: 24px; height: 24px; stroke: var(--accent); stroke-width: 2; fill: none; }
+    .stat-label { font-size: 10px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; }
+    
+    .stat-val { font-size: 32px; font-weight: 700; color: var(--ink); font-family: 'JetBrains Mono', monospace; line-height: 1.1; margin-bottom: 8px; }
+    .stat-trend { font-size: 11px; font-weight: 700; }
+    .trend-alert { color: var(--alert); }
+    .trend-ok { color: var(--ok); }
+    .trend-warn { color: var(--warn); }
+    
+    .grid-2 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; margin-bottom: 16px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-1); overflow: hidden; display: flex; flex-direction: column; }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+    .card-title { margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .link-all { font-size: 12px; font-weight: 600; color: var(--accent); text-decoration: none; }
+    .link-all:hover { text-decoration: underline; }
+    
+    .badge-count { background: var(--surface-2); color: var(--ink); border-radius: 999px; font-size: 11px; padding: 2px 8px; }
+    
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+    td { font-size: 13px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    
+    .badge { border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; display: inline-block; }
+    .badge.critical { background: var(--alert-soft); color: var(--alert); }
+    .badge.warning { background: var(--warn-soft); color: var(--warn); }
+    .badge.info { background: var(--surface-2); color: var(--ink-3); }
+    .badge.ok { background: var(--ok-soft); color: var(--ok); }
+    
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.red { background: var(--alert); animation: pulse-red 2s infinite; }
+    
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+    
+    .dev-name { font-weight: 700; font-size: 13px; color: var(--ink); margin-bottom: 2px; }
+    .dev-site { font-size: 12px; color: var(--ink-3); }
+    .dev-dur { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: var(--alert); text-align: right; }
+    
+    .site-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .site-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1 class="title">Dashboard</h1>
+      <p class="subtitle">ภาพรวมระบบ</p>
+    </div>
+    <div class="refresh-info">
+      อัปเดตเมื่อ 2 นาทีที่แล้ว · รีเฟรชใน 28s
+      <button class="btn-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 2.1-5.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 1 0-2.1 5.7L3 16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <a href="/dashboard/cameras" class="stat-card">
+      <div class="stat-header">
+        <svg class="stat-icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span class="stat-label">Cameras</span>
+      </div>
+      <div class="stat-val">128</div>
+      <div class="stat-trend trend-alert">3 offline</div>
+    </a>
+    <a href="/dashboard/nvrs" class="stat-card">
+      <div class="stat-header">
+        <svg class="stat-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        <span class="stat-label">NVRs</span>
+      </div>
+      <div class="stat-val">8</div>
+      <div class="stat-trend trend-ok">All healthy</div>
+    </a>
+    <a href="/dashboard/switches" class="stat-card">
+      <div class="stat-header">
+        <svg class="stat-icon" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><circle cx="6" cy="12" r="1"/><circle cx="10" cy="12" r="1"/><circle cx="14" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg>
+        <span class="stat-label">Switches</span>
+      </div>
+      <div class="stat-val">12</div>
+      <div class="stat-trend trend-warn">1 warning</div>
+    </a>
+    <a href="/dashboard/alerts" class="stat-card alert">
+      <div class="stat-header">
+        <svg class="stat-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="stat-label">Active Alerts</span>
+      </div>
+      <div class="stat-val">4</div>
+      <div class="stat-trend trend-alert">↑ 2 from yesterday</div>
+    </a>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Recent Alerts</h2>
+        <a href="#" class="link-all">ดูทั้งหมด &rarr;</a>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Device</th>
+            <th>Message</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge critical">CRITICAL</span></td>
+            <td style="font-weight:600;">NVR-03</td>
+            <td>HDD2 storage at 91%</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">14 นาทีที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge warning">WARNING</span></td>
+            <td style="font-weight:600;">CAM-A3-07</td>
+            <td>ไม่ได้รับสัญญาณ 5 นาที</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">32 นาทีที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge info">INFO</span></td>
+            <td style="font-weight:600;">SW-CORE-01</td>
+            <td>Port 14 reconnected</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">1 ชั่วโมงที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge critical">CRITICAL</span></td>
+            <td style="font-weight:600;">CAM-B2-03</td>
+            <td>Connection lost</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">1 ชั่วโมงที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge warning">WARNING</span></td>
+            <td style="font-weight:600;">SW-FLOOR-B2</td>
+            <td>High packet loss detected</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">2 ชั่วโมงที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge info">INFO</span></td>
+            <td style="font-weight:600;">CAM-C1-01</td>
+            <td>Camera back online</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">3 ชั่วโมงที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge warning">WARNING</span></td>
+            <td style="font-weight:600;">NVR-05</td>
+            <td>Offline &mdash; no ping response</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">5 ชั่วโมงที่แล้ว</td>
+          </tr>
+          <tr>
+            <td><span class="badge info">INFO</span></td>
+            <td style="font-weight:600;">SW-FLOOR-A1</td>
+            <td>Firmware update available</td>
+            <td class="mono" style="font-size:11px; color:var(--ink-3);">6 ชั่วโมงที่แล้ว</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">อุปกรณ์ที่ออฟไลน์ <span class="badge-count">4</span></h2>
+      </div>
+      <table style="table-layout: fixed;">
+        <tbody>
+          <tr>
+            <td style="width: 24px; padding-right: 0;"><span class="status-dot red"></span></td>
+            <td>
+              <div class="dev-name">NVR-05</div>
+              <div class="dev-site">สาขาบางนา</div>
+            </td>
+            <td class="dev-dur">5h 12m</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 0;"><span class="status-dot red"></span></td>
+            <td>
+              <div class="dev-name">CAM-A3-07</div>
+              <div class="dev-site">สำนักงานใหญ่</div>
+            </td>
+            <td class="dev-dur">2h 44m</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 0;"><span class="status-dot red"></span></td>
+            <td>
+              <div class="dev-name">CAM-B2-03</div>
+              <div class="dev-site">สำนักงานใหญ่</div>
+            </td>
+            <td class="dev-dur">1h 58m</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 0;"><span class="status-dot red"></span></td>
+            <td>
+              <div class="dev-name">CAM-D1-09</div>
+              <div class="dev-site">สาขาลาดพร้าว</div>
+            </td>
+            <td class="dev-dur">47m</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 0;"><span class="status-dot red"></span></td>
+            <td>
+              <div class="dev-name">SW-FLOOR-B2</div>
+              <div class="dev-site">สาขาสีลม</div>
+            </td>
+            <td class="dev-dur">12m</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">สถานะแต่ละสาขา</h2>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>สาขา</th>
+          <th>กล้องทั้งหมด</th>
+          <th>ออนไลน์</th>
+          <th>ออฟไลน์</th>
+          <th>แจ้งเตือน</th>
+          <th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="#" class="site-link">สำนักงานใหญ่</a></td>
+          <td class="mono">48</td>
+          <td class="mono">46</td>
+          <td class="mono" style="color:var(--alert); font-weight:600;">2</td>
+          <td class="mono">3</td>
+          <td><span class="badge warning">มีปัญหา</span></td>
+        </tr>
+        <tr>
+          <td><a href="#" class="site-link">สาขาสีลม</a></td>
+          <td class="mono">36</td>
+          <td class="mono">35</td>
+          <td class="mono">0</td>
+          <td class="mono">1</td>
+          <td><span class="badge warning">มีปัญหา</span></td>
+        </tr>
+        <tr>
+          <td><a href="#" class="site-link">สาขาลาดพร้าว</a></td>
+          <td class="mono">44</td>
+          <td class="mono">43</td>
+          <td class="mono" style="color:var(--alert); font-weight:600;">1</td>
+          <td class="mono">0</td>
+          <td><span class="badge warning">มีปัญหา</span></td>
+        </tr>
+        <tr>
+          <td><a href="#" class="site-link">สาขาบางนา</a></td>
+          <td class="mono">20</td>
+          <td class="mono">20</td>
+          <td class="mono">0</td>
+          <td class="mono">0</td>
+          <td><span class="badge ok">ปกติ</span></td>
+        </tr>
+        <tr>
+          <td><a href="#" class="site-link">คลังสินค้า</a></td>
+          <td class="mono">16</td>
+          <td class="mono">16</td>
+          <td class="mono">0</td>
+          <td class="mono">0</td>
+          <td><span class="badge ok">ปกติ</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
