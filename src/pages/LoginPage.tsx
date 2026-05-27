@@ -23,9 +23,12 @@ export default function LoginPage() {
     setError(null)
     try {
       const res = await login(values.username, values.password)
-      const { id, username, role, displayName } = extractJwtUser(res.token)
+      const { id, username } = extractJwtUser(res.token)
+      const role = (res.role === 'admin' || res.role === 'user' || res.role === 'viewer')
+        ? res.role as 'admin' | 'user' | 'viewer'
+        : 'viewer'
       setAuth(
-        { id, username: username || values.username, displayName: displayName || values.username, role },
+        { id, username: username || values.username, displayName: res.displayName || values.username, role },
         res.token,
       )
       navigate('/dashboard/topology')

@@ -96,7 +96,9 @@ export interface UserApi {
 
 export interface LoginResponse {
   token: string
-  expiry: string
+  role: string
+  displayName: string
+  expiresIn: number
 }
 
 export interface FloorTreeDto {

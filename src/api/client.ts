@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const client = axios.create({
-  baseURL: 'http://localhost:50680/api',
+  baseURL: '/api',
   timeout: 10_000,
 })
 
