@@ -11,8 +11,8 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 |---|---|
 | บริบทโปรเจกต์ + rules ทั้งหมด | [`CLAUDE.md`](CLAUDE.md) |
 | งานที่ค้างอยู่ + API notes + gotchas | [`BACKLOG.md`](BACKLOG.md) |
-| งาน design ที่ต้องทำ (ใช้ HTML mockup) | [`open design/TASK_DASHBOARD.md`](open%20design/TASK_DASHBOARD.md) · [`open design/TASK_CRUD.md`](open%20design/TASK_CRUD.md) |
-| Presentation slides (สัปดาห์นี้) | [`presentation_F/SLIDES_FINAL.md`](presentation_F/SLIDES_FINAL.md) |
+| ปัญหา UX ที่รอแก้ | [`open design/UX_ISSUES.md`](open%20design/UX_ISSUES.md) |
+| Presentation slides | [`presentation_F/SLIDES_FINAL.md`](presentation_F/SLIDES_FINAL.md) |
 
 ---
 
@@ -23,11 +23,12 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 
 | ส่วน | สถานะ |
 |---|---|
-| Backend API (ASP.NET Core) | ✅ เสร็จ — 17 endpoints, JWT, RBAC, 17/17 tests pass |
-| Frontend pages (React) | ✅ 14 หน้า — บางหน้ายังใช้ mock data |
-| Dashboard page | 🔴 ยังไม่มี — งานบ่ายนี้ |
-| CRUD (Create/Edit/Delete) | 🔴 ยังไม่มี — งานบ่ายนี้ |
-| เชื่อม API จริงทุกหน้า | 🟡 บางหน้าแล้ว ดู BACKLOG.md |
+| Backend API (ASP.NET Core) | ✅ เสร็จ — JWT, RBAC, 17+ endpoints |
+| Dashboard overview | ✅ stat cards + alerts + offline devices + per-site table |
+| CRUD Sites / Cameras / NVRs / Switches | ✅ Add / Edit / Delete modal ครบทุกหน้า |
+| Frontend pages ทั้งหมด | ✅ 15 หน้า (ดูตารางด้านล่าง) |
+| เชื่อม API จริงทุกหน้า | 🟡 บางหน้าแล้ว — list pages ใช้ mock, detail pages ใช้ API |
+| UX issues (back nav, floor mode, topology) | 🔴 รอแก้ — ดู `open design/UX_ISSUES.md` |
 
 ---
 
@@ -39,19 +40,18 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 cd C:\ai-playground\Frontend
 npm install
 npm run dev
-# → http://localhost:3000
+# → http://localhost:3001
 ```
 
-### Backend (ต้องเปิดก่อน Frontend จะ call API ได้)
+### Backend (ต้องเปิดถ้าจะดูหน้า detail / topology)
 
 ```powershell
-# เปิดใน Visual Studio หรือ
-cd C:\ai-playground\Frontend\BNO_Survei_Monitor
+cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
 dotnet run
-# → http://localhost:50680
+# → http://localhost:44342
 ```
 
-> Vite proxy forward `/api` → `localhost:50680` อัตโนมัติ — ไม่ต้องแก้ CORS
+> หน้า Dashboard, Sites list, Cameras list, NVRs list, Switches list ใช้ mock data — **ดูได้โดยไม่ต้องเปิด backend**
 
 ### Login ทดสอบ
 
@@ -60,6 +60,29 @@ dotnet run
 | `admin_test` | `Test@1234` | Admin |
 | `user_test` | `Test@1234` | User |
 | `viewer_test` | `Test@1234` | Viewer |
+| ใส่อะไรก็ได้ | ใส่อะไรก็ได้ | Admin (mock fallback) |
+
+---
+
+## Pages ทั้งหมด
+
+| Route | ไฟล์ | Data | สถานะ |
+|---|---|---|---|
+| `/dashboard` | `OverviewPage.tsx` | Mock | ✅ |
+| `/dashboard/topology` | `TopologyPage.tsx` | API | ✅ |
+| `/dashboard/sites` | `SitesCrudPage.tsx` | Mock | ✅ CRUD |
+| `/dashboard/sites/:siteId` | `SitesPage.tsx` | Mock | ✅ |
+| `/dashboard/buildings/:id` | `BuildingDetailPage.tsx` | Mock | ✅ |
+| `/dashboard/floors/:id` | `FloorPlanPage.tsx` | Mock | ✅ |
+| `/dashboard/cameras` | `CamerasPage.tsx` | Mock | ✅ CRUD |
+| `/dashboard/cameras/:id` | `CameraDetailPage.tsx` | API | ✅ |
+| `/dashboard/nvrs` | `NVRsPage.tsx` | Mock | ✅ CRUD |
+| `/dashboard/nvrs/:id` | `NVRDetailPage.tsx` | API | ✅ |
+| `/dashboard/switches` | `SwitchesPage.tsx` | Mock | ✅ CRUD |
+| `/dashboard/switches/:id` | `SwitchDetailPage.tsx` | API | ✅ |
+| `/dashboard/racks` | `RacksListPage.tsx` | Mock | ✅ |
+| `/dashboard/racks/:id` | `RackDetailPage.tsx` | Mock | ✅ |
+| `/dashboard/users` | `UsersPage.tsx` | API | ✅ Admin only |
 
 ---
 
@@ -68,19 +91,21 @@ dotnet run
 ```
 Frontend/
 ├── src/
-│   ├── pages/          ← React page components
+│   ├── pages/          ← React page components (1 ไฟล์ต่อ 1 route)
+│   ├── components/
+│   │   └── layout/     ← AppLayout, Sidebar, Topbar
 │   ├── api/            ← axios client + typed API functions
 │   ├── stores/         ← Zustand (authStore, themeStore)
 │   └── styles/         ← CSS token files (ห้ามใช้ Tailwind)
 │
 ├── open design/
-│   ├── input/          ← HTML mockup ที่ส่งให้ design tool
-│   ├── output/         ← HTML ที่ได้รับกลับ พร้อม implement เป็น React
-│   └── done/           ← implement เสร็จแล้ว
+│   ├── output/         ← HTML mockup รอ implement
+│   ├── done/           ← implement เสร็จแล้ว (อย่าลบ)
+│   └── UX_ISSUES.md    ← ปัญหา UX ที่รอแก้ไข
 │
-├── BNO_Survei_Monitor/ ← ASP.NET Core backend (ไม่แตะใน branch นี้)
+├── BNO_Survei_Monitor/ ← ASP.NET Core backend
 ├── CLAUDE.md           ← context สำหรับ AI + project rules
-└── BACKLOG.md          ← รายละเอียดงานที่ค้าง + technical notes
+└── BACKLOG.md          ← รายละเอียดงานที่ค้าง
 ```
 
 ---
@@ -89,14 +114,14 @@ Frontend/
 
 | | |
 |---|---|
-| Frontend | React 18 + Vite 6 + TypeScript |
+| Frontend | React 18 + Vite 6 + TypeScript (port 3001) |
 | UI Library | Ant Design 5 (Form / Modal / Table เท่านั้น) |
-| State | Zustand |
+| State | Zustand (`authStore`, `themeStore`) |
 | Data fetching | TanStack React Query + Axios |
 | Icons | lucide-react |
 | Topology | React Flow v11 |
-| Backend | ASP.NET Core .NET 10 + SQL Server |
-| Auth | JWT (8h) + BCrypt + Rate Limiting |
+| Backend | ASP.NET Core .NET 10 |
+| Auth | JWT (8h) + BCrypt |
 
 ---
 
