@@ -9,7 +9,7 @@
 
 ```powershell
 cd C:\ai-playground\Frontend
-npm run dev   # → http://localhost:3001
+npm run dev   # → http://localhost:3000
 ```
 
 Login: ใส่อะไรก็ได้ → Admin (mock fallback)
@@ -51,7 +51,7 @@ BACKLOG.md              ← งานค้าง + API gotchas
 
 ```powershell
 cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
-dotnet run   # → http://localhost:44342
+dotnet run (หรือ IIS Express)   # → http://localhost:50680
 ```
 
 Proxy `/api/*` → `localhost:44342` ตั้งค่าใน `vite.config.ts` แล้ว

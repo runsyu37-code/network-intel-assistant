@@ -128,14 +128,14 @@ network-intel-assistant/         ← git clone จาก branch: frontend
 ```powershell
 cd C:\ai-playground\Frontend
 npm install
-npm run dev   # → http://localhost:3001
+npm run dev   # → http://localhost:3000
 ```
 
 ### Backend (เปิดเฉพาะตอน wire API จริง)
 
 ```powershell
 cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
-dotnet run   # → http://localhost:44342
+IIS Express (Ctrl+F5 ใน VS)   # → http://localhost:50680
 ```
 
 > **ทุกหน้าใช้ mock data** ยกเว้น Camera Detail — ดูได้ครบโดยไม่ต้องเปิด backend
