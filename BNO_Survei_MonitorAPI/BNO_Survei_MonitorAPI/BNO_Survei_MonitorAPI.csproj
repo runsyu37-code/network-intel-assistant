@@ -153,6 +153,7 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\authController.cs" />
     <Compile Include="Filters\JwtAuthFilter.cs" />
+    <Compile Include="Filters\RequireRoleAttribute.cs" />
     <Compile Include="Helpers\JwtHelper.cs" />
     <Compile Include="Areas\HelpPage\ApiDescriptionExtensions.cs" />
     <Compile Include="Areas\HelpPage\App_Start\HelpPageConfig.cs" />

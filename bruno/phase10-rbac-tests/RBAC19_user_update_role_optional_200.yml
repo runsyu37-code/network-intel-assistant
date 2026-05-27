@@ -1,0 +1,49 @@
+info:
+  name: RBAC19 - PUT /api/users/{id} without role field → 200, role preserved
+  type: http
+  seq: 19
+
+# WHAT THIS TESTS:
+#   Phase 12 made "role" optional on user update.
+#   SQL now uses: role = CASE WHEN @role IS NULL THEN role ELSE @role END
+#   Sending a PUT without "role" in body must:
+#     1. Return 200 OK
+#     2. Preserve the existing role (not null it out)
+#
+# SETUP:
+#   - Fill admin_token below with a fresh token from login (admin_test / Test@1234)
+#   - User_ID 6 = user_test (role: "user") — adjust if your DB differs
+#   - After running this, GET /api/users?User_ID=6 with admin_token → role must still be "user"
+#
+# PASS if: 200 OK
+# PASS if: subsequent GET shows role = "user" (unchanged)
+# FAIL if: 400 Bad Request with "role is required" (regression — role became required again)
+# FAIL if: role becomes null in DB
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users/6
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "user_test",
+        "display_name": "User Test",
+        "is_active": true
+      }
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
