@@ -4,9 +4,11 @@
 Manages sites, buildings, floors, rooms, racks, cameras, NVRs, PoE switches, and users
 with JWT authentication and full role-based access control (RBAC).
 
-> **Working from a new machine?** Read [Quick Start](#quick-start) below, then
-> [`review/FRONTEND_PLAN_RECAP_2026-05-27.md`](review/FRONTEND_PLAN_RECAP_2026-05-27.md) for full context.
-> Latest backend log: [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md)
+> **Backend team (new machine):** Read [Quick Start](#quick-start), then
+> [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md) for latest context.
+>
+> **Frontend team:** Jump to [For Frontend Team](#for-frontend-team) below.
+> Full API contract: [`review/FRONTEND_HANDOFF.md`](review/FRONTEND_HANDOFF.md)
 
 ---
 
@@ -307,6 +309,102 @@ API/
     ├── ROLE_MATRIX.md
     └── PHASE{N}_SESSION_2026-05-27.md    # Session logs (7-13)
 ```
+
+---
+
+## For Frontend Team
+
+> Full contract: [`review/FRONTEND_HANDOFF.md`](review/FRONTEND_HANDOFF.md)  
+> Role spec: [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md)  
+> API examples: [`bruno/phase10-rbac-tests/`](bruno/phase10-rbac-tests/)
+
+### Role Matrix (confirmed -- all writes are admin only)
+
+| What | admin | user | viewer |
+|---|---|---|---|
+| GET sites / buildings / floors / floor-plans / hierarchy | YES | YES | YES |
+| GET rooms / racks | YES | YES | NO -- 403 |
+| GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO -- 403 | NO -- 403 |
+| Any POST / UPDATE / DELETE / PATCH | YES | NO -- 403 | NO -- 403 |
+
+```js
+const isAdmin   = user?.role === 'admin';
+const canSeeRooms   = isAdmin || user?.role === 'user';   // rooms, racks
+const canSeeDevices = isAdmin;                            // cameras, NVRs, logs
+
+// All write/edit actions -- admin only
+{isAdmin && <EditButton />}
+{isAdmin && <DeleteButton />}
+{isAdmin && <DragPin />}
+```
+
+### Must-Know Gotchas
+
+**1. Floor plan image needs Auth header -- cannot use plain `<img src="...">`**
+```js
+const res  = await axios.get(`/api/floors/${id}/floor-plan/image`, {
+  responseType: 'blob',
+  headers: { Authorization: `Bearer ${token}` }
+});
+const url = URL.createObjectURL(res.data);
+// <img src={url} />
+```
+
+**2. DELETE uses POST, not HTTP DELETE**
+```
+POST /api/cameras/delete/{id}    <-- correct
+DELETE /api/cameras/{id}          <-- not implemented (404)
+```
+
+**3. Save = array body, Update = single object body**
+```js
+axios.post('/api/cameras', [{ name: 'CAM-01', ... }])   // Save
+axios.post('/api/cameras/5', { name: 'CAM-01', ... })   // Update
+```
+
+**4. Camera x/y is NULL until a pin is placed -- handle it**
+```js
+if (camera.x === null) { /* show in "Unplaced" list */ }
+```
+
+**5. `last_seen` is UTC -- always convert before display**
+```js
+new Date(device.last_seen + 'Z').toLocaleString('th-TH')
+```
+
+**6. Rate limiter: 10 wrong passwords = username locked 15 min**  
+Affects integration tests. Restart IIS Express to reset the in-memory counter.
+
+**7. No Swagger** -- use Bruno collection or `review/FRONTEND_HANDOFF.md` for request shapes.
+
+**8. CORS allowed origins (dev)**
+```
+http://localhost:5173   http://localhost:3000   http://localhost:5174
+```
+Running on a different port? Add it to `Web.config` on the backend.
+
+### Auth Flow
+```
+POST /api/auth/login
+Body:     { "username": "admin_test", "password": "Test@1234" }
+Response: { "token": "eyJ...", "role": "admin", "displayName": "Admin", "expiresIn": 28800 }
+
+All subsequent requests:  Authorization: Bearer <token>
+Token lifetime:           8 hours (no refresh endpoint)
+On 401:                   redirect to /login
+```
+
+### Error Response Shape
+```json
+{ "Message": "Human-readable error string" }
+```
+| Status | Meaning | Action |
+|---|---|---|
+| 400 | Validation error | Show `Message` to user |
+| 401 | Token missing / expired | Redirect to /login |
+| 403 | Wrong role | Show "Access denied" |
+| 429 | Too many failed logins | Show retry-after from header |
+| 500 | Server error | Show generic message |
 
 ---
 
