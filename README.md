@@ -10,8 +10,7 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 | ต้องการอะไร | ไปที่ |
 |---|---|
 | บริบทโปรเจกต์ + rules ทั้งหมด | [`CLAUDE.md`](CLAUDE.md) |
-| งานที่ค้างอยู่ + API notes + gotchas | [`BACKLOG.md`](BACKLOG.md) |
-| ปัญหา UX ที่รอแก้ | [`open design/UX_ISSUES.md`](open%20design/UX_ISSUES.md) |
+| งานที่ค้างอยู่ + API notes | [`BACKLOG.md`](BACKLOG.md) |
 | Presentation slides | [`presentation_F/SLIDES_FINAL.md`](presentation_F/SLIDES_FINAL.md) |
 
 ---
@@ -25,10 +24,13 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 |---|---|
 | Backend API (ASP.NET Core) | ✅ เสร็จ — JWT, RBAC, 17+ endpoints |
 | Dashboard overview | ✅ stat cards + alerts + offline devices + per-site table |
-| CRUD Sites / Cameras / NVRs / Switches | ✅ Add / Edit / Delete modal ครบทุกหน้า |
-| Frontend pages ทั้งหมด | ✅ 15 หน้า (ดูตารางด้านล่าง) |
-| เชื่อม API จริงทุกหน้า | 🟡 บางหน้าแล้ว — list pages ใช้ mock, detail pages ใช้ API |
-| UX issues (back nav, floor mode, topology) | 🔴 รอแก้ — ดู `open design/UX_ISSUES.md` |
+| CRUD Sites / Cameras / NVRs / Switches / Users | ✅ Add / Edit / Delete modal ครบทุกหน้า |
+| Frontend pages ทั้งหมด | ✅ 15 หน้า — ดูตารางด้านล่าง |
+| Open design mockups | ✅ ทุก HTML mockup implement เสร็จแล้ว |
+| UX — Back navigation | ✅ Camera/Rack/NVR/Switch detail ทุกหน้ามีปุ่ม ← back |
+| UX — Floor plan side panel | ✅ คลิกกล้อง → แสดง IP/model/status + Open Detail |
+| UX — Topology legend panel | ✅ left panel + hide offline toggle |
+| เชื่อม API จริงทุกหน้า | 🟡 Camera Detail ใช้ API — หน้าอื่นใช้ mock data |
 
 ---
 
@@ -43,7 +45,7 @@ npm run dev
 # → http://localhost:3001
 ```
 
-### Backend (ต้องเปิดถ้าจะดูหน้า detail / topology)
+### Backend (ต้องเปิดถ้าจะดูข้อมูลจริงใน Camera Detail)
 
 ```powershell
 cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
@@ -51,7 +53,7 @@ dotnet run
 # → http://localhost:44342
 ```
 
-> หน้า Dashboard, Sites list, Cameras list, NVRs list, Switches list ใช้ mock data — **ดูได้โดยไม่ต้องเปิด backend**
+> **ทุกหน้าใช้ mock data** ยกเว้น Camera Detail — ดูได้ครบโดยไม่ต้องเปิด backend
 
 ### Login ทดสอบ
 
@@ -59,7 +61,6 @@ dotnet run
 |---|---|---|
 | `admin_test` | `Test@1234` | Admin |
 | `user_test` | `Test@1234` | User |
-| `viewer_test` | `Test@1234` | Viewer |
 | ใส่อะไรก็ได้ | ใส่อะไรก็ได้ | Admin (mock fallback) |
 
 ---
@@ -68,21 +69,36 @@ dotnet run
 
 | Route | ไฟล์ | Data | สถานะ |
 |---|---|---|---|
-| `/dashboard` | `OverviewPage.tsx` | Mock | ✅ |
-| `/dashboard/topology` | `TopologyPage.tsx` | API | ✅ |
+| `/dashboard` | `OverviewPage.tsx` | Mock | ✅ stat cards + alerts |
+| `/dashboard/topology` | `TopologyPage.tsx` | Mock | ✅ legend panel + hide offline |
 | `/dashboard/sites` | `SitesCrudPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/sites/:siteId` | `SitesPage.tsx` | Mock | ✅ |
-| `/dashboard/buildings/:id` | `BuildingDetailPage.tsx` | Mock | ✅ |
-| `/dashboard/floors/:id` | `FloorPlanPage.tsx` | Mock | ✅ |
+| `/dashboard/sites/:siteId` | `SitesPage.tsx` | Mock | ✅ building cards |
+| `/dashboard/buildings/:id` | `BuildingDetailPage.tsx` | Mock | ✅ isometric view |
+| `/dashboard/floors/:id` | `FloorPlanPage.tsx` | Mock | ✅ View/Edit mode + side panel |
 | `/dashboard/cameras` | `CamerasPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/cameras/:id` | `CameraDetailPage.tsx` | API | ✅ |
-| `/dashboard/nvrs` | `NVRsPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/nvrs/:id` | `NVRDetailPage.tsx` | API | ✅ |
+| `/dashboard/cameras/:id` | `CameraDetailPage.tsx` | API | ✅ ping chart + uptime |
+| `/dashboard/nvrs` | `NVRsPage.tsx` | Mock | ✅ CRUD + HDD progress |
+| `/dashboard/nvrs/:id` | `NVRDetailPage.tsx` | Mock | ✅ HDD per-drive + channels table |
 | `/dashboard/switches` | `SwitchesPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/switches/:id` | `SwitchDetailPage.tsx` | API | ✅ |
-| `/dashboard/racks` | `RacksListPage.tsx` | Mock | ✅ |
-| `/dashboard/racks/:id` | `RackDetailPage.tsx` | Mock | ✅ |
-| `/dashboard/users` | `UsersPage.tsx` | API | ✅ Admin only |
+| `/dashboard/switches/:id` | `SwitchDetailPage.tsx` | Mock | ✅ port map + port status table |
+| `/dashboard/racks` | `RacksListPage.tsx` | Mock | ✅ per-site grouping |
+| `/dashboard/racks/:id` | `RackDetailPage.tsx` | Mock | ✅ rack frame visualization |
+| `/dashboard/users` | `UsersPage.tsx` | Mock | ✅ CRUD + Admin only |
+
+---
+
+## Back Navigation
+
+ทุก detail page ส่ง context กลับถูกหน้า:
+
+| เส้นทาง | กดกลับไปที่ |
+|---|---|
+| Floor Plan → Camera Detail | กลับ Floor Plan เดิม |
+| Floor Plan → Rack Detail | กลับ Floor Plan เดิม |
+| NVRs List → NVR Detail | กลับ NVRs List |
+| Switches List → Switch Detail | กลับ Switches List |
+
+Pattern: `navigate(path, { state: { from: location.pathname } })` → detail page อ่าน `location.state?.from`
 
 ---
 
@@ -93,15 +109,16 @@ Frontend/
 ├── src/
 │   ├── pages/          ← React page components (1 ไฟล์ต่อ 1 route)
 │   ├── components/
-│   │   └── layout/     ← AppLayout, Sidebar, Topbar
+│   │   ├── layout/     ← AppLayout, Sidebar, Topbar
+│   │   └── topology/   ← HQNode, SiteNode, mockData
 │   ├── api/            ← axios client + typed API functions
 │   ├── stores/         ← Zustand (authStore, themeStore)
 │   └── styles/         ← CSS token files (ห้ามใช้ Tailwind)
 │
 ├── open design/
-│   ├── output/         ← HTML mockup รอ implement
-│   ├── done/           ← implement เสร็จแล้ว (อย่าลบ)
-│   └── UX_ISSUES.md    ← ปัญหา UX ที่รอแก้ไข
+│   ├── input/          ← TASK_*.md — design briefs
+│   ├── output/         ← HTML mockups (implement แล้วทั้งหมด)
+│   └── done/           ← archive
 │
 ├── BNO_Survei_Monitor/ ← ASP.NET Core backend
 ├── CLAUDE.md           ← context สำหรับ AI + project rules
