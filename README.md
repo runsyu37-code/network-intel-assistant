@@ -1,14 +1,89 @@
-# SSM Network Monitor -- Backend API
+# SSM Network Monitor — Backend API
 
-**ASP.NET Web API (.NET Framework 4.8)** -- REST backend for the SSM Network Monitor system.
+**ASP.NET Web API (.NET Framework 4.8)** — REST backend for the SSM Network Monitor system.
 Manages sites, buildings, floors, rooms, racks, cameras, NVRs, PoE switches, and users
 with JWT authentication and full role-based access control (RBAC).
 
 > **Backend team (new machine):** Read [Quick Start](#quick-start), then
-> [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md) for latest context.
+> [`docs/sessions/PHASE13_SESSION.md`](docs/sessions/PHASE13_SESSION.md) for latest context.
 >
 > **Frontend team:** Jump to [For Frontend Team](#for-frontend-team) below.
-> Full API contract: [`review/FRONTEND_HANDOFF.md`](review/FRONTEND_HANDOFF.md)
+> Full API contract: [`docs/FRONTEND_HANDOFF.md`](docs/FRONTEND_HANDOFF.md)
+
+---
+
+## File Map — Where Everything Lives
+
+```
+network-intel-assistant/           ← git clone จาก branch: backend
+│
+├── README.md                      ← อ่านไฟล์นี้ก่อน (ไฟล์นี้)
+├── ROADMAP.md                     ← แผน 5 เดือน + decision log (personal)
+│
+├── BNO_Survei_MonitorAPI/         ← [Home Laptop] API source code
+│   └── BNO_Survei_MonitorAPI/
+│       ├── Controllers/           ← 16 controllers (auth, dashboard, cameras ฯลฯ)
+│       ├── Filters/               ← JwtAuthFilter + RequireRoleAttribute
+│       ├── Models/                ← C# models ทุก table
+│       ├── Helpers/               ← JwtHelper, password hashing
+│       ├── Services/              ← PingService (background ping loop)
+│       ├── ConnectionDB/          ← SqlConnection wrapper
+│       ├── App_Start/             ← CORS, routing, filter registration
+│       ├── Web.config             ← ⚠ SECRETS — gitignored, ต้อง copy จาก template
+│       └── Web.config.template   ← copy ไฟล์นี้ แล้วใส่ JwtSecret + connectionString
+│
+├── db/                            ← [Setup — ทำครั้งเดียว] SQL schema + seed data
+│   ├── SSM_schema_v2.sql          ← รันบน SSMS เพื่อสร้าง SSM_DB ทั้งหมด
+│   ├── migration_week0_schema.sql ← migration สำหรับ week 0
+│   └── mock_data.sql              ← seed mock data หลัง schema พร้อม
+│
+├── bruno/                         ← [Home Laptop] API test collection
+│   ├── auth/                      ← login + me
+│   ├── cameras/ buildings/ ...    ← CRUD tests แต่ละ resource
+│   ├── phase8-tests/              ← error sanitization + role tests
+│   ├── phase9-tests/              ← rate limit + validation tests
+│   └── phase10-rbac-tests/        ← 21 RBAC test files (RBAC01–21)
+│
+├── scripts/                       ← [Home Laptop] dev utilities
+│   └── Check-EndpointSecurity.ps1 ← รันหลัง build: ตรวจ 43/43 endpoints มี [RequireRole]
+│
+├── FOR_WORK_NB/                   ← [Work Notebook] data import tools
+│   ├── START_HERE.md              ← อ่านก่อนใช้งาน work notebook session
+│   ├── ssm_import.py              ← import Excel → SSM_DB
+│   ├── import_to_api.py           ← import ผ่าน API (หลัง auth)
+│   ├── patterns.py + sanitize.py  ← sanitize IP/MAC/hostname ก่อนส่ง AI
+│   ├── template_v4.xlsx           ← Excel template สำหรับกรอกข้อมูลจริง
+│   ├── SSM_schema_v2.sql          ← copy ของ schema (ใช้บน work NB)
+│   ├── MEGA_CONTEXT.md            ← full context สำหรับ AI ที่ work NB
+│   └── SSM_IMPORT_GUIDE.md        ← คู่มือ import ฉบับเต็ม
+│
+├── docs/                          ← [Reference] อ่านอ้างอิง
+│   ├── FRONTEND_HANDOFF.md        ← ⭐ API contract สำหรับ frontend dev
+│   ├── ROLE_MATRIX.md             ← ⭐ RBAC matrix ฉบับยืนยันแล้ว
+│   ├── PROJECT_STATUS.md          ← สถานะโปรเจกต์ทุก phase
+│   ├── BACKEND_API_BRIEF.md       ← schema + code patterns อ้างอิง
+│   ├── PING_SERVICE_NOTES.md      ← notes การออกแบบ PingService
+│   ├── MACHINE_RULES.md           ← กฎการใช้งานแต่ละเครื่อง
+│   └── sessions/                  ← session logs Phase 7–13
+│       ├── PHASE7_SESSION.md
+│       ├── PHASE8_SESSION.md  PHASE8_DEBATE.md
+│       ├── PHASE9_SESSION.md  PHASE9_DEBATE.md
+│       ├── PHASE10_SESSION.md
+│       ├── PHASE11_SESSION.md
+│       ├── PHASE12_SESSION.md
+│       ├── PHASE13_SESSION.md
+│       └── FRONTEND_PLAN_RECAP.md  ← frontend starting brief
+│
+├── presentation_B/                ← slides สำหรับ weekly presentation
+│   └── WEEKLY_PRESENTATION_2026-05-27.md
+│
+└── archive/                       ← เก็บไว้แต่ไม่ใช้แล้ว
+    ├── MEGA/                      ← superseded โดย FOR_WORK_NB/
+    ├── sanitizer/                 ← Phase A sanitizer (superseded)
+    ├── samples/ + tests/          ← Phase A test data
+    ├── frontend_design/           ← wireframes HTML (ย้ายไป frontend branch แล้ว)
+    └── old_docs/                  ← root .md เก่าจาก early sessions
+```
 
 ---
 
@@ -16,8 +91,10 @@ with JWT authentication and full role-based access control (RBAC).
 
 | Branch | Contents |
 |---|---|
-| `backend` | This branch -- ASP.NET Web API source |
-| `master` | Main branch -- merge target |
+| `backend` | **This branch** — ASP.NET Web API source + tools |
+| `frontend` | React SPA (Vite + TypeScript) |
+| `master` | Main branch — merge target |
+| `work-safe` | Branch สำหรับ work notebook (ไม่มี secrets) |
 
 ---
 
@@ -30,18 +107,22 @@ with JWT authentication and full role-based access control (RBAC).
    git clone <repo-url>
    git checkout backend
 
-2. Copy the config template (Web.config is gitignored -- contains secrets):
+2. Create the database (do once):
+   Open SSMS → open db/SSM_schema_v2.sql → Execute
+   Open SSMS → open db/mock_data.sql     → Execute  (optional seed data)
+
+3. Copy the config template (Web.config is gitignored — contains secrets):
    copy BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI\Web.config.template ^
         BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI\Web.config
 
-3. Fill in Web.config:
+4. Fill in Web.config:
    - JwtSecret:         any 256-bit base64 string (generate and keep secret)
    - connectionString:  your SQL Server connection details
 
-4. Open the solution:
+5. Open the solution:
    BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx
 
-5. Press Ctrl+F5 to start IIS Express.
+6. Press Ctrl+F5 to start IIS Express.
    Server runs at: http://localhost:50680
 ```
 
@@ -74,13 +155,13 @@ Invoke-RestMethod `
 | `viewer_test` | `Test@1234` | viewer | Read-only: sites/buildings/floors/floor-plans only |
 
 > **Token expired?** Re-login. JWT lifetime = 8 hours. No refresh endpoint.  
-> **JWT secret changed in Web.config?** All existing tokens are invalid -- re-login.
+> **JWT secret changed in Web.config?** All existing tokens are invalid — re-login.
 
 ---
 
 ## Role Matrix
 
-> Full spec: [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md)
+> Full spec: [`docs/ROLE_MATRIX.md`](docs/ROLE_MATRIX.md)
 
 | Action | admin | user | viewer |
 |---|---|---|---|
@@ -108,7 +189,7 @@ Invoke-RestMethod `
 |---|---|---|
 | GET | `/api/hierarchy/tree` | All | Full site tree in 1 call (use for sidebar nav) |
 | GET | `/api/dashboard/summary` | admin | Aggregate device/alert counts |
-| GET | `/api/status/devices` | All | Lightweight -- for 30s polling (status + last_seen only) |
+| GET | `/api/status/devices` | All | Lightweight — for 30s polling (status + last_seen only) |
 | GET | `/api/sites` | All | |
 | GET | `/api/buildings` | All | |
 | GET | `/api/floors` | All | |
@@ -127,13 +208,13 @@ Invoke-RestMethod `
 | Method | Endpoint | Role | Notes |
 |---|---|---|---|
 | POST | `/api/cameras` | admin + user | Body: array `[{...}]` |
-| POST | `/api/cameras/{id}` | admin + user | Update -- single object |
+| POST | `/api/cameras/{id}` | admin + user | Update — single object |
 | POST | `/api/cameras/delete/{id}` | admin | DELETE uses POST pattern |
 | PATCH | `/api/cameras/{id}/position` | admin + user | Body: `{"x": 0.35, "y": 0.72}` |
 | POST | `/api/floor-plans/validate-path` | admin | 6-layer file validation |
 | POST | `/api/floor-plans` | admin | Register floor plan (re-validates inside) |
 | POST | `/api/users` | admin | |
-| POST | `/api/users/{id}` | admin | `role` field is optional -- omit to preserve existing |
+| POST | `/api/users/{id}` | admin | `role` field is optional — omit to preserve existing |
 | POST | `/api/users/delete/{id}` | admin | |
 
 > **DELETE pattern:** All deletes use `POST /api/{resource}/delete/{id}`, not HTTP DELETE.  
@@ -143,7 +224,7 @@ Invoke-RestMethod `
 
 ## JWT Notes
 
-Login response returns `role` and `displayName` directly -- no need to decode the token.  
+Login response returns `role` and `displayName` directly — no need to decode the token.  
 If you do need to decode it (e.g., in middleware), use these full URI claim keys:
 
 | Field | Claim key |
@@ -163,7 +244,7 @@ If you do need to decode it (e.g., in middleware), use these full URI claim keys
 | No `Authorization` header | Add `Authorization: Bearer <token>` header |
 | Token expired (8 hours) | Re-login to get a fresh token |
 | Wrong JWT secret in Web.config | Match the secret that was used to issue the token |
-| Token from a different environment | Each Web.config has its own secret -- tokens are not portable |
+| Token from a different environment | Each Web.config has its own secret — tokens are not portable |
 
 **Check:** Login works but GET /api/sites returns 401 --> secret mismatch between machines.
 
@@ -175,7 +256,7 @@ If you do need to decode it (e.g., in middleware), use these full URI claim keys
 | Using `viewer_test` for write actions | Use `admin_test` |
 | Using `user_test` for admin-only endpoints | Use `admin_test` |
 
-**Quick test:** `GET /api/auth/me` with the token -- confirms what role the token actually has.
+**Quick test:** `GET /api/auth/me` with the token — confirms what role the token actually has.
 
 ### When you get 429 Too Many Requests
 
@@ -192,7 +273,7 @@ Header: Retry-After: 847
 
 ### When you get 400 Bad Request
 
-Validation error. Check the `Message` field in the response body -- it says exactly what's wrong.
+Validation error. Check the `Message` field in the response body — it says exactly what's wrong.
 
 Common causes:
 - Missing required field (username, password on login)
@@ -204,13 +285,13 @@ Common causes:
 1. **Port conflict:** Another process on port 50680. Kill it or change port in `applicationhost.config`.
 2. **Web.config missing:** Copy from `Web.config.template` and fill in values.
 3. **DB connection refused:** Check `connectionString` in Web.config. Test SQL Server is running.
-4. **Build error "type not found":** All `.cs` files must be listed in `.csproj` -- check `<Compile Include>` entries.
+4. **Build error "type not found":** All `.cs` files must be listed in `.csproj` — check `<Compile Include>` entries.
 
 ### When a request works in Bruno but fails from frontend
 
 1. **CORS:** Frontend must run on an origin in `Web.config` CORS list (`localhost:5173`, `localhost:3000`, `localhost:5174`).
 2. **Auth header format:** Must be exactly `Authorization: Bearer <token>` (capital B, space before token).
-3. **Floor plan image:** Cannot use `<img src="...">` -- must fetch with auth header and use blob URL.
+3. **Floor plan image:** Cannot use `<img src="...">` — must fetch with auth header and use blob URL.
 4. **Content-Type:** POST bodies need `Content-Type: application/json`.
 
 ---
@@ -246,93 +327,65 @@ ORDER BY created_at DESC;
 
 Run this after adding any new controller or action method:
 ```powershell
-# From repo root -- requires a successful build first
+# From repo root — requires a successful build first
 .\scripts\Check-EndpointSecurity.ps1
 ```
 
 **Result:** 43/43 PASS = all write endpoints have `[RequireRole]` or `[AllowAnonymous]`.  
-Any FAIL = endpoint missing security attribute -- fix before deploy.
+Any FAIL = endpoint missing security attribute — fix before deploy.
 
 ---
 
 ## Bruno API Tests
 
 Test collections are in `bruno/phase10-rbac-tests/` (21 test files).  
-Tokens in committed files are placeholders (`FILL_IN_TOKEN`) -- fill from a fresh login.
+Tokens in committed files are placeholders (`FILL_IN_TOKEN`) — fill from a fresh login.
 
 1. Open Bruno app
 2. File > Open Collection > select `bruno/phase10-rbac-tests/`
 3. Login with a test account
 4. Paste token into the runtime variable for that collection
-5. Run -- all 21 tests should pass
+5. Run — all 21 tests should pass
 
 ---
 
-## Project Documentation
+## Reference Documents
 
 | File | Contents |
 |---|---|
-| [`review/FRONTEND_PLAN_RECAP_2026-05-27.md`](review/FRONTEND_PLAN_RECAP_2026-05-27.md) | **Frontend starting brief** -- read this when switching machines |
-| [`review/FRONTEND_HANDOFF.md`](review/FRONTEND_HANDOFF.md) | Full backend API contract for frontend dev |
-| [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) | Full project state (all phases) |
-| [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md) | Phase 13 -- reflection security gate |
-| [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md) | Phase 12 -- all backlog items closed |
-| [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) | Phase 11 -- adversarial review + backlog |
-| [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md) | Confirmed role access matrix |
-| [`Web.config.template`](BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/Web.config.template) | Config template for new developer setup |
-
----
-
-## Project Structure
-
-```
-API/
-├── BNO_Survei_MonitorAPI/
-│   └── BNO_Survei_MonitorAPI/
-│       ├── Controllers/          # 16 API controllers
-│       ├── Filters/              # JwtAuthFilter (global), RequireRoleAttribute (per-method)
-│       ├── ConnectDB/            # SqlConnection wrapper
-│       ├── Models/               # Request/response models
-│       ├── Helpers/              # JwtHelper (token sign/verify), password hashing
-│       ├── App_Start/            # WebApiConfig (CORS, routing, filter registration)
-│       ├── App_Data/             # security.log (lockout fallback -- gitignored)
-│       ├── Web.config            # Secrets -- gitignored, copy from template
-│       └── Web.config.template   # Safe template for new developers
-├── scripts/
-│   └── Check-EndpointSecurity.ps1  # Phase 13 reflection security gate
-├── bruno/
-│   └── phase10-rbac-tests/       # 21 RBAC test files (RBAC01-21)
-└── review/
-    ├── FRONTEND_PLAN_RECAP_2026-05-27.md  # Frontend starting brief
-    ├── FRONTEND_HANDOFF.md
-    ├── PROJECT_STATUS.md
-    ├── ROLE_MATRIX.md
-    └── PHASE{N}_SESSION_2026-05-27.md    # Session logs (7-13)
-```
+| [`docs/FRONTEND_HANDOFF.md`](docs/FRONTEND_HANDOFF.md) | ⭐ Full backend API contract for frontend dev |
+| [`docs/ROLE_MATRIX.md`](docs/ROLE_MATRIX.md) | ⭐ Confirmed role access matrix |
+| [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) | Full project state (all phases) |
+| [`docs/BACKEND_API_BRIEF.md`](docs/BACKEND_API_BRIEF.md) | DB schema + code patterns reference |
+| [`docs/PING_SERVICE_NOTES.md`](docs/PING_SERVICE_NOTES.md) | PingService design notes |
+| [`docs/sessions/PHASE13_SESSION.md`](docs/sessions/PHASE13_SESSION.md) | Phase 13 — reflection security gate |
+| [`docs/sessions/PHASE12_SESSION.md`](docs/sessions/PHASE12_SESSION.md) | Phase 12 — all backlog items closed |
+| [`docs/sessions/FRONTEND_PLAN_RECAP.md`](docs/sessions/FRONTEND_PLAN_RECAP.md) | Frontend starting brief |
+| [`FOR_WORK_NB/START_HERE.md`](FOR_WORK_NB/START_HERE.md) | Work notebook session entry point |
 
 ---
 
 ## For Frontend Team
 
-> Full contract: [`review/FRONTEND_HANDOFF.md`](review/FRONTEND_HANDOFF.md)  
-> Role spec: [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md)  
+> Full contract: [`docs/FRONTEND_HANDOFF.md`](docs/FRONTEND_HANDOFF.md)  
+> Role spec: [`docs/ROLE_MATRIX.md`](docs/ROLE_MATRIX.md)  
 > API examples: [`bruno/phase10-rbac-tests/`](bruno/phase10-rbac-tests/)
 
-### Role Matrix (confirmed -- all writes are admin only)
+### Role Matrix (confirmed — all writes are admin only)
 
 | What | admin | user | viewer |
 |---|---|---|---|
 | GET sites / buildings / floors / floor-plans / hierarchy | YES | YES | YES |
-| GET rooms / racks | YES | YES | NO -- 403 |
-| GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO -- 403 | NO -- 403 |
-| Any POST / UPDATE / DELETE / PATCH | YES | NO -- 403 | NO -- 403 |
+| GET rooms / racks | YES | YES | NO — 403 |
+| GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO — 403 | NO — 403 |
+| Any POST / UPDATE / DELETE / PATCH | YES | NO — 403 | NO — 403 |
 
 ```js
 const isAdmin   = user?.role === 'admin';
 const canSeeRooms   = isAdmin || user?.role === 'user';   // rooms, racks
 const canSeeDevices = isAdmin;                            // cameras, NVRs, logs
 
-// All write/edit actions -- admin only
+// All write/edit actions — admin only
 {isAdmin && <EditButton />}
 {isAdmin && <DeleteButton />}
 {isAdmin && <DragPin />}
@@ -340,7 +393,7 @@ const canSeeDevices = isAdmin;                            // cameras, NVRs, logs
 
 ### Must-Know Gotchas
 
-**1. Floor plan image needs Auth header -- cannot use plain `<img src="...">`**
+**1. Floor plan image needs Auth header — cannot use plain `<img src="...">`**
 ```js
 const res  = await axios.get(`/api/floors/${id}/floor-plan/image`, {
   responseType: 'blob',
@@ -362,12 +415,12 @@ axios.post('/api/cameras', [{ name: 'CAM-01', ... }])   // Save
 axios.post('/api/cameras/5', { name: 'CAM-01', ... })   // Update
 ```
 
-**4. Camera x/y is NULL until a pin is placed -- handle it**
+**4. Camera x/y is NULL until a pin is placed — handle it**
 ```js
 if (camera.x === null) { /* show in "Unplaced" list */ }
 ```
 
-**5. `last_seen` is UTC -- always convert before display**
+**5. `last_seen` is UTC — always convert before display**
 ```js
 new Date(device.last_seen + 'Z').toLocaleString('th-TH')
 ```
@@ -375,7 +428,7 @@ new Date(device.last_seen + 'Z').toLocaleString('th-TH')
 **6. Rate limiter: 10 wrong passwords = username locked 15 min**  
 Affects integration tests. Restart IIS Express to reset the in-memory counter.
 
-**7. No Swagger** -- use Bruno collection or `review/FRONTEND_HANDOFF.md` for request shapes.
+**7. No Swagger** — use Bruno collection or `docs/FRONTEND_HANDOFF.md` for request shapes.
 
 **8. CORS allowed origins (dev)**
 ```
@@ -410,8 +463,8 @@ On 401:                   redirect to /login
 
 ## Current Status
 
-**Backend: Phase 13 complete -- maintenance mode.**  
-**Frontend: Not started -- approved plan ready, begin Phase F1.**
+**Backend: Phase 13 complete — maintenance mode.**  
+**Frontend: Not started — approved plan ready, begin Phase F1.**
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -419,7 +472,7 @@ On 401:                   redirect to /login
 | 10 | RBAC enforcement | Done |
 | 11 | Adversarial review | Done |
 | 12 | All 5 review items closed | Done |
-| 13 | Reflection security gate (43/43 PASS) | Done -- no review, no HTTP test needed |
+| 13 | Reflection security gate (43/43 PASS) | Done |
 | **F1** | Frontend setup + login | **Next** |
 
 ---

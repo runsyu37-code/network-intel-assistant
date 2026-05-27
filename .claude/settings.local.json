@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Get-ChildItem -Path \"C:\\\\ai-playground\\\\API\\\\BNO_Survei_MonitorAPI\\\\BNO_Survei_MonitorAPI\" -Filter \"JwtAuthFilter.cs\" -Recurse | ForEach-Object { $_.FullName })"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\ai-playground\\\\API\\\\BNO_Survei_MonitorAPI\\\\BNO_Survei_MonitorAPI\" -Filter \"JwtAuthFilter.cs\" -Recurse | ForEach-Object { $_.FullName })",
+      "Bash(git pull *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "PowerShell(ls \"C:\\\\1_Work_Local\\\\AI_Agent\\\\network-intel-assistant\" 2>$null; if \\(-not $?\\) { \"Directory not found\" })",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git cherry-pick *)",
+      "Bash(python sanitizer/sanitize.py samples/fake_input_02.txt output/demo_clean.txt --report output/demo_report.json)",
+      "Bash(git fetch *)",
+      "Bash(git ls-tree *)"
     ]
   }
 }

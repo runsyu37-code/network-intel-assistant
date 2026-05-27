@@ -527,19 +527,38 @@ Open in Bruno: **Open Collection** → select any table folder (e.g., `bruno/bui
 
 ## Current State & Limitations
 
+> Last updated: 2026-05-26
+
 | Area | Status |
 |---|---|
 | SQL Schema | Complete — 13 tables, 5 views, indexes, constraints |
-| Models (C#) | Complete — 13 models, all columns mapped |
-| Controllers (C#) | Complete — 13 controllers, 4 CRUD endpoints each |
+| Models (C#) | Complete — 13 models + `deviceSearchModel` (14 total) |
+| Controllers (C#) | Complete — 13 CRUD controllers + `devicesController` (14 total) |
+| GET filtering | Implemented — all hierarchy + device GET endpoints accept query params (see table below) |
+| Unified device search | Implemented — `/api/GetDevices` searches cameras/nvrs/switches in one call |
 | Authentication | Not implemented — no JWT/session middleware |
 | Authorization | Not implemented — all endpoints publicly accessible |
 | Input validation | Minimal — only checks required PK fields are not empty |
 | Business logic | None — pure CRUD only |
 | Error responses | Generic — returns raw SqlException message |
 | Pagination | Not implemented — GET returns all rows |
-| Filtering/search | Not implemented — no query parameters |
 | Bruno test bodies | URLs only — no request body samples in `.yml` files |
+
+### GET Filter Parameters (implemented)
+
+| Endpoint | Query params supported |
+|---|---|
+| `/api/GetSites` | `?Site_ID=` |
+| `/api/GetBuildings` | `?Site_ID=`, `?Building_ID=` |
+| `/api/GetFloors` | `?Building_ID=`, `?Floor_ID=` |
+| `/api/GetRooms` | `?Floor_ID=`, `?Room_ID=` |
+| `/api/GetRacks` | `?Room_ID=`, `?Rack_ID=` |
+| `/api/GetCameras` | `?Site_ID=`, `?Floor_ID=`, `?status=`, `?id=` |
+| `/api/GetNvrs` | `?Site_ID=`, `?Rack_ID=`, `?status=`, `?NVR_ID=` |
+| `/api/GetPoeSwitches` | `?Site_ID=`, `?Rack_ID=`, `?status=`, `?SW_ID=` |
+| `/api/GetDevices` | `?device_type=` (camera/nvr/switch, comma-separated), `?Site_ID=`, `?Building_ID=`, `?Floor_ID=`, `?device_name=` (LIKE), `?ip_address=` (LIKE), `?status=` |
+
+All filters use `WHERE 1=1` + conditional `AND` appending — omitting a param returns all rows.
 
 ---
 
@@ -559,9 +578,9 @@ Open in Bruno: **Open Collection** → select any table folder (e.g., `bruno/bui
 - Add `?page=1&pageSize=50` query params to GET endpoints
 - Use `OFFSET / FETCH NEXT` in SQL Server queries
 
-### If the front-end needs filtered queries
-- Add query parameters for common filters (e.g., `?Site_ID=S001`, `?status=offline`)
-- The `WHERE 1=1` pattern in current GET queries makes appending conditions easy
+### If the front-end needs more filtered queries
+- Filter params already exist on all hierarchy + device GET endpoints (see section 9)
+- To add more params: follow the `WHERE 1=1` + conditional `AND` pattern already in use
 
 ### Important design decisions to preserve
 - **Cameras link to Floor, not Room/Rack** — cameras are placed on floor SVG plans, not inside racks
