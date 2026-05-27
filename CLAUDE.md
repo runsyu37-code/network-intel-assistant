@@ -1,5 +1,8 @@
 # SSM Frontend — Claude Context
 
+> **Quick session?** Load [`DEV.md`](DEV.md) instead — it's smaller and faster.
+> Load this file when you need full context or are designing a new feature.
+
 ## Project
 Surveillance Smart-Monitor (SSM) — React SPA for CCTV device management.
 Presentation deadline: **2026-05-29 (Thursday)**.
