@@ -1,4 +1,4 @@
-info:
+﻿info:
   name: RBAC14 - viewer GET /api/cameras → 403
   type: http
   seq: 14
@@ -13,7 +13,7 @@ http:
 runtime:
   variables:
     - name: viewer_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidXNlcl90ZXN0IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoidXNlciIsImp0aSI6IjMzYWI4NWI2LTA3NTItNGJkZC05OGM2LTMyMDgxZjNlYTlkYiIsImV4cCI6MTc3OTg3NDgwOCwiaXNzIjoiU1NNLUFQSSIsImF1ZCI6IlNTTS1Gcm9udGVuZCJ9.X4IDyEySP67WsezHtqHtyS5CdZYlovvwXTBnRFcdhxg
+      value: FILL_IN_TOKEN
 
 settings:
   encodeUrl: true

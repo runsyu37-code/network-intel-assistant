@@ -1,4 +1,4 @@
-info:
+﻿info:
   name: TEST2 - English error strings (no garbled Thai)
   type: http
   seq: 2
@@ -15,7 +15,7 @@ http:
 runtime:
   variables:
     - name: admin_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWRtaW4iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJhZG1pbiIsImp0aSI6IjliZjBlMDRiLTM0MTctNDU5OS04NDk5LTg4YjA5NGNjZDQ0OSIsImV4cCI6MTc3OTgwOTA4NiwiaXNzIjoiU1NNLUFQSSIsImF1ZCI6IlNTTS1Gcm9udGVuZCJ9.66eTxWp0WLbkOUSt-aR7p4O8_snukjJWK-_T5Dvfx1o
+      value: FILL_IN_TOKEN
 
 settings:
   encodeUrl: true

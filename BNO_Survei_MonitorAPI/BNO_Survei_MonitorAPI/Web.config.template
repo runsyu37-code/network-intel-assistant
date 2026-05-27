@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SETUP: Copy this file to Web.config and fill in the values marked with CHANGE_THIS.
+  Web.config is NOT committed to git — it contains secrets.
+  Generate a JWT secret: [System.Convert]::ToBase64String((1..32 | % { [byte](Get-Random -Max 256) }))
+-->
+<configuration>
+  <appSettings>
+    <add key="webpages:Version" value="3.0.0.0" />
+    <add key="webpages:Enabled" value="false" />
+    <add key="ClientValidationEnabled" value="true" />
+    <add key="UnobtrusiveJavaScriptEnabled" value="true" />
+    <add key="JwtSecret" value="CHANGE_THIS_TO_A_STRONG_RANDOM_SECRET_BEFORE_DEPLOY" />
+    <add key="CorsOrigins" value="http://localhost:5173,http://localhost:3000,http://localhost:5174" />
+  </appSettings>
+  <connectionStrings configSource="connectionStrings.config" />
+  <system.web>
+    <compilation debug="true" targetFramework="4.7.2" />
+    <httpRuntime targetFramework="4.7.2" />
+  </system.web>
+</configuration>

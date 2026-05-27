@@ -10,7 +10,8 @@ BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/obj/
 # NuGet packages (restore on build)
 BNO_Survei_MonitorAPI/packages/
 
-# Sensitive config — each machine has its own connectionStrings.config
+# Secrets — never commit (Web.config contains JwtSecret, connectionStrings.config has DB creds)
+BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/Web.config
 connectionStrings.config
 
 # Bruno environment files — contain real tokens/secrets, never commit
