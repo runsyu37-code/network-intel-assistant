@@ -61,8 +61,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Savefloors([FromBody] List<floorsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (modelList == null || modelList.Count == 0)
@@ -121,8 +120,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updatefloors(string Floor_ID, [FromBody] floorsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (model == null || string.IsNullOrWhiteSpace(model.Floor_ID))
@@ -175,8 +173,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/floors/delete/{Floor_ID}")]
         public IHttpActionResult Deletefloors(string Floor_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (string.IsNullOrWhiteSpace(Floor_ID))

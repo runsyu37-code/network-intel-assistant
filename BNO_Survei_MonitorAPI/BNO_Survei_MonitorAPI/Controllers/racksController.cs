@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetRacks(string Room_ID = null, string Rack_ID = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin") && !RequestContext.Principal.IsInRole("user"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<racksModel> ListRP = new List<racksModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -65,8 +68,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Saveracks([FromBody] List<racksModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (modelList == null || modelList.Count == 0)
@@ -129,8 +131,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updateracks(string Rack_ID, [FromBody] racksModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (model == null || string.IsNullOrWhiteSpace(model.Rack_ID))
@@ -191,8 +192,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/racks/delete/{Rack_ID}")]
         public IHttpActionResult Deleteracks(string Rack_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (string.IsNullOrWhiteSpace(Rack_ID))

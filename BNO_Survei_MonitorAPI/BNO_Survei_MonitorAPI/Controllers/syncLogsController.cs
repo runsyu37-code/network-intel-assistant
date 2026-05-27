@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetSyncLogs(string device_type = null, string device_id = null, string status = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<syncLogsModel> ListRP = new List<syncLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {

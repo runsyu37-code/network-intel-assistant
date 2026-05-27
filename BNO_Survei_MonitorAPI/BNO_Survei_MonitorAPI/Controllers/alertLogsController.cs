@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetAlertLogs(string device_type = null, bool active_only = false)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<alertLogsModel> ListRP = new List<alertLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {

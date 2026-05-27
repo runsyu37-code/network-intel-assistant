@@ -1,5 +1,5 @@
 info:
-  name: RBAC05 - user POST /api/sites → NOT 403 (user role allowed)
+  name: RBAC05 - user POST /api/sites → 403 (write is admin-only)
   type: http
   seq: 5
 
@@ -23,6 +23,6 @@ runtime:
     - name: user_token
       value: FILL_IN_USER_TOKEN
 
-# EXPECT: 200 OK (user role is allowed on infrastructure)
-# FAIL if: 403 (would mean user role is incorrectly blocked)
-# NOTE: may get 500/conflict if Site_ID already exists — that's fine, not 403
+# EXPECT: 403 Forbidden
+# FAIL if: 200 (user role should NOT be allowed to write — all writes are admin-only per confirmed role matrix)
+# NOTE: changed from "200 expected" (Phase 9) to "403 expected" (Phase 10 confirmed matrix)

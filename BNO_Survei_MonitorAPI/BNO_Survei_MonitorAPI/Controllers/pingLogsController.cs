@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetPingLogs(string device_id = null, string device_type = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<pingLogsModel> ListRP = new List<pingLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {

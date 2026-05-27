@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetAuditLogs(int? user_id = null, string table_name = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<auditLogsModel> ListRP = new List<auditLogsModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {

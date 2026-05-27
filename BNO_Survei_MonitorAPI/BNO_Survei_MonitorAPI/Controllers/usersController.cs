@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetUsers(string role = null, int? User_ID = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<usersModel> ListRP = new List<usersModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {

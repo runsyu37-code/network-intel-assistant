@@ -60,8 +60,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Savebuildings([FromBody] List<buildingsModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (modelList == null || modelList.Count == 0)
@@ -119,8 +118,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult Updatebuildings(string Building_ID, [FromBody] buildingsModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (model == null || string.IsNullOrWhiteSpace(model.Building_ID))
@@ -171,8 +169,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/buildings/delete/{Building_ID}")]
         public IHttpActionResult Deletebuildings(string Building_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (string.IsNullOrWhiteSpace(Building_ID))

@@ -20,6 +20,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpGet]
         public IHttpActionResult GetPoeSwitches(string Site_ID = null, string Rack_ID = null, string status = null, string SW_ID = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             List<poeSwitchesModel> ListRP = new List<poeSwitchesModel>();
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
@@ -84,8 +87,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult SavepoeSwitches([FromBody] List<poeSwitchesModel> modelList)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (modelList == null || modelList.Count == 0)
@@ -163,8 +165,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [HttpPost]
         public IHttpActionResult UpdatepoeSwitches(string SW_ID, [FromBody] poeSwitchesModel model)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (model == null || string.IsNullOrWhiteSpace(model.SW_ID))
@@ -255,8 +256,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         [Route("api/poe-switches/delete/{SW_ID}")]
         public IHttpActionResult DeletepoeSwitches(string SW_ID)
         {
-            if (!RequestContext.Principal.IsInRole("admin") &&
-                !RequestContext.Principal.IsInRole("user"))
+            if (!RequestContext.Principal.IsInRole("admin"))
                 return StatusCode(System.Net.HttpStatusCode.Forbidden);
 
             if (string.IsNullOrWhiteSpace(SW_ID))

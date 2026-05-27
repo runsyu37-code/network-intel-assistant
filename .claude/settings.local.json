@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\ai-playground\\\\API\\\\BNO_Survei_MonitorAPI\\\\BNO_Survei_MonitorAPI\" -Filter \"JwtAuthFilter.cs\" -Recurse | ForEach-Object { $_.FullName })"
+    ]
+  }
+}

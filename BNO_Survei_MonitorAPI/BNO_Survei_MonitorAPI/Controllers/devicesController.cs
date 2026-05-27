@@ -25,6 +25,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
             string ip_address   = null,
             string status       = null)
         {
+            if (!RequestContext.Principal.IsInRole("admin"))
+                return StatusCode(System.Net.HttpStatusCode.Forbidden);
+
             var types = string.IsNullOrWhiteSpace(device_type)
                 ? new HashSet<string> { DeviceTypes.Camera, DeviceTypes.Nvr, DeviceTypes.PoeSwitch }
                 : new HashSet<string>(device_type.Split(',').Select(t => t.Trim().ToLower()));

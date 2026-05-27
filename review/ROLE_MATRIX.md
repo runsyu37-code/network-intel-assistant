@@ -72,11 +72,11 @@ Cannot see room-level detail or any device/operational data.
 
 | Item | Status |
 |------|--------|
-| All write endpoints → admin only | ⏳ Pending (was admin+user, needs fix) |
-| viewer blocked on rooms/racks GET | ⏳ Pending |
-| user/viewer blocked on cameras/nvrs/switches/devices GET | ⏳ Pending |
-| user/viewer blocked on logs/users GET | ⏳ Pending |
+| All write endpoints → admin only | ✅ Done (Phase 10, 2026-05-27) |
+| viewer blocked on rooms/racks GET | ✅ Done (Phase 10, 2026-05-27) |
+| user/viewer blocked on cameras/nvrs/switches/devices GET | ✅ Done (Phase 10, 2026-05-27) |
+| user/viewer blocked on logs/users GET | ✅ Done (Phase 10, 2026-05-27) |
 
 ---
 
-*Confirmed by Ran — 2026-05-26. To be implemented next session.*
+*Confirmed by Ran — 2026-05-26. Implemented Phase 10 — 2026-05-27.*
