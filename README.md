@@ -6,7 +6,7 @@ with JWT authentication and full role-based access control (RBAC).
 
 > **Working from a new machine?** Start with [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) —
 > it covers everything: what is built, what is pending, and how to get the server running.
-> Latest session log: [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md)
+> Latest session log: [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md)
 
 ---
 
@@ -146,7 +146,8 @@ Test collections are in `bruno/`. All tokens are stripped from committed files
 | File | Contents |
 |---|---|
 | [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) | **Start here** — full project state, what's built, what's pending |
-| [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md) | Latest session log (Phase 12) |
+| [`review/PHASE13_SESSION_2026-05-27.md`](review/PHASE13_SESSION_2026-05-27.md) | Latest session log (Phase 13) |
+| [`review/PHASE12_SESSION_2026-05-27.md`](review/PHASE12_SESSION_2026-05-27.md) | Phase 12 — all backlog items closed |
 | [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) | Phase 11 — adversarial review + backlog |
 | [`review/PHASE10_SESSION_2026-05-27.md`](review/PHASE10_SESSION_2026-05-27.md) | Phase 10 — full RBAC implementation |
 | [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md) | Confirmed role access matrix |
@@ -168,29 +169,32 @@ API/
 │       ├── App_Start/            # WebApiConfig (CORS, routing, JWT auth)
 │       ├── Web.config            # ⚠ Gitignored — copy from Web.config.template
 │       └── Web.config.template   # Template for new developers
+├── scripts/
+│   └── Check-EndpointSecurity.ps1  # Phase 13 reflection security gate
 ├── bruno/
-│   └── phase10-rbac-tests/       # 20 RBAC test files (RBAC01–20)
+│   └── phase10-rbac-tests/       # 21 RBAC test files (RBAC01–21)
 └── review/
     ├── PROJECT_STATUS.md         # Master status document
     ├── ROLE_MATRIX.md
+    ├── PHASE13_SESSION_2026-05-27.md
     ├── PHASE12_SESSION_2026-05-27.md
-    ├── PHASE11_SESSION_2026-05-27.md
-    └── PHASE10_SESSION_2026-05-27.md
+    └── PHASE11_SESSION_2026-05-27.md
 ```
 
 ---
 
-## Current Status (Phase 12 — Complete)
+## Current Status (Phase 13 — Complete)
 
-All planned backend features are implemented. No open backlog items.
+All planned backend work is done. Backend is in maintenance mode.
 
 | Phase | Highlights |
 |---|---|
 | 10 | RBAC enforcement across all controllers |
 | 11 | Adversarial review — 5 backlog items identified |
 | 12 | All 5 backlog items closed: `RequireRoleAttribute`, per-username lockout, stale eviction, file-log fallback, role optional on update |
+| 13 | Reflection security gate — 43/43 write endpoints verified secured |
 
-**Phase 13 (pending):** Reflection-based test — verify all write endpoints have `[RequireRole]` or `[AllowAnonymous]` at compile time.
+**Security gate:** Run `.\scripts\Check-EndpointSecurity.ps1` after any controller change.
 
 ---
 
