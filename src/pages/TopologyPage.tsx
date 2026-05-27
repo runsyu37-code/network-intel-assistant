@@ -1,150 +1,150 @@
+import { useState } from 'react'
 import ReactFlow, {
-  Background, BackgroundVariant, Controls, MiniMap,
+  Background, BackgroundVariant, Controls,
   useNodesState, useEdgesState, type NodeTypes,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { useQuery } from '@tanstack/react-query'
 import { initialNodes, initialEdges } from '../components/topology/mockData'
 import HQNode from '../components/topology/HQNode'
 import SiteNode from '../components/topology/SiteNode'
-import { TrendingUp, TrendingDown } from 'lucide-react'
-import { getDashboardSummary, getAlertLogs } from '../api/hierarchy'
-import type { DashboardSummaryDto, AlertLogApi } from '../api/types'
 
 const nodeTypes: NodeTypes = { hqNode: HQNode, siteNode: SiteNode }
 
-function aggregateSummary(rows: DashboardSummaryDto[]) {
-  return rows.reduce((acc, r) => ({
-    cameras: acc.cameras + r.totalCameras,
-    camerasOnline: acc.camerasOnline + r.camerasOnline,
-    camerasOffline: acc.camerasOffline + r.camerasOffline,
-    camerasWarning: acc.camerasWarning + r.camerasWarning,
-    nvrs: acc.nvrs + r.totalNvrs,
-    nvrsOffline: acc.nvrsOffline + r.nvrsOffline,
-    switches: acc.switches + r.totalSwitches,
-    switchesOffline: acc.switchesOffline + r.switchesOffline,
-  }), { cameras: 0, camerasOnline: 0, camerasOffline: 0, camerasWarning: 0, nvrs: 0, nvrsOffline: 0, switches: 0, switchesOffline: 0 })
-}
-
-function formatEventTime(raw: string): string {
-  try {
-    const d = new Date(raw + (raw.endsWith('Z') ? '' : 'Z'))
-    return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
-  } catch {
-    return raw
-  }
-}
-
-function alertDot(alert: AlertLogApi): string {
-  const t = (alert.alert_type ?? '').toLowerCase()
-  if (t.includes('offline') || t.includes('fail') || t.includes('error')) return 'var(--alert)'
-  if (t.includes('warning') || t.includes('warn'))                         return 'var(--warn)'
-  return 'var(--ok)'
+const MOCK_STATS = {
+  sites: 6,
+  cameras: 99,
+  camerasOnline: 96,
+  nvrs: 5,
+  switches: 8,
+  alerts: 2,
 }
 
 export default function TopologyPage() {
   const [nodes, , onNodesChange] = useNodesState(initialNodes)
   const [edges, , onEdgesChange] = useEdgesState(initialEdges)
+  const [hideOffline, setHideOffline] = useState(false)
 
-  const { data: summary = [] } = useQuery({
-    queryKey: ['dashboard-summary'],
-    queryFn: getDashboardSummary,
-    refetchInterval: 30_000,
-  })
-
-  const { data: alertLogs = [] } = useQuery({
-    queryKey: ['alert-logs'],
-    queryFn: () => getAlertLogs(),
-    refetchInterval: 60_000,
-    retry: false,
-  })
-
-  const agg = aggregateSummary(summary)
-  const totalOnline = agg.camerasOnline + (agg.nvrs - agg.nvrsOffline) + (agg.switches - agg.switchesOffline)
-  const totalOffline = agg.camerasOffline + agg.nvrsOffline + agg.switchesOffline
-  const totalDevices = agg.cameras + agg.nvrs + agg.switches
-
-  const statsLoaded = summary.length > 0
-
-  const STATS = [
-    {
-      label: 'Cameras Online',
-      val: statsLoaded ? `${agg.camerasOnline} / ${agg.cameras}` : '— / —',
-      trend: agg.camerasOffline > 0 ? 'down' : 'up',
-      trendText: statsLoaded
-        ? agg.camerasOffline > 0 ? `${agg.camerasOffline} offline` : 'All online'
-        : 'Loading…',
-      ok: agg.camerasOffline === 0 && statsLoaded,
-    },
-    {
-      label: 'NVRs',
-      val: statsLoaded ? `${agg.nvrs - agg.nvrsOffline} / ${agg.nvrs}` : '— / —',
-      trend: agg.nvrsOffline > 0 ? 'down' : '',
-      trendText: statsLoaded
-        ? agg.nvrsOffline > 0 ? `${agg.nvrsOffline} offline` : 'All recording'
-        : 'Loading…',
-    },
-    {
-      label: 'PoE Switches',
-      val: statsLoaded ? `${agg.switches - agg.switchesOffline} / ${agg.switches}` : '— / —',
-      trend: agg.switchesOffline > 0 ? 'down' : '',
-      trendText: statsLoaded
-        ? agg.switchesOffline > 0 ? `${agg.switchesOffline} offline` : 'All active'
-        : 'Loading…',
-    },
-    {
-      label: 'Active Nodes',
-      val: statsLoaded ? `${totalOnline} / ${totalDevices}` : '— / —',
-      trend: totalOffline > 0 ? 'down' : 'up',
-      trendText: statsLoaded
-        ? totalOffline > 0 ? `${totalOffline} offline alerts` : 'All systems go'
-        : 'Loading…',
-      ok: totalOffline === 0 && statsLoaded,
-    },
-  ]
-
-  const recentAlerts = [...alertLogs]
-    .sort((a, b) => new Date(b.alerted_at ?? '').getTime() - new Date(a.alerted_at ?? '').getTime())
-    .slice(0, 6)
+  const visibleNodes = hideOffline
+    ? nodes.filter(n => (n.data as { status?: string }).status !== 'alert')
+    : nodes
+  const visibleEdges = hideOffline
+    ? edges.filter(e => {
+        const target = visibleNodes.find(n => n.id === e.target)
+        return !!target
+      })
+    : edges
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
       <div className="page-head">
         <div>
           <h1>Network Topology</h1>
-          <p className="page-sub">Big-picture view of every site connecting back to HQ — click any node to drill in.</p>
+          <p className="page-sub">Big-picture view of every site — click any node to drill in.</p>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {statsLoaded ? (
-            <>
-              <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--ok)' }} />{totalOnline} Online</span>
-              <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--alert)' }} />{totalOffline} Offline</span>
-            </>
-          ) : (
-            <span className="dl-stat" style={{ color: 'var(--ink-3)' }}>Loading…</span>
-          )}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span className="dl-stat">
+            <span className="ds-dot" style={{ background: 'var(--ok)' }} />
+            {MOCK_STATS.camerasOnline} Online
+          </span>
+          <span className="dl-stat">
+            <span className="ds-dot" style={{ background: 'var(--alert)' }} />
+            {MOCK_STATS.cameras - MOCK_STATS.camerasOnline} Offline
+          </span>
         </div>
       </div>
 
-      <div className="stat-grid">
-        {STATS.map(s => (
-          <div key={s.label} className="stat-card">
-            <div className="stat-label">{s.label}</div>
-            <div className={`stat-val${s.ok ? ' ok' : ''}`}>{s.val}</div>
-            <div className={`stat-trend${s.trend ? ' ' + s.trend : ''}`}>
-              {s.trend === 'up'   && <TrendingUp  size={11} />}
-              {s.trend === 'down' && <TrendingDown size={11} />}
-              {s.trendText}
+      {/* Main area: left panel + canvas */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', margin: '0 24px 24px', gap: 16 }}>
+
+        {/* Left legend panel */}
+        <div style={{
+          width: 220, flexShrink: 0,
+          display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
+
+          {/* Status legend */}
+          <div className="cam-card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 12 }}>
+              Status Legend
             </div>
+            {[
+              { color: 'var(--ok)',    label: 'Online (Normal)'   },
+              { color: 'var(--warn)',  label: 'Warning (Issue)'   },
+              { color: 'var(--alert)', label: 'Offline (Critical)' },
+            ].map(l => (
+              <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: l.color, boxShadow: `0 0 6px ${l.color}`,
+                }} />
+                {l.label}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="canvas-wrap" style={{ height: 360, minHeight: 0, flex: 'none', margin: '0 24px 20px' }}>
-        <div className="canvas" style={{ backgroundImage: 'none', overflow: 'hidden', borderRadius: 10, border: '1px solid var(--border)' }}>
+          {/* Filter */}
+          <div className="cam-card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 12 }}>
+              Filter
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={hideOffline}
+                onChange={e => setHideOffline(e.target.checked)}
+                style={{ accentColor: 'var(--accent)', width: 14, height: 14, cursor: 'pointer' }}
+              />
+              <span style={{ color: 'var(--ink-2)' }}>Hide offline nodes</span>
+            </label>
+          </div>
+
+          {/* Node type legend */}
+          <div className="cam-card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 12 }}>
+              Node Types
+            </div>
+            {[
+              { label: 'HQ / Core',    desc: 'Central router node' },
+              { label: 'Site',         desc: 'Branch or DC site'   },
+            ].map(t => (
+              <div key={t.label} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>{t.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{t.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary stats */}
+          <div className="cam-card" style={{ padding: 16, marginTop: 'auto' }}>
+            {[
+              { label: 'Total Sites',   val: MOCK_STATS.sites,    warn: false },
+              { label: 'Total Cameras', val: MOCK_STATS.cameras,  warn: false },
+              { label: 'Active Alerts', val: MOCK_STATS.alerts,   warn: MOCK_STATS.alerts > 0 },
+            ].map(s => (
+              <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 12 }}>
+                <span style={{ color: 'var(--ink-3)' }}>{s.label}</span>
+                <span style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 16,
+                  color: s.warn ? 'var(--warn)' : 'var(--ink)',
+                }}>
+                  {s.val}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* React Flow canvas */}
+        <div style={{
+          flex: 1, minWidth: 0,
+          background: 'var(--canvas-bg)', borderRadius: 10,
+          border: '1px solid var(--border)', overflow: 'hidden',
+          position: 'relative',
+        }}>
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={visibleNodes}
+            edges={visibleEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             nodeTypes={nodeTypes}
@@ -157,41 +157,12 @@ export default function TopologyPage() {
           >
             <Background
               variant={BackgroundVariant.Dots}
-              gap={24}
-              size={1}
+              gap={24} size={1}
               color="var(--grid-dot)"
               style={{ background: 'var(--canvas-bg)' }}
             />
             <Controls showInteractive={false} position="top-right" />
-            <MiniMap
-              position="bottom-left"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }}
-              maskColor="rgba(0,0,0,0.10)"
-            />
           </ReactFlow>
-        </div>
-      </div>
-
-      <div className="events-section">
-        <div className="events-card">
-          <div className="events-head">
-            <h3>Recent Alerts</h3>
-            <a className="events-viewall" href="#">View All</a>
-          </div>
-          {recentAlerts.length === 0 ? (
-            <div style={{ padding: '12px 0', fontSize: 12, color: 'var(--ink-4)' }}>
-              {alertLogs.length === 0 ? 'No recent alerts' : 'No alerts to display'}
-            </div>
-          ) : (
-            recentAlerts.map(e => (
-              <div key={e.id} className="event-row">
-                <span className="event-dot" style={{ background: alertDot(e) }} />
-                <span className="event-time">{formatEventTime(e.alerted_at ?? '')}</span>
-                <span className="event-device">{e.device_name ?? e.device_id ?? '—'}</span>
-                <span className="event-msg">{e.message}</span>
-              </div>
-            ))
-          )}
         </div>
       </div>
     </div>

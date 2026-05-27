@@ -1,14 +1,29 @@
 import { useParams } from 'react-router-dom'
-import { HardDrive, Wifi, MapPin, Server } from 'lucide-react'
+import { HardDrive, Wifi, MapPin, Server, AlertTriangle } from 'lucide-react'
 
 type Status = 'ok' | 'warn' | 'alert'
+
+interface HDD {
+  label: string
+  usedGB: number
+  totalGB: number
+  pct: number
+}
+
+interface Channel {
+  ch: number
+  name: string
+  mbps: number
+  offline: boolean
+}
 
 interface NVR {
   id: string; name: string; ip: string; mac: string; status: Status
   site: string; building: string; floor: string; rack: string
   model: string; firmware: string; installedAt: string
   channels: number; usedCh: number
-  storageTB: number; storageUsedPct: number; retentionDays: number
+  retentionDays: number
+  hdds: HDD[]
   connectedCams: string[]
 }
 
@@ -17,42 +32,63 @@ const NVRS: Record<string, NVR> = {
     id: 'NVR-HQ-01', name: 'NVR HQ 01', ip: '192.168.1.200', mac: '00:1A:2B:3C:4D:01',
     status: 'ok', site: 'HQ Bangkok', building: 'Building A', floor: 'F2', rack: 'Rack A1',
     model: 'Hikvision DS-7732NI-I4', firmware: 'V4.62.200', installedAt: '2023-04-12',
-    channels: 32, usedCh: 28, storageTB: 8, storageUsedPct: 72, retentionDays: 30,
-    connectedCams: ['CAM-001','CAM-002','CAM-005','CAM-006','CAM-007','CAM-008','CAM-009','CAM-010','CAM-011','CAM-012','CAM-013','CAM-014'],
+    channels: 32, usedCh: 28, retentionDays: 30,
+    hdds: [
+      { label: 'HDD1', usedGB: 726, totalGB: 931, pct: 78 },
+      { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
+    ],
+    connectedCams: ['CAM-001','CAM-002','CAM-005','CAM-006','CAM-007','CAM-008'],
   },
   'NVR-HQ-02': {
     id: 'NVR-HQ-02', name: 'NVR HQ 02', ip: '192.168.1.201', mac: '00:1A:2B:3C:4D:02',
     status: 'ok', site: 'HQ Bangkok', building: 'Building A', floor: 'F2', rack: 'Rack A1',
     model: 'Hikvision DS-7732NI-I4', firmware: 'V4.62.200', installedAt: '2023-04-12',
-    channels: 32, usedCh: 16, storageTB: 8, storageUsedPct: 41, retentionDays: 30,
-    connectedCams: ['CAM-003','CAM-004','CAM-015','CAM-016'],
+    channels: 32, usedCh: 16, retentionDays: 30,
+    hdds: [
+      { label: 'HDD1', usedGB: 380, totalGB: 931, pct: 41 },
+      { label: 'HDD2', usedGB: 455, totalGB: 931, pct: 49 },
+    ],
+    connectedCams: ['CAM-003','CAM-004'],
   },
   'NVR-HQ-03': {
     id: 'NVR-HQ-03', name: 'NVR HQ 03', ip: '192.168.1.202', mac: '00:1A:2B:3C:4D:03',
     status: 'warn', site: 'HQ Bangkok', building: 'Building B', floor: 'F1', rack: 'Rack B1',
     model: 'Dahua NVR5232-EI', firmware: 'V4.000.0000003.0', installedAt: '2023-06-01',
-    channels: 32, usedCh: 18, storageTB: 16, storageUsedPct: 85, retentionDays: 60,
+    channels: 32, usedCh: 18, retentionDays: 60,
+    hdds: [
+      { label: 'HDD1', usedGB: 840, totalGB: 931, pct: 90 },
+      { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
+    ],
     connectedCams: ['CAM-014'],
   },
   'NVR-CM-01': {
     id: 'NVR-CM-01', name: 'NVR Chiang Mai', ip: '192.168.10.200', mac: '00:1A:2B:3C:4D:04',
     status: 'ok', site: 'Chiang Mai DC', building: 'Building A', floor: 'F1', rack: 'Rack C1',
     model: 'Hikvision DS-7616NI-I2', firmware: 'V4.50.100', installedAt: '2023-09-15',
-    channels: 16, usedCh: 10, storageTB: 4, storageUsedPct: 53, retentionDays: 30,
+    channels: 16, usedCh: 10, retentionDays: 30,
+    hdds: [
+      { label: 'HDD1', usedGB: 494, totalGB: 931, pct: 53 },
+    ],
     connectedCams: ['CAM-015','CAM-016'],
   },
   'NVR-PK-01': {
     id: 'NVR-PK-01', name: 'NVR Phuket', ip: '192.168.20.200', mac: '00:1A:2B:3C:4D:05',
     status: 'ok', site: 'Phuket Branch', building: 'Building A', floor: 'F1', rack: 'Rack P1',
     model: 'Dahua NVR5216-EI', firmware: 'V4.000.0000003.0', installedAt: '2023-11-20',
-    channels: 16, usedCh: 8, storageTB: 4, storageUsedPct: 31, retentionDays: 30,
+    channels: 16, usedCh: 8, retentionDays: 30,
+    hdds: [
+      { label: 'HDD1', usedGB: 289, totalGB: 931, pct: 31 },
+    ],
     connectedCams: [],
   },
   'NVR-KK-01': {
     id: 'NVR-KK-01', name: 'NVR Khon Kaen', ip: '192.168.30.200', mac: '00:1A:2B:3C:4D:06',
     status: 'ok', site: 'Khon Kaen', building: 'Building A', floor: 'F1', rack: 'Rack K1',
     model: 'Axis S3008', firmware: '11.8.53', installedAt: '2024-01-10',
-    channels: 8, usedCh: 5, storageTB: 2, storageUsedPct: 44, retentionDays: 14,
+    channels: 8, usedCh: 5, retentionDays: 14,
+    hdds: [
+      { label: 'HDD1', usedGB: 410, totalGB: 931, pct: 44 },
+    ],
     connectedCams: [],
   },
 }
@@ -60,66 +96,42 @@ const NVRS: Record<string, NVR> = {
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
 
-function rng(seed: number, i: number) {
-  return (((seed * 1103515245 + i * 12345) >>> 0) & 0x7fffffff) / 0x7fffffff
-}
-
-function ChannelBars({ nvr }: { nvr: NVR }) {
-  const seed = nvr.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
-  const names = ['Lobby Cam A','Lobby Cam B','Server Rm 01','Server Rm 02','Main Gate','Parking A',
-                 'Annex Lobby','Meeting 5A','Office 3A','Office 3B','Office 3C','Break Rm 3',
-                 'Meeting 3','Executive 6A','Corridor B1','Entrance B2']
-  const show = Math.min(nvr.channels, 12)
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
-      {Array.from({ length: show }, (_, i) => {
-        const active = i < nvr.usedCh
-        const mbps   = active ? Math.round((2.5 + rng(seed, i) * 3.5) * 10) / 10 : 0
-        const pct    = active ? Math.round(mbps / 10 * 100) : 0
-        return (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5 }}>
-            <span style={{ width: 22, textAlign: 'right', color: 'var(--ink-4)', fontFamily: 'JetBrains Mono, monospace', flex: 'none' }}>
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <span style={{ width: 112, flex: 'none', color: active ? 'var(--ink-2)' : 'var(--ink-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {active ? (names[i] ?? `CAM-${String(i+1).padStart(2,'0')}`) : '— empty —'}
-            </span>
-            <div style={{ flex: 1, height: 7, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden' }}>
-              {active && <div style={{ height: '100%', width: `${pct}%`, background: 'var(--accent)', opacity: .75, borderRadius: 4 }} />}
-            </div>
-            <span style={{ width: 52, textAlign: 'right', flex: 'none', fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink-3)', fontSize: 10.5 }}>
-              {active ? `${mbps} Mbps` : '—'}
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 const MOCK_EVENTS = [
-  { time: '14:22:01', type: 'alert' as const, msg: 'CH-03 camera connection lost' },
-  { time: '14:18:45', type: 'warn'  as const, msg: 'HDD 1 usage above 75% threshold' },
-  { time: '13:55:02', type: 'ok'    as const, msg: 'Recording schedule applied: 24/7 H.265' },
-  { time: '13:41:18', type: 'warn'  as const, msg: 'CPU temperature 72°C — fan speed increased' },
-  { time: '12:00:00', type: 'ok'    as const, msg: 'Daily health check passed' },
+  { time: '10:15:22', sev: 'crit' as const, msg: 'Channel 5 signal lost' },
+  { time: '09:40:01', sev: 'warn' as const, msg: 'HDD2 approaching capacity' },
+  { time: '08:05:10', sev: 'info' as const, msg: 'Recording resumed on CH01' },
+  { time: '08:00:00', sev: 'info' as const, msg: 'System boot completed' },
+  { time: '07:58:30', sev: 'crit' as const, msg: 'Unexpected shutdown' },
+  { time: 'Yesterday', sev: 'info' as const, msg: 'User admin logged in' },
+  { time: 'Yesterday', sev: 'warn' as const, msg: 'Network latency high' },
+  { time: 'Yesterday', sev: 'info' as const, msg: 'Backup routine started' },
 ]
-const EV_LABEL = { alert: 'Offline', warn: 'Warning', ok: 'Info' }
-const EV_COLOR = { alert: 'var(--alert)', warn: 'var(--warn)', ok: 'var(--ok)' }
-const EV_BG    = { alert: 'var(--alert-soft)', warn: 'var(--warn-soft)', ok: 'var(--ok-soft)' }
 
-function StorageBar({ pct, warn }: { pct: number; warn: boolean }) {
-  return (
-    <div style={{ marginTop: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>
-        <span>Used</span><span style={{ color: warn ? 'var(--warn)' : 'var(--ink-2)', fontWeight: 600 }}>{pct}%</span>
-      </div>
-      <div style={{ height: 8, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 999, background: warn ? 'var(--warn)' : 'var(--accent)', transition: 'width .4s ease' }} />
-      </div>
-    </div>
-  )
+const SEV_STYLE = {
+  crit: { bg: 'var(--alert-soft)', color: 'var(--alert)', label: 'CRITICAL' },
+  warn: { bg: 'var(--warn-soft)',  color: 'var(--warn)',  label: 'WARN'     },
+  info: { bg: 'var(--surface-2)', color: 'var(--ink-2)',  label: 'INFO'     },
+}
+
+const CAM_NAMES = [
+  'Lobby Cam A', 'Lobby Cam B', 'Server Rm 01', 'Server Rm 02',
+  'Main Gate', 'Parking A', 'Annex Lobby', 'Meeting 5A',
+  'Office 3A', 'Office 3B', 'Office 3C', 'Break Rm 3',
+]
+
+function makeChannels(nvr: NVR): Channel[] {
+  const seed = nvr.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return Array.from({ length: Math.min(nvr.channels, 12) }, (_, i) => {
+    const active = i < nvr.usedCh
+    const r = (((seed * 1103515245 + i * 12345) >>> 0) & 0x7fffffff) / 0x7fffffff
+    const mbps = active ? Math.round((2.5 + r * 7.5) * 10) / 10 : 0
+    return {
+      ch: i + 1,
+      name: active ? (CAM_NAMES[i] ?? `CAM-${String(i+1).padStart(2,'0')}`) : '— empty —',
+      mbps,
+      offline: active && mbps === 0,
+    }
+  })
 }
 
 export default function NVRDetailPage() {
@@ -132,119 +144,241 @@ export default function NVRDetailPage() {
     </div>
   )
 
-  const storageWarn = nvr.storageUsedPct > 80
-  const chPct = Math.round(nvr.usedCh / nvr.channels * 100)
+  const channels = makeChannels(nvr)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+      {/* Header */}
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{
-            width: 36, height: 36, borderRadius: 9,
+            width: 36, height: 36, borderRadius: 9, flex: 'none',
             background: `color-mix(in srgb, ${STATUS_COLOR[nvr.status]} 15%, transparent)`,
             border: `1.5px solid ${STATUS_COLOR[nvr.status]}`,
-            display: 'grid', placeItems: 'center', color: STATUS_COLOR[nvr.status], flex: 'none',
-          }}><Server size={18} /></span>
+            display: 'grid', placeItems: 'center', color: STATUS_COLOR[nvr.status],
+          }}>
+            <Server size={18} />
+          </span>
           <div>
             <h1 style={{ margin: 0 }}>{nvr.name}</h1>
             <p className="page-sub" style={{ margin: 0 }}>{nvr.id} · {nvr.model}</p>
           </div>
         </div>
-        <span className="cam-status-badge" style={{
-          background: `color-mix(in srgb, ${STATUS_COLOR[nvr.status]} 12%, transparent)`,
-          color: STATUS_COLOR[nvr.status], border: `1px solid ${STATUS_COLOR[nvr.status]}`,
-          borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 600,
-        }}>
-          {STATUS_LABEL[nvr.status]}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--ink-3)' }}>
+            {nvr.firmware}
+          </span>
+          <span style={{
+            background: `color-mix(in srgb, ${STATUS_COLOR[nvr.status]} 12%, transparent)`,
+            color: STATUS_COLOR[nvr.status], border: `1px solid ${STATUS_COLOR[nvr.status]}`,
+            borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 600,
+          }}>
+            {STATUS_LABEL[nvr.status]}
+          </span>
+        </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 28px 28px' }}>
-        <div className="nvr-detail">
+      {/* Body */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 24px 28px' }}>
 
-          {/* Left column */}
-          <div className="nvr-info-col">
-
-            <div className="cam-card">
-              <div className="cam-card-title"><MapPin size={13} /> Location</div>
-              <div className="cam-row"><span className="cr-label">Site</span><span className="cr-val">{nvr.site}</span></div>
-              <div className="cam-row"><span className="cr-label">Building</span><span className="cr-val">{nvr.building}</span></div>
-              <div className="cam-row"><span className="cr-label">Floor</span><span className="cr-val">{nvr.floor}</span></div>
-              <div className="cam-row"><span className="cr-label">Rack</span><span className="cr-val cr-mono">{nvr.rack}</span></div>
+        {/* Info row: Location + Network */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+          <div className="cam-card" style={{ flex: 1 }}>
+            <div className="cam-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <MapPin size={13} /> Location
             </div>
-
-            <div className="cam-card">
-              <div className="cam-card-title"><Wifi size={13} /> Network</div>
-              <div className="cam-row"><span className="cr-label">IP Address</span><span className="cr-val cr-mono">{nvr.ip}</span></div>
-              <div className="cam-row"><span className="cr-label">MAC</span><span className="cr-val cr-mono">{nvr.mac}</span></div>
-              <div className="cam-row"><span className="cr-label">Firmware</span><span className="cr-val cr-mono">{nvr.firmware}</span></div>
-              <div className="cam-row"><span className="cr-label">Installed</span><span className="cr-val">{nvr.installedAt}</span></div>
+            <div className="cam-row">
+              <span className="cr-label">Site</span>
+              <span className="cr-val">{nvr.site}</span>
             </div>
-
-            <div className="cam-card">
-              <div className="cam-card-title"><HardDrive size={13} /> Storage</div>
-              <div className="cam-row"><span className="cr-label">Capacity</span><span className="cr-val cr-mono">{nvr.storageTB} TB</span></div>
-              <div className="cam-row"><span className="cr-label">Retention</span><span className="cr-val">{nvr.retentionDays} days</span></div>
-              <StorageBar pct={nvr.storageUsedPct} warn={storageWarn} />
-              {storageWarn && (
-                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--warn)', fontWeight: 600 }}>
-                  Storage above 80% — consider expanding or reducing retention.
-                </div>
-              )}
+            <div className="cam-row">
+              <span className="cr-label">Building</span>
+              <span className="cr-val">{nvr.building}</span>
             </div>
-
+            <div className="cam-row">
+              <span className="cr-label">Floor · Rack</span>
+              <span className="cr-val cr-mono">{nvr.floor} / {nvr.rack}</span>
+            </div>
           </div>
-
-          {/* Right column */}
-          <div className="nvr-chart-col">
-
-            <div className="cam-card">
-              <div className="cam-card-title">Channel Usage — {nvr.usedCh} / {nvr.channels} Active</div>
-              <div style={{ marginBottom: 12 }}>
-                <ChannelBars nvr={nvr} />
+          <div className="cam-card" style={{ flex: 1 }}>
+            <div className="cam-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Wifi size={13} /> Network
+            </div>
+            <div className="cam-row">
+              <span className="cr-label">IP Address</span>
+              <span className="cr-val cr-mono">{nvr.ip}</span>
+            </div>
+            <div className="cam-row">
+              <span className="cr-label">MAC</span>
+              <span className="cr-val cr-mono">{nvr.mac}</span>
+            </div>
+            <div className="cam-row">
+              <span className="cr-label">Installed</span>
+              <span className="cr-val">{nvr.installedAt}</span>
+            </div>
+          </div>
+          <div className="cam-card" style={{ display: 'flex', gap: 32, alignItems: 'center', padding: '14px 24px', flexShrink: 0 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 28, fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                {nvr.usedCh}<span style={{ fontSize: 14, color: 'var(--ink-3)' }}> / {nvr.channels}</span>
               </div>
-              <div className="stats-grid">
-                <div className="ps-item">
-                  <span className="ps-val">{nvr.usedCh} / {nvr.channels}</span>
-                  <span className="ps-label">Channels active</span>
-                </div>
-                <div className="ps-item">
-                  <span className="ps-val" style={{ color: chPct > 90 ? 'var(--warn)' : undefined }}>{chPct}%</span>
-                  <span className="ps-label">Utilization</span>
-                </div>
-                <div className="ps-item">
-                  <span className="ps-val">{nvr.channels - nvr.usedCh}</span>
-                  <span className="ps-label">Free channels</span>
-                </div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 4 }}>
+                Channels
               </div>
             </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 28, fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                {nvr.retentionDays}
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em', marginTop: 4 }}>
+                Day Retention
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* Main 2-col grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 20, alignItems: 'flex-start' }}>
+
+          {/* Left: Storage + Channels */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Storage Status */}
             <div className="cam-card">
-              <div className="cam-card-title">Recent Events</div>
-              <div style={{ display: 'flex', flexDirection: 'column', marginTop: 4 }}>
-                {MOCK_EVENTS.map((ev, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 0',
-                    borderBottom: i < MOCK_EVENTS.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}>
-                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: 'var(--ink-4)', flex: 'none', width: 60 }}>
-                      {ev.time}
-                    </span>
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999, flex: 'none',
-                      background: EV_BG[ev.type], color: EV_COLOR[ev.type],
-                      border: `1px solid ${EV_COLOR[ev.type]}44`,
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <HardDrive size={15} /> Storage Status
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {nvr.hdds.map(hdd => {
+                  const isAlert = hdd.pct >= 85
+                  const color   = isAlert ? 'var(--alert)' : 'var(--ok)'
+                  return (
+                    <div key={hdd.label} style={{
+                      background: 'var(--surface-2)', borderRadius: 8, padding: 16,
                     }}>
-                      {EV_LABEL[ev.type]}
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-2)', flex: 1 }}>{ev.msg}</span>
-                  </div>
-                ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, color: isAlert ? 'var(--alert)' : 'var(--ink)' }}>
+                          {isAlert && <AlertTriangle size={15} />}
+                          {hdd.label}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{hdd.usedGB} GB / {hdd.totalGB} GB</span>
+                          <span style={{ fontWeight: 700, marginLeft: 8, color }}>{hdd.pct}%</span>
+                        </div>
+                      </div>
+                      <div style={{ height: 6, background: 'var(--surface-3, var(--border))', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${hdd.pct}%`, borderRadius: 4, background: color, transition: 'width .4s ease' }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
+            {/* Channels Table */}
+            <div className="cam-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, padding: '16px 20px 0' }}>
+                Channels
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+                <thead>
+                  <tr>
+                    {['CH', 'Camera Name', 'Bandwidth'].map(h => (
+                      <th key={h} style={{
+                        background: 'var(--surface-2)', fontSize: 10, fontWeight: 700,
+                        textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)',
+                        padding: '10px 16px', textAlign: 'left',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {channels.map(ch => {
+                    const bwWarn = ch.mbps > 8
+                    const bwPct  = Math.min(100, Math.round(ch.mbps / 10 * 100))
+                    const bwColor = bwWarn ? 'var(--warn)' : 'var(--accent)'
+                    return (
+                      <tr key={ch.ch}>
+                        <td style={{
+                          fontFamily: 'JetBrains Mono, monospace', fontSize: 12,
+                          padding: '10px 16px', borderBottom: '1px solid var(--border)',
+                          color: ch.mbps === 0 && ch.name !== '— empty —' ? 'var(--alert)' : 'var(--ink-2)',
+                        }}>
+                          CH{String(ch.ch).padStart(2, '0')}
+                        </td>
+                        <td style={{
+                          fontSize: 13, padding: '10px 16px', borderBottom: '1px solid var(--border)',
+                          color: ch.name === '— empty —' ? 'var(--ink-3)' : 'var(--ink)',
+                        }}>
+                          {ch.name}
+                        </td>
+                        <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 60, height: 4, background: 'var(--surface-3, var(--border))', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                              <div style={{ height: '100%', width: `${bwPct}%`, background: bwColor }} />
+                            </div>
+                            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--ink-2)' }}>
+                              {ch.mbps.toFixed(1)} Mbps
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {/* Right: Event Logs */}
+          <div className="cam-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, padding: '16px 20px 0' }}>Event Logs</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 12 }}>
+              <thead>
+                <tr>
+                  {['Time', 'Sev', 'Message'].map(h => (
+                    <th key={h} style={{
+                      background: 'var(--surface-2)', fontSize: 10, fontWeight: 700,
+                      textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-3)',
+                      padding: '10px 16px', textAlign: 'left',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_EVENTS.map((ev, i) => {
+                  const s = SEV_STYLE[ev.sev]
+                  return (
+                    <tr key={i}>
+                      <td style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'var(--ink-3)',
+                        padding: '10px 16px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap',
+                      }}>
+                        {ev.time}
+                      </td>
+                      <td style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)' }}>
+                        <span style={{
+                          borderRadius: 999, fontSize: 10, fontWeight: 700,
+                          textTransform: 'uppercase', padding: '2px 8px',
+                          background: s.bg, color: s.color,
+                        }}>
+                          {s.label}
+                        </span>
+                      </td>
+                      <td style={{
+                        fontSize: 13, padding: '10px 16px', borderBottom: '1px solid var(--border)',
+                        color: 'var(--ink)',
+                      }}>
+                        {ev.msg}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
     </div>

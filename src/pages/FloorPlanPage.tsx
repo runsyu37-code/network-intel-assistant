@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Video, Eye, Pencil, Plus, Server } from 'lucide-react'
+import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
 
 const PLAN_EXTS = ['jpg', 'jpeg', 'png', 'svg', 'webp']
 
-type CamStatus = 'ok' | 'alert'
+type CamStatus = 'ok' | 'warn' | 'alert'
 
 interface Camera {
   id: string; status: CamStatus; left: string; top: string; rot: number; room: string
+  ip?: string; model?: string; lastSeen?: string
 }
 
 interface RackMarker {
@@ -23,67 +24,67 @@ const FLOORS: Record<string, FloorData> = {
     title: 'Floor 6 — Executive Office',
     sub: 'Executive workspace · 4 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Executive Suite' },
-      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 200, room: 'Board Room' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '20%', rot: 135, room: 'Director Room' },
-      { id: 'CAM-04', status: 'ok', left: '40%', top: '75%', rot: 330, room: 'Lounge' },
+      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Executive Suite', ip: '192.168.1.161', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 200, room: 'Board Room',      ip: '192.168.1.162', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '78%', top: '20%', rot: 135, room: 'Director Room',   ip: '192.168.1.163', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-04', status: 'ok', left: '40%', top: '75%', rot: 330, room: 'Lounge',          ip: '192.168.1.164', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
     ],
   },
   'a-f5': {
     title: 'Floor 5 — Meeting Rooms',
     sub: 'Conference floors · 5 cameras · 1 warning',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Conf A' },
-      { id: 'CAM-02', status: 'ok', left: '50%', top: '25%', rot: 180, room: 'Conf B' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '20%', rot: 135, room: 'Conf C' },
-      { id: 'CAM-04', status: 'ok', left: '30%', top: '75%', rot: 330, room: 'Break Area' },
-      { id: 'CAM-05', status: 'ok', left: '70%', top: '78%', rot: 300, room: 'Corridor' },
+      { id: 'CAM-01', status: 'ok',   left: '22%', top: '22%', rot: 130, room: 'Conf A',    ip: '192.168.1.151', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok',   left: '50%', top: '25%', rot: 180, room: 'Conf B',    ip: '192.168.1.152', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'warn', left: '78%', top: '20%', rot: 135, room: 'Conf C',    ip: '192.168.1.153', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 11:00' },
+      { id: 'CAM-04', status: 'ok',   left: '30%', top: '75%', rot: 330, room: 'Break Area', ip: '192.168.1.154', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
+      { id: 'CAM-05', status: 'ok',   left: '70%', top: '78%', rot: 300, room: 'Corridor',   ip: '192.168.1.155', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
     ],
   },
   'a-f4': {
     title: 'Floor 4 — Office',
     sub: 'Open-plan workspace · 5 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Reception' },
-      { id: 'CAM-02', status: 'ok', left: '50%', top: '28%', rot: 185, room: 'Open Office' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '18%', rot: 135, room: 'Manager' },
-      { id: 'CAM-04', status: 'ok', left: '29%', top: '78%', rot: 325, room: 'Meeting Room' },
-      { id: 'CAM-05', status: 'ok', left: '72%', top: '80%', rot: 300, room: 'Break Room' },
+      { id: 'CAM-01', status: 'ok', left: '22%', top: '22%', rot: 130, room: 'Reception',    ip: '192.168.1.141', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '50%', top: '28%', rot: 185, room: 'Open Office',  ip: '192.168.1.142', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '78%', top: '18%', rot: 135, room: 'Manager',      ip: '192.168.1.143', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-04', status: 'ok', left: '29%', top: '78%', rot: 325, room: 'Meeting Room', ip: '192.168.1.144', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-05', status: 'ok', left: '72%', top: '80%', rot: 300, room: 'Break Room',   ip: '192.168.1.145', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:31' },
     ],
   },
   'a-f3': {
     title: 'Floor 3 — Office',
     sub: 'Open-plan workspace · 5 cameras · 1 offline',
     cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '22%', top: '22%', rot: 130, room: 'Reception' },
-      { id: 'CAM-02', status: 'ok',    left: '50%', top: '28%', rot: 185, room: 'Open Office' },
-      { id: 'CAM-03', status: 'ok',    left: '78%', top: '18%', rot: 135, room: 'Manager' },
-      { id: 'CAM-04', status: 'ok',    left: '29%', top: '78%', rot: 325, room: 'Meeting Room' },
-      { id: 'CAM-05', status: 'alert', left: '72%', top: '80%', rot: 300, room: 'Break Room — OFFLINE' },
+      { id: 'CAM-01', status: 'ok',    left: '22%', top: '22%', rot: 130, room: 'Reception',    ip: '192.168.1.131', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok',    left: '50%', top: '28%', rot: 185, room: 'Open Office',  ip: '192.168.1.132', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok',    left: '78%', top: '18%', rot: 135, room: 'Manager',      ip: '192.168.1.133', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-04', status: 'ok',    left: '29%', top: '78%', rot: 325, room: 'Meeting Room', ip: '192.168.1.134', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
+      { id: 'CAM-05', status: 'alert', left: '72%', top: '80%', rot: 300, room: 'Break Room',   ip: '192.168.1.135', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 10:14' },
     ],
   },
   'a-f2': {
     title: 'Floor 2 — Server Room',
     sub: 'IT infrastructure · 9 devices · 2 cams offline',
     cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '20%', top: '25%', rot: 130, room: 'Server Hall' },
-      { id: 'CAM-02', status: 'alert', left: '55%', top: '22%', rot: 180, room: 'Rack A — OFFLINE' },
-      { id: 'CAM-03', status: 'ok',    left: '80%', top: '30%', rot: 220, room: 'UPS Room' },
-      { id: 'CAM-04', status: 'alert', left: '30%', top: '75%', rot: 0,   room: 'Access Control — OFFLINE' },
-      { id: 'CAM-05', status: 'ok',    left: '70%', top: '70%', rot: 315, room: 'Exit' },
+      { id: 'CAM-01', status: 'ok',    left: '20%', top: '25%', rot: 130, room: 'Server Hall',          ip: '192.168.1.121', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'alert', left: '55%', top: '22%', rot: 180, room: 'Rack A',               ip: '192.168.1.122', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 09:00' },
+      { id: 'CAM-03', status: 'ok',    left: '80%', top: '30%', rot: 220, room: 'UPS Room',             ip: '192.168.1.123', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-04', status: 'alert', left: '30%', top: '75%', rot: 0,   room: 'Access Control',       ip: '192.168.1.124', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 08:45' },
+      { id: 'CAM-05', status: 'ok',    left: '70%', top: '70%', rot: 315, room: 'Exit',                 ip: '192.168.1.125', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
     ],
     racks: [
       { id: 'rack-a1', label: 'Rack A1', left: '42%', top: '50%', status: 'alert' },
-      { id: 'rack-a2', label: 'Rack A2', left: '58%', top: '50%', status: 'ok' },
+      { id: 'rack-a2', label: 'Rack A2', left: '58%', top: '50%', status: 'ok'    },
     ],
   },
   'a-f1': {
     title: 'Floor 1 — Lobby · Reception',
     sub: 'Ground floor · 3 cameras · all online',
     cameras: [
-      { id: 'CAM-01', status: 'ok', left: '22%', top: '30%', rot: 130, room: 'Main Entrance' },
-      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 180, room: 'Reception Desk' },
-      { id: 'CAM-03', status: 'ok', left: '78%', top: '70%', rot: 300, room: 'Elevator Hall' },
+      { id: 'CAM-01', status: 'ok', left: '22%', top: '30%', rot: 130, room: 'Main Entrance',  ip: '192.168.1.111', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
+      { id: 'CAM-02', status: 'ok', left: '55%', top: '25%', rot: 180, room: 'Reception Desk', ip: '192.168.1.112', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:29' },
+      { id: 'CAM-03', status: 'ok', left: '78%', top: '70%', rot: 300, room: 'Elevator Hall',  ip: '192.168.1.113', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
     ],
   },
 }
@@ -92,16 +93,15 @@ const DEFAULT_FLOOR: FloorData = {
   title: 'Floor Plan',
   sub: '— view mode',
   cameras: [
-    { id: 'CAM-01', status: 'ok', left: '25%', top: '25%', rot: 130, room: 'Area A' },
-    { id: 'CAM-02', status: 'ok', left: '60%', top: '30%', rot: 200, room: 'Area B' },
-    { id: 'CAM-03', status: 'ok', left: '75%', top: '70%', rot: 300, room: 'Area C' },
+    { id: 'CAM-01', status: 'ok', left: '25%', top: '25%', rot: 130, room: 'Area A', ip: '192.168.1.101', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
+    { id: 'CAM-02', status: 'ok', left: '60%', top: '30%', rot: 200, room: 'Area B', ip: '192.168.1.102', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
+    { id: 'CAM-03', status: 'ok', left: '75%', top: '70%', rot: 300, room: 'Area C', ip: '192.168.1.103', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
   ],
 }
 
 function FloorPlanBackground({ floorId }: { floorId: string }) {
   const [imgOk, setImgOk] = useState(false)
   const [extIdx, setExtIdx] = useState(0)
-
   const tryNext = () => { if (extIdx + 1 < PLAN_EXTS.length) setExtIdx(i => i + 1) }
   const src = `/floorplans/${floorId}.${PLAN_EXTS[extIdx]}`
 
@@ -115,7 +115,7 @@ function FloorPlanBackground({ floorId }: { floorId: string }) {
           <rect className="room-fill"     x="80"  y="60"  width="280" height="240" />
           <rect className="room-fill alt" x="360" y="60"  width="280" height="240" />
           <rect className="room-fill"     x="640" y="60"  width="280" height="240" />
-          <rect className="room-fill alt" x="80"  y="300" width="840" height="40" />
+          <rect className="room-fill alt" x="80"  y="300" width="840" height="40"  />
           <rect className="room-fill"     x="80"  y="340" width="420" height="200" />
           <rect className="room-fill alt" x="500" y="340" width="420" height="200" />
           <rect className="floor-bg" x="80" y="60" width="840" height="480" />
@@ -148,15 +148,17 @@ function FloorPlanBackground({ floorId }: { floorId: string }) {
 }
 
 const RACK_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
+const CAM_STATUS_COLOR: Record<CamStatus, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
+const CAM_STATUS_LABEL: Record<CamStatus, string>  = { ok: 'Online',   warn: 'Warning',     alert: 'Offline'   }
 
 export default function FloorPlanPage() {
   const { floorId }  = useParams<{ floorId: string }>()
   const navigate     = useNavigate()
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
-  const [zoom, setZoom] = useState(1.0)
+  const [mode, setMode]           = useState<'view' | 'edit'>('view')
+  const [zoom, setZoom]           = useState(1.0)
+  const [selectedCam, setSelectedCam] = useState<Camera | null>(null)
 
   const floorData = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
-
   const [cameras, setCameras] = useState<Camera[]>(floorData.cameras)
   const [positions, setPositions] = useState<Record<string, { left: string; top: string }>>(() =>
     Object.fromEntries(floorData.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
@@ -168,23 +170,21 @@ export default function FloorPlanPage() {
   const zoomRef    = useRef(zoom)
   useEffect(() => { zoomRef.current = zoom }, [zoom])
 
-  // Reset on floor change
   useEffect(() => {
     const f = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
     setCameras(f.cameras)
     setPositions(Object.fromEntries(f.cameras.map(c => [c.id, { left: c.left, top: c.top }])))
     setZoom(1.0)
     setMode('view')
+    setSelectedCam(null)
   }, [floorId])
 
-  // ESC = exit edit mode first (capture phase, before global AppLayout handler)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (document.activeElement as HTMLElement)?.tagName?.toUpperCase()
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
       if (e.key === 'Escape' && mode === 'edit') {
-        e.stopImmediatePropagation()
-        setMode('view')
+        e.stopImmediatePropagation(); setMode('view')
       } else if (e.key === '=' || e.key === '+') {
         setZoom(z => Math.min(3.0, parseFloat((z + 0.2).toFixed(2))))
       } else if (e.key === '-') {
@@ -197,7 +197,6 @@ export default function FloorPlanPage() {
     return () => window.removeEventListener('keydown', onKey, true)
   }, [mode])
 
-  // Mouse-wheel zoom on canvas
   useEffect(() => {
     const el = canvasRef.current
     if (!el) return
@@ -212,17 +211,14 @@ export default function FloorPlanPage() {
   const clamp = (z: number) => Math.max(0.4, Math.min(3.0, z))
 
   function startDrag(id: string, e: React.MouseEvent) {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault(); e.stopPropagation()
     wasDragged.current = false
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
     const pos  = positions[id] ?? { left: '50%', top: '50%' }
     dragging.current = {
-      id,
-      startX:   e.clientX,
-      startY:   e.clientY,
+      id, startX: e.clientX, startY: e.clientY,
       origLeft: parseFloat(pos.left) / 100 * rect.width,
       origTop:  parseFloat(pos.top)  / 100 * rect.height,
     }
@@ -244,7 +240,6 @@ export default function FloorPlanPage() {
 
   function stopDrag() { dragging.current = null }
 
-  // Click on plan background in edit mode → place new camera
   function onPlanClick(e: React.MouseEvent<HTMLDivElement>) {
     if (mode !== 'edit') return
     if (wasDragged.current) { wasDragged.current = false; return }
@@ -261,165 +256,278 @@ export default function FloorPlanPage() {
     const leftStr = `${leftPct.toFixed(1)}%`
     const topStr  = `${topPct.toFixed(1)}%`
     const newId   = `CAM-${String(cameras.length + 1).padStart(2, '0')}`
-    const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera' }
+    const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera', ip: '—', model: '—', lastSeen: '—' }
     setCameras(prev => [...prev, newCam])
     setPositions(prev => ({ ...prev, [newId]: { left: leftStr, top: topStr } }))
   }
 
+  const panelCam = selectedCam ? cameras.find(c => c.id === selectedCam.id) ?? selectedCam : null
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+
+      {/* Page header */}
       <div className="page-head">
         <div>
           <h1>{floorData.title}</h1>
           <p className="page-sub">{floorData.sub}</p>
         </div>
-        <div className="topo-legend">
-          <span className="legend-swatch"><i style={{ background: 'var(--ok)'    }} />Online</span>
-          <span className="legend-swatch"><i style={{ background: 'var(--alert)' }} />Offline</span>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div className="topo-legend">
+            <span className="legend-swatch"><i style={{ background: 'var(--ok)'    }} />Online</span>
+            <span className="legend-swatch"><i style={{ background: 'var(--warn)'  }} />Warning</span>
+            <span className="legend-swatch"><i style={{ background: 'var(--alert)' }} />Offline</span>
+          </div>
+          {/* Mode toggle pill */}
+          <div style={{
+            display: 'flex', background: 'var(--surface-2)', borderRadius: 999,
+            padding: 3, border: '1px solid var(--border)',
+          }}>
+            {(['view', 'edit'] as const).map(m => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                style={{
+                  padding: '5px 14px', fontSize: 12, fontWeight: 600,
+                  borderRadius: 999, border: 'none', cursor: 'pointer',
+                  background: mode === m ? 'var(--surface)' : 'transparent',
+                  color: mode === m ? 'var(--ink)' : 'var(--ink-3)',
+                  boxShadow: mode === m ? 'var(--shadow-1)' : 'none',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  transition: 'background .15s, color .15s',
+                }}
+              >
+                {m === 'view' ? <Eye size={12} /> : <Pencil size={12} />}
+                {m === 'view' ? 'View' : 'Edit'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="canvas-wrap" style={{ flex: 1, minHeight: 0 }}>
-        <div
-          ref={canvasRef}
-          className={`canvas${mode === 'edit' ? ' edit' : ''}`}
-          style={{ position: 'relative', overflow: 'hidden' }}
-          onMouseMove={mode === 'edit' ? onDragMove : undefined}
-          onMouseUp={stopDrag}
-          onMouseLeave={stopDrag}
-          onClick={onPlanClick}
-        >
+      {/* Main area: canvas + side panel */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
 
-          {/* Zoom layer — floor plan + camera overlays scale together */}
+        {/* Canvas area */}
+        <div className="canvas-wrap" style={{ flex: 1, minWidth: 0 }}>
           <div
-            style={{
-              position: 'absolute', inset: 0,
-              transform: `scale(${zoom})`,
-              transformOrigin: '0 0',
-              pointerEvents: 'none',
-            }}
+            ref={canvasRef}
+            className={`canvas${mode === 'edit' ? ' edit' : ''}`}
+            style={{ position: 'relative', overflow: 'hidden' }}
+            onMouseMove={mode === 'edit' ? onDragMove : undefined}
+            onMouseUp={stopDrag}
+            onMouseLeave={stopDrag}
+            onClick={onPlanClick}
           >
-            <FloorPlanBackground floorId={floorId ?? ''} />
-          </div>
+            {/* Zoom layer — floor plan */}
+            <div style={{ position: 'absolute', inset: 0, transform: `scale(${zoom})`, transformOrigin: '0 0', pointerEvents: 'none' }}>
+              <FloorPlanBackground floorId={floorId ?? ''} />
+            </div>
 
-          {/* Camera overlays — positioned in logical (un-zoomed) space, then zoom via parent */}
-          <div
-            style={{
-              position: 'absolute', inset: 0,
-              transform: `scale(${zoom})`,
-              transformOrigin: '0 0',
-              cursor: mode === 'edit' ? 'crosshair' : 'default',
-            }}
-          >
-            {cameras.map(cam => (
-              <div
-                key={cam.id}
-                className={`cam ${cam.status}`}
-                style={{
-                  left: positions[cam.id]?.left ?? cam.left,
-                  top: positions[cam.id]?.top ?? cam.top,
-                  cursor: mode === 'view' ? 'pointer' : undefined,
-                }}
-                onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
-                onClick={mode === 'view' ? () => {
-                  const realId = 'CAM-' + cam.id.split('-')[1].padStart(3, '0')
-                  navigate(`/dashboard/cameras/${realId}`)
-                } : undefined}
-                title={`${cam.id} · ${cam.room}`}
-              >
-                <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
-                <div className="cam-icon"><Video size={16} /></div>
-                <span className="cam-name">{cam.id}</span>
-              </div>
-            ))}
-
-            {floorData.racks?.map(r => (
-              <div
-                key={r.id}
-                data-rack={r.id}
-                onClick={() => navigate(`/dashboard/racks/${r.id}`)}
-                title={`Open ${r.label}`}
-                style={{
-                  position: 'absolute', left: r.left, top: r.top,
-                  transform: 'translate(-50%,-50%)',
-                  zIndex: 3, cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                  transition: 'transform .12s ease',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = 'translate(-50%,-50%) scale(1.08)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'translate(-50%,-50%)')}
-              >
-                <div style={{
-                  width: 32, height: 32, borderRadius: 7,
-                  background: 'var(--surface)', border: `2px solid ${RACK_COLOR[r.status]}`,
-                  display: 'grid', placeItems: 'center', color: RACK_COLOR[r.status],
-                  boxShadow: '0 2px 8px rgba(0,0,0,.18)',
-                }}>
-                  <Server size={16} />
+            {/* Camera + rack overlays */}
+            <div style={{ position: 'absolute', inset: 0, transform: `scale(${zoom})`, transformOrigin: '0 0', cursor: mode === 'edit' ? 'crosshair' : 'default' }}>
+              {cameras.map(cam => (
+                <div
+                  key={cam.id}
+                  className={`cam ${cam.status}`}
+                  style={{
+                    left: positions[cam.id]?.left ?? cam.left,
+                    top: positions[cam.id]?.top ?? cam.top,
+                    cursor: mode === 'view' ? 'pointer' : undefined,
+                    outline: panelCam?.id === cam.id ? `3px solid var(--accent)` : undefined,
+                    outlineOffset: 2,
+                  }}
+                  onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
+                  onClick={mode === 'view' ? (e) => {
+                    e.stopPropagation()
+                    setSelectedCam(cam)
+                  } : undefined}
+                  title={`${cam.id} · ${cam.room}`}
+                >
+                  <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
+                  <div className="cam-icon"><Video size={16} /></div>
+                  <span className="cam-name">{cam.id}</span>
                 </div>
-                <span style={{
-                  background: 'var(--surface)', border: '1px solid var(--border)',
-                  borderRadius: 5, padding: '2px 7px',
-                  fontFamily: 'monospace', fontSize: 10, color: 'var(--ink-2)', fontWeight: 600,
-                  whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-                }}>{r.label}</span>
+              ))}
+
+              {floorData.racks?.map(r => (
+                <div
+                  key={r.id}
+                  data-rack={r.id}
+                  onClick={() => navigate(`/dashboard/racks/${r.id}`)}
+                  title={`Open ${r.label}`}
+                  style={{
+                    position: 'absolute', left: r.left, top: r.top,
+                    transform: 'translate(-50%,-50%)', zIndex: 3, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    transition: 'transform .12s ease',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.transform = 'translate(-50%,-50%) scale(1.08)')}
+                  onMouseLeave={e => (e.currentTarget.style.transform = 'translate(-50%,-50%)')}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 7,
+                    background: 'var(--surface)', border: `2px solid ${RACK_COLOR[r.status]}`,
+                    display: 'grid', placeItems: 'center', color: RACK_COLOR[r.status],
+                    boxShadow: '0 2px 8px rgba(0,0,0,.18)',
+                  }}>
+                    <Server size={16} />
+                  </div>
+                  <span style={{
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    borderRadius: 5, padding: '2px 7px',
+                    fontFamily: 'monospace', fontSize: 10, color: 'var(--ink-2)', fontWeight: 600,
+                    whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,.06)',
+                  }}>{r.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Edit banner */}
+            <div className="edit-banner">
+              <span className="eb-dot" />
+              Edit mode · click floor plan to add · drag to move · Esc to exit
+            </div>
+
+            {/* Add camera button (edit mode) */}
+            <button
+              className="add-cam-btn"
+              onClick={e => {
+                e.stopPropagation()
+                const leftStr = '50%', topStr = '50%'
+                const newId   = `CAM-${String(cameras.length + 1).padStart(2, '0')}`
+                const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera' }
+                setCameras(prev => [...prev, newCam])
+                setPositions(prev => ({ ...prev, [newId]: { left: leftStr, top: topStr } }))
+              }}
+            >
+              <Plus size={14} /> Add camera
+            </button>
+            <div className="role-hint">Click on floor plan to place · drag to reposition</div>
+
+            {/* Zoom controls */}
+            <div className="canvas-tools">
+              <div className="ct-group">
+                <button className="icon-btn" title="Zoom in  ( + )" onClick={() => setZoom(z => clamp(parseFloat((z + 0.2).toFixed(2))))}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+                <div className="ct-label">{Math.round(zoom * 100)}%</div>
+                <button className="icon-btn" title="Zoom out  ( - )" onClick={() => setZoom(z => clamp(parseFloat((z - 0.2).toFixed(2))))}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </button>
+                <button className="icon-btn" title="Reset zoom  ( 0 )" onClick={() => setZoom(1.0)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                    <path d="M4 9V5a1 1 0 0 1 1-1h4" /><path d="M20 9V5a1 1 0 0 0-1-1h-4" />
+                    <path d="M4 15v4a1 1 0 0 0 1 1h4" /><path d="M20 15v4a1 1 0 0 1-1 1h-4" />
+                  </svg>
+                </button>
               </div>
-            ))}
-          </div>
-
-          {/* ── Fixed UI overlays (not zoomed) ── */}
-
-          <div className="mode-toggle">
-            <button className={mode === 'view' ? 'on' : ''} onClick={() => setMode('view')}>
-              <Eye size={13} /> View
-            </button>
-            <button className={mode === 'edit' ? 'on' : ''} onClick={() => setMode('edit')}>
-              <Pencil size={13} /> Edit
-            </button>
-          </div>
-
-          <div className="edit-banner">
-            <span className="eb-dot" />
-            Edit mode · click floor plan to add · drag to move · Esc to exit
-          </div>
-
-          <button
-            className="add-cam-btn"
-            onClick={e => {
-              e.stopPropagation()
-              const leftStr = '50%', topStr = '50%'
-              const newId   = `CAM-${String(cameras.length + 1).padStart(2, '0')}`
-              const newCam: Camera = { id: newId, status: 'ok', left: leftStr, top: topStr, rot: 135, room: 'New Camera' }
-              setCameras(prev => [...prev, newCam])
-              setPositions(prev => ({ ...prev, [newId]: { left: leftStr, top: topStr } }))
-            }}
-          >
-            <Plus size={14} /> Add camera
-          </button>
-          <div className="role-hint">Click on floor plan to place · drag to reposition</div>
-
-          <div className="canvas-tools">
-            <div className="ct-group">
-              <button className="icon-btn" title="Zoom in  ( + )" onClick={() => setZoom(z => clamp(parseFloat((z + 0.2).toFixed(2))))}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-              <div className="ct-label">{Math.round(zoom * 100)}%</div>
-              <button className="icon-btn" title="Zoom out  ( - )" onClick={() => setZoom(z => clamp(parseFloat((z - 0.2).toFixed(2))))}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-              <button className="icon-btn" title="Reset zoom  ( 0 )" onClick={() => setZoom(1.0)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
-                  <path d="M4 9V5a1 1 0 0 1 1-1h4" /><path d="M20 9V5a1 1 0 0 0-1-1h-4" />
-                  <path d="M4 15v4a1 1 0 0 0 1 1h4" /><path d="M20 15v4a1 1 0 0 1-1 1h-4" />
-                </svg>
-              </button>
             </div>
           </div>
+        </div>
 
+        {/* Side panel — camera detail */}
+        <div style={{
+          width: 280, flexShrink: 0,
+          background: 'var(--surface)',
+          borderLeft: '1px solid var(--border)',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <div style={{
+            padding: '14px 16px', borderBottom: '1px solid var(--border)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>
+              {panelCam ? panelCam.id : 'Camera Detail'}
+            </span>
+            {panelCam && (
+              <button
+                className="tbl-icon-btn"
+                onClick={() => setSelectedCam(null)}
+                title="Close"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+
+          {panelCam ? (
+            <div style={{ padding: 16, flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Thumbnail placeholder */}
+              <div style={{
+                width: '100%', aspectRatio: '16/9',
+                background: 'var(--surface-2)', borderRadius: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--ink-3)', border: '1px solid var(--border)',
+              }}>
+                <Video size={32} />
+              </div>
+
+              {/* Detail rows */}
+              {[
+                { label: 'Status',    value: CAM_STATUS_LABEL[panelCam.status], isStatus: true },
+                { label: 'Room',      value: panelCam.room,                     isStatus: false },
+                { label: 'IP',        value: panelCam.ip ?? '—',                isStatus: false, mono: true },
+                { label: 'Model',     value: panelCam.model ?? '—',             isStatus: false },
+                { label: 'Last Seen', value: panelCam.lastSeen ?? '—',          isStatus: false, mono: true },
+              ].map(row => (
+                <div key={row.label} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  borderBottom: '1px solid var(--border)', paddingBottom: 10,
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                    {row.label}
+                  </span>
+                  {row.isStatus ? (
+                    <span style={{
+                      borderRadius: 999, fontSize: 10, fontWeight: 700,
+                      textTransform: 'uppercase', padding: '2px 9px',
+                      background: `color-mix(in srgb, ${CAM_STATUS_COLOR[panelCam.status]} 14%, transparent)`,
+                      color: CAM_STATUS_COLOR[panelCam.status],
+                    }}>
+                      {row.value}
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: 12, fontWeight: 600, color: 'var(--ink)',
+                      fontFamily: row.mono ? 'JetBrains Mono, monospace' : undefined,
+                    }}>
+                      {row.value}
+                    </span>
+                  )}
+                </div>
+              ))}
+
+              {/* Open Detail button */}
+              <div style={{ marginTop: 'auto' }}>
+                <button
+                  className="btn-primary"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={() => {
+                    const realId = 'CAM-' + panelCam.id.split('-')[1].padStart(3, '0')
+                    navigate(`/dashboard/cameras/${realId}`)
+                  }}
+                >
+                  Open Detail
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              color: 'var(--ink-3)', gap: 10, padding: 24,
+            }}>
+              <Video size={36} style={{ opacity: .3 }} />
+              <span style={{ fontSize: 12, textAlign: 'center' }}>
+                Click a camera on the floor plan to see details
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
