@@ -286,6 +286,20 @@ Common causes:
 2. **Web.config missing:** Copy from `Web.config.template` and fill in values.
 3. **DB connection refused:** Check `connectionString` in Web.config. Test SQL Server is running.
 4. **Build error "type not found":** All `.cs` files must be listed in `.csproj` — check `<Compile Include>` entries.
+5. **NuGet packages missing** (new machine / fresh clone):
+   ```powershell
+   # From repo root — add nuget.org if not listed
+   .\nuget.exe sources add -name "nuget.org" -source "https://api.nuget.org/v3/index.json"
+   .\nuget.exe restore "BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx"
+   ```
+6. **`bin\roslyn\csc.exe` not found** — copy Roslyn compiler after NuGet restore:
+   ```powershell
+   $src = "BNO_Survei_MonitorAPI\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\tools\Roslyn45"
+   $dst = "BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI\bin\roslyn"
+   New-Item -ItemType Directory -Force $dst | Out-Null
+   Copy-Item "$src\*" $dst -Recurse -Force
+   ```
+   Then press **Ctrl+F5** again in Visual Studio.
 
 ### When a request works in Bruno but fails from frontend
 
@@ -464,7 +478,7 @@ On 401:                   redirect to /login
 ## Current Status
 
 **Backend: Phase 13 complete — maintenance mode.**  
-**Frontend: Not started — approved plan ready, begin Phase F1.**
+**Frontend: 15 pages done — presentation ready 2026-05-29.**
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -473,7 +487,8 @@ On 401:                   redirect to /login
 | 11 | Adversarial review | Done |
 | 12 | All 5 review items closed | Done |
 | 13 | Reflection security gate (43/43 PASS) | Done |
-| **F1** | Frontend setup + login | **Next** |
+| F1–F8 | React SPA — 15 pages, Buono purple theme | Done |
+| **F9** | Wire remaining 12 pages to real API | **Next** |
 
 ---
 
