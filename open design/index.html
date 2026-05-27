@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSM — Surveillance Smart-Monitor</title>
+    <link rel="stylesheet" href="mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="mpmh6ze9-layout.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; }
+        iframe { border: none; width: 100%; height: 100%; background: transparent; }
+        
+        /* Icons (Lucide-like SVG scale) */
+        .ico { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
+    </style>
+</head>
+<body>
+    <div class="app" id="appShell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">SSM</div>
+                <div class="user-who">
+                    <div class="brand-name">Smart-Monitor</div>
+                    <div class="brand-ver">v2.4.0</div>
+                </div>
+            </div>
+
+            <nav class="nav-section">
+                <div class="nav-label">Monitoring</div>
+                <a href="screens/dashboard.html" target="contentFrame" class="nav-item active" onclick="setActive(this)">
+                    <svg class="ico nav-ico"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="screens/device-list.html" target="contentFrame" class="nav-item" onclick="setActive(this)">
+                    <svg class="ico nav-ico"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <span>Device List</span>
+                    <span class="nav-count">128</span>
+                </a>
+                <a href="screens/camera-monitoring.html" target="contentFrame" class="nav-item" onclick="setActive(this)">
+                    <svg class="ico nav-ico"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    <span>Cameras</span>
+                </a>
+                <a href="screens/rack-inventory.html" target="contentFrame" class="nav-item" onclick="setActive(this)">
+                    <svg class="ico nav-ico"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    <span>Rack View</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-spacer"></div>
+
+            <div class="sidebar-foot">
+                <div class="theme-toggle">
+                    <button id="themeLight" class="on" onclick="setTheme('light')">
+                        <svg class="ico" style="width:14px;height:14px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        Light
+                    </button>
+                    <button id="themeDark" onclick="setTheme('dark')">
+                        <svg class="ico" style="width:14px;height:14px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        Dark
+                    </button>
+                </div>
+
+                <div class="user-chip">
+                    <div class="user-avatar">JD</div>
+                    <div class="user-who">
+                        <div class="user-name">John Doe</div>
+                        <div class="user-role">NOC Admin</div>
+                    </div>
+                    <svg class="ico" style="width:14px;height:14px;opacity:0.5;"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg class="ico"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                
+                <div class="crumbs">
+                    <a href="#">Network</a>
+                    <span class="crumb-sep">/</span>
+                    <span class="crumb-here" id="crumbTitle">Dashboard</span>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="pill pill-alert">
+                        <span class="pill-dot"></span>
+                        3 Active Alerts
+                    </div>
+                    <div class="pill pill-poll">
+                        <span class="pill-dot"></span>
+                        Polling: 2s
+                    </div>
+                    <button class="icon-btn">
+                        <svg class="ico"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </button>
+                    <button class="icon-btn">
+                        <svg class="ico"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <iframe name="contentFrame" src="screens/dashboard.html" id="contentFrame"></iframe>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('appShell').classList.toggle('sidebar-collapsed');
+        }
+
+        function setTheme(mode) {
+            document.documentElement.setAttribute('data-theme', mode);
+            document.getElementById('themeLight').classList.toggle('on', mode === 'light');
+            document.getElementById('themeDark').classList.toggle('on', mode === 'dark');
+            
+            // Sync with iframe
+            const frame = document.getElementById('contentFrame');
+            if (frame.contentDocument) {
+                frame.contentDocument.documentElement.setAttribute('data-theme', mode);
+            }
+        }
+
+        function setActive(el) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('crumbTitle').innerText = el.querySelector('span').innerText;
+        }
+
+        // Handle iframe load for theme persistence
+        document.getElementById('contentFrame').addEventListener('load', function() {
+            const mode = document.documentElement.getAttribute('data-theme') || 'light';
+            this.contentDocument.documentElement.setAttribute('data-theme', mode);
+        });
+    </script>
+</body>
+</html>

@@ -98,7 +98,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-logo">S</div>
+        <img src="/buono_icon.png" alt="Buono" className="brand-logo" />
         <div>
           <div className="brand-name">SSM</div>
           <div className="brand-ver">v1.0 Network Intel</div>

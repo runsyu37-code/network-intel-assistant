@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+    <style>
+        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
+
+        .sites-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 0 24px 24px;
+        }
+
+        /* Site card */
+        .site-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow-1);
+        }
+        .site-card-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            cursor: pointer;
+        }
+        .site-card-head:hover { background: var(--surface-2); }
+        .site-status-bar {
+            width: 3px; height: 40px;
+            border-radius: 3px; flex: none;
+            margin-top: 2px;
+        }
+        .site-card-meta { flex: 1; min-width: 0; }
+        .site-card-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+        .site-loc-badge {
+            display: inline-block;
+            font-size: 10px; font-weight: 600;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--ink-3);
+            padding: 2px 8px; border-radius: 4px;
+            margin-top: 4px;
+        }
+        .site-counts {
+            display: flex; gap: 12px; margin-top: 8px;
+        }
+        .site-count {
+            font-size: 11px; color: var(--ink-2); font-weight: 500;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .site-count svg { opacity: 0.5; }
+        .site-dot-wrap { display: flex; align-items: center; padding-top: 2px; }
+        .site-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Expand chevron */
+        .site-chevron { color: var(--ink-3); margin-top: 14px; transition: transform 0.2s; }
+        .site-chevron.open { transform: rotate(180deg); }
+
+        /* Building expansion */
+        .bldg-expansion {
+            border-top: 1px solid var(--border);
+            padding: 12px 16px;
+            background: var(--surface-2);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .bldg-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .bldg-card:hover { box-shadow: var(--shadow-2); }
+
+        /* Isometric placeholder */
+        .bldg-thumb {
+            width: 40px; height: 36px;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            flex: none;
+            display: grid; place-items: center;
+        }
+
+        .bldg-info { flex: 1; min-width: 0; }
+        .bldg-name { font-size: 12px; font-weight: 600; color: var(--ink); }
+        .bldg-floors { font-size: 11px; color: var(--ink-3); margin-top: 1px; }
+
+        /* Camera ratio bar */
+        .cam-bar-wrap { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+        .cam-bar-track {
+            flex: 1; height: 4px; background: var(--surface-3);
+            border-radius: 2px; overflow: hidden;
+        }
+        .cam-bar-fill { height: 100%; border-radius: 2px; background: var(--ok); }
+        .cam-bar-fill.warn { background: var(--warn); }
+        .cam-bar-fill.alert { background: var(--alert); }
+        .cam-bar-label { font-size: 10px; color: var(--ink-3); white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="page-head">
+        <div>
+            <h1>Sites Overview</h1>
+            <div class="page-sub">All locations · 5 sites · 142 cameras total</div>
+        </div>
+        <div class="topbar-right">
+            <div class="dl-stat"><span class="ds-dot" style="background:var(--ok)"></span> 4 Healthy</div>
+            <div class="dl-stat"><span class="ds-dot" style="background:var(--alert)"></span> 1 Alert</div>
+        </div>
+    </div>
+
+    <div class="sites-grid">
+
+        <!-- Site A — HQ Bangkok (expanded, has alert) -->
+        <div class="site-card">
+            <div class="site-card-head">
+                <div class="site-status-bar" style="background: var(--alert);"></div>
+                <div class="site-card-meta">
+                    <div class="site-card-name">Site A — HQ Bangkok</div>
+                    <div class="site-loc-badge">Sathorn, Bangkok</div>
+                    <div class="site-counts">
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                            4 buildings
+                        </span>
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            89 cameras
+                        </span>
+                    </div>
+                </div>
+                <div class="site-dot-wrap"><span class="site-dot" style="background: var(--alert);"></span></div>
+                <div class="site-chevron open">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+            <!-- Expanded buildings -->
+            <div class="bldg-expansion">
+                <div class="bldg-card">
+                    <div class="bldg-thumb">
+                        <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="var(--ink-3)" stroke-width="1.2">
+                            <polygon points="14,2 26,8 26,22 14,22" fill="var(--surface-2)"/>
+                            <polygon points="14,2 2,8 2,22 14,22" fill="var(--surface-3)"/>
+                            <polygon points="2,8 14,2 26,8 14,14" fill="var(--border)"/>
+                            <line x1="14" y1="2" x2="14" y2="22"/>
+                        </svg>
+                    </div>
+                    <div class="bldg-info">
+                        <div class="bldg-name">Building A</div>
+                        <div class="bldg-floors">6 floors</div>
+                        <div class="cam-bar-wrap">
+                            <div class="cam-bar-track"><div class="cam-bar-fill alert" style="width: 72%;"></div></div>
+                            <span class="cam-bar-label">42/58</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bldg-card">
+                    <div class="bldg-thumb">
+                        <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="var(--ink-3)" stroke-width="1.2">
+                            <polygon points="14,4 26,10 26,22 14,22" fill="var(--surface-2)"/>
+                            <polygon points="14,4 2,10 2,22 14,22" fill="var(--surface-3)"/>
+                            <polygon points="2,10 14,4 26,10 14,16" fill="var(--border)"/>
+                            <line x1="14" y1="4" x2="14" y2="22"/>
+                        </svg>
+                    </div>
+                    <div class="bldg-info">
+                        <div class="bldg-name">Building B</div>
+                        <div class="bldg-floors">4 floors</div>
+                        <div class="cam-bar-wrap">
+                            <div class="cam-bar-track"><div class="cam-bar-fill" style="width: 100%;"></div></div>
+                            <span class="cam-bar-label">20/20</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bldg-card">
+                    <div class="bldg-thumb">
+                        <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="var(--ink-3)" stroke-width="1.2">
+                            <polygon points="14,6 26,12 26,22 14,22" fill="var(--surface-2)"/>
+                            <polygon points="14,6 2,12 2,22 14,22" fill="var(--surface-3)"/>
+                            <polygon points="2,12 14,6 26,12 14,18" fill="var(--border)"/>
+                            <line x1="14" y1="6" x2="14" y2="22"/>
+                        </svg>
+                    </div>
+                    <div class="bldg-info">
+                        <div class="bldg-name">Building C</div>
+                        <div class="bldg-floors">3 floors</div>
+                        <div class="cam-bar-wrap">
+                            <div class="cam-bar-track"><div class="cam-bar-fill" style="width: 100%;"></div></div>
+                            <span class="cam-bar-label">12/12</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bldg-card">
+                    <div class="bldg-thumb">
+                        <svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="var(--ink-3)" stroke-width="1.2">
+                            <polygon points="14,8 26,14 26,22 14,22" fill="var(--surface-2)"/>
+                            <polygon points="14,8 2,14 2,22 14,22" fill="var(--surface-3)"/>
+                            <polygon points="2,14 14,8 26,14 14,20" fill="var(--border)"/>
+                            <line x1="14" y1="8" x2="14" y2="22"/>
+                        </svg>
+                    </div>
+                    <div class="bldg-info">
+                        <div class="bldg-name">Building D</div>
+                        <div class="bldg-floors">2 floors</div>
+                        <div class="cam-bar-wrap">
+                            <div class="cam-bar-track"><div class="cam-bar-fill warn" style="width: 83%;"></div></div>
+                            <span class="cam-bar-label">10/12</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Site B — Chiang Mai (collapsed) -->
+        <div class="site-card">
+            <div class="site-card-head">
+                <div class="site-status-bar" style="background: var(--ok);"></div>
+                <div class="site-card-meta">
+                    <div class="site-card-name">Site B — Chiang Mai DC</div>
+                    <div class="site-loc-badge">Mueang, CNX</div>
+                    <div class="site-counts">
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                            2 buildings
+                        </span>
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            24 cameras
+                        </span>
+                    </div>
+                </div>
+                <div class="site-dot-wrap"><span class="site-dot" style="background: var(--ok);"></span></div>
+                <div class="site-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Site C — Phuket -->
+        <div class="site-card">
+            <div class="site-card-head">
+                <div class="site-status-bar" style="background: var(--ok);"></div>
+                <div class="site-card-meta">
+                    <div class="site-card-name">Site C — Phuket Branch</div>
+                    <div class="site-loc-badge">Kathu, HKT</div>
+                    <div class="site-counts">
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                            1 building
+                        </span>
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            16 cameras
+                        </span>
+                    </div>
+                </div>
+                <div class="site-dot-wrap"><span class="site-dot" style="background: var(--ok);"></span></div>
+                <div class="site-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Site D — Khon Kaen -->
+        <div class="site-card">
+            <div class="site-card-head">
+                <div class="site-status-bar" style="background: var(--warn);"></div>
+                <div class="site-card-meta">
+                    <div class="site-card-name">Site D — Khon Kaen</div>
+                    <div class="site-loc-badge">Mueang, KKC</div>
+                    <div class="site-counts">
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                            1 building
+                        </span>
+                        <span class="site-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                            13 cameras
+                        </span>
+                    </div>
+                </div>
+                <div class="site-dot-wrap"><span class="site-dot" style="background: var(--warn);"></span></div>
+                <div class="site-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

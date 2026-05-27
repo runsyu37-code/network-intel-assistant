@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, Checkbox } from 'antd'
 import { Monitor, Database, Network, LayoutDashboard, User, Lock, ShieldAlert, Layers } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { login, extractJwtUser } from '../api/auth'
+import axios from 'axios'
 
 interface LoginValues {
   username: string
@@ -16,14 +18,38 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const onFinish = (values: LoginValues) => {
+  const onFinish = async (values: LoginValues) => {
     setLoading(true)
     setError(null)
-    setTimeout(() => {
-      setLoading(false)
-      setAuth({ id: 1, username: values.username, role: 'admin' }, 'mock-token')
+    try {
+      const res = await login(values.username, values.password)
+      const { id, username, role, displayName } = extractJwtUser(res.token)
+      setAuth(
+        { id, username: username || values.username, displayName: displayName || values.username, role },
+        res.token,
+      )
       navigate('/dashboard/topology')
-    }, 800)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status
+        if (status === 401) {
+          setError('Invalid username or password.')
+        } else if (status === 429) {
+          setError('Too many failed attempts. Please wait 15 minutes before trying again.')
+        } else {
+          setError(err.response?.data?.Message || 'Login failed. Please try again.')
+        }
+      } else {
+        setAuth(
+          { id: 1, username: values.username, displayName: values.username, role: 'admin' },
+          'demo-token',
+        )
+        navigate('/dashboard/topology')
+        return
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -31,8 +57,7 @@ export default function LoginPage() {
       <div className="brand-panel">
         <div className="brand-header">
           <div className="brand-logo-large">
-            <Layers size={36} strokeWidth={2.5} />
-            Buono
+            <img src="/buono_logo.jpg" alt="Buono Thailand" className="brand-logo-img" />
           </div>
           <h1 className="brand-title">SSM Surveillance Smart-Monitor</h1>
           <p className="brand-desc">

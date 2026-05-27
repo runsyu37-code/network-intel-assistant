@@ -1,6 +1,8 @@
 /* Base styles — mirrors wireframe shell */
 *, *::before, *::after { box-sizing: border-box; }
 
+@keyframes spin { to { transform: rotate(360deg); } }
+
 html, body {
   margin: 0;
   height: 100%;

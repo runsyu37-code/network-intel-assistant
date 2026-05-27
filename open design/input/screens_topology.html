@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+    <style>
+        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
+
+        .topo-canvas {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 48px);
+            background: var(--canvas-bg);
+            background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+            background-size: 24px 24px;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .topo-toolbar {
+            position: absolute;
+            top: 16px; right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-1);
+            overflow: hidden;
+            z-index: 10;
+        }
+        .topo-toolbar button {
+            width: 34px; height: 34px;
+            display: grid; place-items: center;
+            background: var(--surface); border: none;
+            border-bottom: 1px solid var(--border);
+            color: var(--ink-2); cursor: pointer;
+        }
+        .topo-toolbar button:last-child { border-bottom: none; }
+        .topo-toolbar button:hover { background: var(--surface-2); }
+
+        /* Legend */
+        .topo-legend {
+            position: absolute;
+            bottom: 16px; left: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            box-shadow: var(--shadow-1);
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--ink-2);
+            z-index: 10;
+        }
+        .leg-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+        /* Nodes */
+        .node {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            min-width: 180px;
+            box-shadow: var(--shadow-2);
+            transform: translate(-50%, -50%);
+        }
+        .node-hq {
+            background: linear-gradient(180deg, #1b2540 0%, #141a2c 100%);
+            border-color: rgba(91,141,239,0.45);
+            box-shadow: 0 0 0 1px rgba(91,141,239,0.18), 0 8px 28px rgba(0,0,0,0.55);
+        }
+        .node-alert { border-color: rgba(220,38,38,0.4); }
+        .node-warn  { border-color: rgba(217,119,6,0.4); }
+        .node-head { display: flex; align-items: center; gap: 8px; }
+        .node-glyph {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center; flex: none;
+        }
+        .node-glyph-dark { background: var(--accent); color: #0b0e16; }
+        .node-label { font-weight: 600; font-size: 13px; color: var(--ink); }
+        .node-label-white { color: #fff; }
+        .node-ip { font-size: 11px; color: var(--ink-3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+        .node-ip-dark { color: #94a3b8; }
+        .node-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-left: auto; }
+        .node-chips {
+            display: flex; gap: 6px; margin-top: 10px;
+            padding-top: 8px; border-top: 1px solid var(--border);
+        }
+        .node-chips-dark { border-top-color: rgba(255,255,255,0.08); }
+        .node-chip {
+            font-size: 10px; font-weight: 600;
+            background: var(--surface-2); color: var(--ink-2);
+            padding: 2px 7px; border-radius: 999px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .node-chip-dark { background: rgba(255,255,255,0.08); color: #94a3b8; }
+
+        /* SVG edges */
+        .edges-svg {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="topo-canvas" id="canvas">
+
+        <!-- Edges SVG -->
+        <svg class="edges-svg" id="edgesSvg">
+            <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L8,3 Z" fill="var(--ink-3)" />
+                </marker>
+                <marker id="arrow-alert" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L8,3 Z" fill="var(--alert)" />
+                </marker>
+            </defs>
+            <!-- HQ → Site A (Bangkok) -->
+            <line x1="50%" y1="34%" x2="28%" y2="52%" stroke="var(--alert)" stroke-width="1.5" marker-end="url(#arrow-alert)" stroke-dasharray="none"/>
+            <!-- HQ → Site B (Chiang Mai) -->
+            <line x1="50%" y1="34%" x2="72%" y2="52%" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <!-- HQ → Site C (Phuket) -->
+            <line x1="50%" y1="34%" x2="38%" y2="70%" stroke="var(--ok)" stroke-width="1.5" marker-end="url(#arrow)"/>
+            <!-- Site A children -->
+            <line x1="28%" y1="58%" x2="16%" y2="72%" stroke="var(--border-2)" stroke-width="1" marker-end="url(#arrow)"/>
+            <line x1="28%" y1="58%" x2="28%" y2="72%" stroke="var(--border-2)" stroke-width="1" marker-end="url(#arrow)"/>
+            <line x1="28%" y1="58%" x2="40%" y2="72%" stroke="var(--border-2)" stroke-width="1" marker-end="url(#arrow)"/>
+            <!-- Site B children -->
+            <line x1="72%" y1="58%" x2="64%" y2="72%" stroke="var(--border-2)" stroke-width="1" marker-end="url(#arrow)"/>
+            <line x1="72%" y1="58%" x2="80%" y2="72%" stroke="var(--border-2)" stroke-width="1" marker-end="url(#arrow)"/>
+        </svg>
+
+        <!-- HQ Node -->
+        <div class="node node-hq" style="left: 50%; top: 30%;">
+            <div class="node-head">
+                <div class="node-glyph node-glyph-dark">HQ</div>
+                <div>
+                    <div class="node-label node-label-white">HQ — Core Router</div>
+                    <div class="node-ip node-ip-dark">203.0.113.1</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok); margin-left: auto;"></span>
+            </div>
+            <div class="node-chips node-chips-dark">
+                <span class="node-chip node-chip-dark">5 sites</span>
+                <span class="node-chip node-chip-dark">142 cams</span>
+                <span class="node-chip node-chip-dark">1.2 Gbps</span>
+            </div>
+        </div>
+
+        <!-- Site A — Bangkok (alert) -->
+        <div class="node node-alert" style="left: 28%; top: 52%;">
+            <div class="node-head">
+                <div class="node-glyph" style="background: var(--alert-soft); color: var(--alert);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                </div>
+                <div>
+                    <div class="node-label">Site A — HQ Bangkok</div>
+                    <div class="node-ip">192.168.1.0/24</div>
+                </div>
+                <span class="node-dot" style="background: var(--alert); box-shadow: 0 0 0 3px rgba(220,38,38,0.15);"></span>
+            </div>
+            <div class="node-chips">
+                <span class="node-chip">42 dev</span>
+                <span class="node-chip" style="color: var(--alert);">2 offline</span>
+            </div>
+        </div>
+
+        <!-- Site B — Chiang Mai -->
+        <div class="node" style="left: 72%; top: 52%;">
+            <div class="node-head">
+                <div class="node-glyph" style="background: var(--ok-soft); color: var(--ok);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                </div>
+                <div>
+                    <div class="node-label">Site B — Chiang Mai DC</div>
+                    <div class="node-ip">192.168.10.0/24</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+            <div class="node-chips">
+                <span class="node-chip">38 dev</span>
+                <span class="node-chip">all online</span>
+            </div>
+        </div>
+
+        <!-- Site C — Phuket -->
+        <div class="node" style="left: 38%; top: 70%;">
+            <div class="node-head">
+                <div class="node-glyph" style="background: var(--ok-soft); color: var(--ok);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/></svg>
+                </div>
+                <div>
+                    <div class="node-label">Site C — Phuket Branch</div>
+                    <div class="node-ip">192.168.20.0/24</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+            <div class="node-chips">
+                <span class="node-chip">24 dev</span>
+                <span class="node-chip">all online</span>
+            </div>
+        </div>
+
+        <!-- Site A child: NVR -->
+        <div class="node" style="left: 16%; top: 79%; min-width: 140px; padding: 8px 12px;">
+            <div class="node-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" style="flex:none"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="11" cy="12" r="1" fill="currentColor"/><circle cx="14" cy="12" r="1" fill="currentColor"/></svg>
+                <div>
+                    <div class="node-label" style="font-size: 12px;">NVR-HQ-01</div>
+                    <div class="node-ip">192.168.1.200</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+        </div>
+
+        <!-- Site A child: Switch -->
+        <div class="node" style="left: 28%; top: 79%; min-width: 140px; padding: 8px 12px;">
+            <div class="node-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" style="flex:none"><rect x="2" y="8" width="20" height="8" rx="1"/><line x1="5" y1="11" x2="5" y2="13"/><line x1="8" y1="11" x2="8" y2="13"/><line x1="11" y1="11" x2="11" y2="13"/></svg>
+                <div>
+                    <div class="node-label" style="font-size: 12px;">SW-HQ-CORE</div>
+                    <div class="node-ip">192.168.1.1</div>
+                </div>
+                <span class="node-dot" style="background: var(--alert);"></span>
+            </div>
+        </div>
+
+        <!-- Site A child: Cameras badge -->
+        <div class="node" style="left: 40%; top: 79%; min-width: 120px; padding: 8px 12px;">
+            <div class="node-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" style="flex:none"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                <div>
+                    <div class="node-label" style="font-size: 12px;">42 Cameras</div>
+                    <div class="node-ip">Floor 1–6</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+        </div>
+
+        <!-- Site B children -->
+        <div class="node" style="left: 64%; top: 79%; min-width: 140px; padding: 8px 12px;">
+            <div class="node-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" style="flex:none"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="11" cy="12" r="1" fill="currentColor"/></svg>
+                <div>
+                    <div class="node-label" style="font-size: 12px;">NVR-CM-01</div>
+                    <div class="node-ip">192.168.10.200</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+        </div>
+        <div class="node" style="left: 80%; top: 79%; min-width: 120px; padding: 8px 12px;">
+            <div class="node-head">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2" style="flex:none"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                <div>
+                    <div class="node-label" style="font-size: 12px;">16 Cameras</div>
+                    <div class="node-ip">Floor 1–2</div>
+                </div>
+                <span class="node-dot" style="background: var(--ok);"></span>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="topo-toolbar">
+            <button title="Zoom in">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button title="Zoom out">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button title="Fit screen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+        </div>
+
+        <!-- Legend -->
+        <div class="topo-legend">
+            <div class="leg-item"><span class="leg-dot" style="background: var(--ok);"></span> Online</div>
+            <div class="leg-item"><span class="leg-dot" style="background: var(--alert);"></span> Offline</div>
+            <div class="leg-item"><span class="leg-dot" style="background: var(--warn);"></span> Warning</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — SSM Surveillance Smart-Monitor</title>
+    <link rel="stylesheet" href="mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; }
+        
+        /* Mock Ant Design minimal essentials */
+        .ant-form-item { margin-bottom: 24px; }
+        .ant-form-item-label { margin-bottom: 8px; }
+        .ant-input, .ant-input-affix-wrapper {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: var(--bg);
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ant-input-affix-wrapper input {
+            border: none;
+            background: transparent;
+            color: inherit;
+            outline: none;
+            width: 100%;
+        }
+        .ant-checkbox-wrapper { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+        .ant-btn { 
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        /* Demo Controls */
+        .demo-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 40px;
+            display: flex;
+            gap: 12px;
+            box-shadow: var(--shadow-2);
+            z-index: 100;
+        }
+        .demo-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--ink-2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .demo-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page" id="loginPage">
+        <div class="brand-panel">
+            <div class="brand-header">
+                <div class="brand-logo-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    Buono
+                </div>
+                <h1 class="brand-title">SSM Surveillance Smart-Monitor</h1>
+                <p class="brand-desc">
+                    Centralized surveillance, monitoring and inventory management platform for high-security network operations.
+                </p>
+
+                <div class="feature-cards">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        </div>
+                        <h3>Camera Monitoring</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"></path><path d="M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>
+                        </div>
+                        <h3>Device Management</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                        </div>
+                        <h3>Rack Inventory</h3>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        </div>
+                        <h3>Survey Dashboard</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="brand-footer">
+                <span>&copy; 2026 Buono Systems</span>
+                <span>&bull;</span>
+                <a href="#" style="color: inherit; text-decoration: none;">Privacy Policy</a>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div class="login-card" id="loginCard">
+                <div class="env-badge env-production">Production</div>
+                
+                <div class="login-card-header">
+                    <h1>Welcome back</h1>
+                    <p>Sign in to access SSM platform</p>
+                </div>
+
+                <div id="errorBox" class="error-msg" style="display: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Invalid credentials. Please check your username and password.
+                </div>
+
+                <form class="login-form" onsubmit="return handleLogin(event)">
+                    <div class="ant-form-item">
+                        <div class="ant-form-item-label"><label>Email / Username</label></div>
+                        <div class="ant-input-affix-wrapper">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--ink-3)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <input type="text" placeholder="admin@buono.net" required>
+                        </div>
+                    </div>
+
+                    <div class="ant-form-item">
+                        <div class="ant-form-item-label"><label>Password</label></div>
+                        <div class="ant-input-affix-wrapper">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--ink-3)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <input type="password" placeholder="••••••••" required>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--ink-3); cursor: pointer;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <label class="ant-checkbox-wrapper">
+                            <input type="checkbox" checked> Remember me
+                        </label>
+                        <a class="forgot-link" href="#">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="ant-btn btn-primary" id="signInBtn">
+                        Sign In
+                    </button>
+
+                    <div style="margin-top: 16px;">
+                        <button type="button" class="ant-btn btn-sso">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                            Sign in with SSO
+                        </button>
+                    </div>
+                </form>
+
+                <div class="form-footer">
+                    SSM v1.0 &bull; Build 2026.05.26
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-bar">
+        <button class="demo-btn active" onclick="setMode('light')">Light</button>
+        <button class="demo-btn" onclick="setMode('dark')">Dark</button>
+        <button class="demo-btn" onclick="toggleError()">Toggle Error</button>
+        <button class="demo-btn" onclick="toggleSkeleton()">Toggle Loading</button>
+    </div>
+
+    <script>
+        function setMode(mode) {
+            document.documentElement.setAttribute('data-theme', mode);
+            document.querySelectorAll('.demo-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.toLowerCase() === mode);
+            });
+        }
+
+        function toggleError() {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.style.display = errorBox.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function toggleSkeleton() {
+            const page = document.getElementById('loginPage');
+            const isSkeleton = page.classList.contains('is-skeleton');
+            
+            if (!isSkeleton) {
+                page.classList.add('is-skeleton');
+                // Temporarily replace content with skeleton
+                const brandHeader = page.querySelector('.brand-header');
+                const featureCards = page.querySelector('.feature-cards');
+                const loginCard = document.getElementById('loginCard');
+                
+                brandHeader.innerHTML = `
+                    <div class="skeleton" style="width: 120px; height: 40px; margin-bottom: 24px;"></div>
+                    <div class="skeleton" style="width: 300px; height: 80px; margin-bottom: 16px;"></div>
+                    <div class="skeleton" style="width: 260px; height: 20px;"></div>
+                `;
+                featureCards.innerHTML = `
+                    <div class="skeleton" style="height: 100px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="height: 100px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="height: 100px; border-radius: 8px;"></div>
+                    <div class="skeleton" style="height: 100px; border-radius: 8px;"></div>
+                `;
+                loginCard.innerHTML = `
+                    <div class="skeleton" style="width: 180px; height: 32px; margin-bottom: 8px;"></div>
+                    <div class="skeleton" style="width: 240px; height: 20px; margin-bottom: 32px;"></div>
+                    <div class="skeleton" style="height: 40px; margin-bottom: 24px;"></div>
+                    <div class="skeleton" style="height: 40px; margin-bottom: 24px;"></div>
+                    <div class="skeleton" style="height: 44px;"></div>
+                `;
+            } else {
+                location.reload(); // Quick way to restore original state
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('signInBtn');
+            btn.innerHTML = 'Signing in...';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                btn.innerHTML = 'Sign In';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                toggleError();
+            }, 1500);
+            return false;
+        }
+    </script>
+</body>
+</html>

@@ -1,93 +1,90 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Video } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowLeft, Video, RefreshCw } from 'lucide-react'
+import { getCameraById, getPingLogs } from '../api/cameras'
+import type { CameraApi, PingLogApi } from '../api/types'
 
-type Status = 'ok' | 'warn' | 'alert'
+/* ── Status mapping ──────────────────────────────────────────── */
+type UiStatus = 'ok' | 'warn' | 'alert'
+const STATUS_LABEL: Record<UiStatus, string> = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
 
-interface Camera {
-  id: string; name: string; ip: string; mac: string; status: Status
-  site: string; building: string; floor: string; room: string
-  type: 'indoor' | 'outdoor'
-  model: string; resolution: string; fps: number; codec: string
-  nvr: string; switchPort: string; firmware: string; installedAt: string
+function toUiStatus(s: string | null): UiStatus {
+  const v = (s ?? '').toLowerCase()
+  if (v === 'online')  return 'ok'
+  if (v === 'warning') return 'warn'
+  return 'alert'
 }
 
-const CAMERAS: Camera[] = [
-  { id:'CAM-001', name:'Lobby Cam A',     ip:'192.168.1.101', mac:'A4:C3:F0:11:22:33', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F1', room:'Main Lobby',        type:'indoor',  model:'Hikvision DS-2CD2143G2', resolution:'2688×1520', fps:25, codec:'H.265', nvr:'NVR-HQ-01', switchPort:'SW-CORE / Gi0/1',  firmware:'V5.7.15', installedAt:'2023-06-12' },
-  { id:'CAM-002', name:'Lobby Cam B',     ip:'192.168.1.102', mac:'A4:C3:F0:11:22:34', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F1', room:'Main Lobby',        type:'indoor',  model:'Hikvision DS-2CD2143G2', resolution:'2688×1520', fps:25, codec:'H.265', nvr:'NVR-HQ-01', switchPort:'SW-CORE / Gi0/2',  firmware:'V5.7.15', installedAt:'2023-06-12' },
-  { id:'CAM-003', name:'Server Room 01',  ip:'192.168.1.103', mac:'A4:C3:F0:22:33:01', status:'alert', site:'HQ Bangkok',    building:'Building A', floor:'F2', room:'Server Room',       type:'indoor',  model:'Dahua IPC-HDW2831T',     resolution:'2592×1944', fps:20, codec:'H.264', nvr:'NVR-HQ-01', switchPort:'SW-F2 / Gi0/3',    firmware:'V2.820',  installedAt:'2022-11-05' },
-  { id:'CAM-004', name:'Server Room 02',  ip:'192.168.1.104', mac:'A4:C3:F0:22:33:02', status:'alert', site:'HQ Bangkok',    building:'Building A', floor:'F2', room:'Server Room',       type:'indoor',  model:'Dahua IPC-HDW2831T',     resolution:'2592×1944', fps:20, codec:'H.264', nvr:'NVR-HQ-01', switchPort:'SW-F2 / Gi0/4',    firmware:'V2.820',  installedAt:'2022-11-05' },
-  { id:'CAM-005', name:'Office 3A',       ip:'192.168.1.105', mac:'A4:C3:F0:33:44:01', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F3', room:'Open Office',       type:'indoor',  model:'Hikvision DS-2CD2143G2', resolution:'2688×1520', fps:25, codec:'H.265', nvr:'NVR-HQ-02', switchPort:'SW-F3 / Gi0/1',    firmware:'V5.7.15', installedAt:'2023-01-20' },
-  { id:'CAM-006', name:'Office 3B',       ip:'192.168.1.106', mac:'A4:C3:F0:33:44:02', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F3', room:'Open Office',       type:'indoor',  model:'Hikvision DS-2CD2143G2', resolution:'2688×1520', fps:25, codec:'H.265', nvr:'NVR-HQ-02', switchPort:'SW-F3 / Gi0/2',    firmware:'V5.7.15', installedAt:'2023-01-20' },
-  { id:'CAM-007', name:'Office 3C',       ip:'192.168.1.107', mac:'B8:27:EB:55:66:01', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F3', room:'Manager Section',   type:'indoor',  model:'Axis P3245-V',           resolution:'1920×1080', fps:30, codec:'H.264', nvr:'NVR-HQ-02', switchPort:'SW-F3 / Gi0/3',    firmware:'10.12.1', installedAt:'2023-03-08' },
-  { id:'CAM-008', name:'Break Room 3',    ip:'192.168.1.108', mac:'A4:C3:F0:33:44:08', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F3', room:'Break Room',        type:'indoor',  model:'Dahua IPC-HDW2831T',     resolution:'2592×1944', fps:20, codec:'H.264', nvr:'NVR-HQ-02', switchPort:'SW-F3 / Gi0/4',    firmware:'V2.820',  installedAt:'2022-11-05' },
-  { id:'CAM-009', name:'Meeting Room 3',  ip:'192.168.1.109', mac:'B8:27:EB:55:66:09', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F3', room:'Meeting Room 301',  type:'indoor',  model:'Axis P3245-V',           resolution:'1920×1080', fps:30, codec:'H.264', nvr:'NVR-HQ-02', switchPort:'SW-F3 / Gi0/5',    firmware:'10.12.1', installedAt:'2023-03-08' },
-  { id:'CAM-010', name:'Meeting Room 5A', ip:'192.168.1.110', mac:'A4:C3:F0:55:66:10', status:'warn',  site:'HQ Bangkok',    building:'Building A', floor:'F5', room:'Meeting Room 501',  type:'indoor',  model:'Hikvision DS-2CD2143G2', resolution:'2688×1520', fps:25, codec:'H.265', nvr:'NVR-HQ-02', switchPort:'SW-F5 / Gi0/1',    firmware:'V5.7.15', installedAt:'2023-06-12' },
-  { id:'CAM-011', name:'Executive 6A',    ip:'192.168.1.111', mac:'B8:27:EB:66:77:11', status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F6', room:'Executive Suite',   type:'indoor',  model:'Axis P3245-V',           resolution:'1920×1080', fps:30, codec:'H.264', nvr:'NVR-HQ-02', switchPort:'SW-F6 / Gi0/1',    firmware:'10.12.1', installedAt:'2023-09-01' },
-  { id:'CAM-012', name:'Main Gate Out',   ip:'192.168.1.112', mac:'A4:C3:F0:77:88:12', status:'ok',    site:'HQ Bangkok',    building:'Building D', floor:'F1', room:'Gate Entrance',     type:'outdoor', model:'Hikvision DS-2CD2T47G2', resolution:'2560×1440', fps:25, codec:'H.265', nvr:'NVR-HQ-01', switchPort:'SW-GATE / Gi0/1',  firmware:'V5.7.16', installedAt:'2022-08-15' },
-  { id:'CAM-013', name:'Parking Lot A',   ip:'192.168.1.113', mac:'A4:C3:F0:77:88:13', status:'ok',    site:'HQ Bangkok',    building:'Building D', floor:'F1', room:'Parking Zone A',    type:'outdoor', model:'Hikvision DS-2CD2T47G2', resolution:'2560×1440', fps:25, codec:'H.265', nvr:'NVR-HQ-01', switchPort:'SW-GATE / Gi0/2',  firmware:'V5.7.16', installedAt:'2022-08-15' },
-  { id:'CAM-014', name:'Annex Lobby',     ip:'192.168.1.114', mac:'A4:C3:F0:88:99:14', status:'ok',    site:'HQ Bangkok',    building:'Building B', floor:'F1', room:'Annex Lobby',       type:'indoor',  model:'Dahua IPC-HDW2831T',     resolution:'2592×1944', fps:20, codec:'H.264', nvr:'NVR-HQ-02', switchPort:'SW-B1 / Gi0/1',    firmware:'V2.820',  installedAt:'2023-02-14' },
-  { id:'CAM-015', name:'Warehouse Gate',  ip:'192.168.10.10', mac:'A4:C3:F0:10:20:15', status:'ok',    site:'Chiang Mai DC', building:'Building A', floor:'F1', room:'Warehouse Entrance', type:'outdoor', model:'Hikvision DS-2CD2T47G2', resolution:'2560×1440', fps:25, codec:'H.265', nvr:'NVR-CM-01', switchPort:'SW-CM / Gi0/1',    firmware:'V5.7.16', installedAt:'2023-04-18' },
-  { id:'CAM-016', name:'DC Floor 01',     ip:'192.168.10.11', mac:'A4:C3:F0:10:20:16', status:'ok',    site:'Chiang Mai DC', building:'Building A', floor:'F1', room:'Data Center Floor', type:'indoor',  model:'Dahua IPC-HDW2831T',     resolution:'2592×1944', fps:20, codec:'H.264', nvr:'NVR-CM-01', switchPort:'SW-CM / Gi0/2',    firmware:'V2.820',  installedAt:'2023-04-18' },
-]
+/* ── Ping helpers ────────────────────────────────────────────── */
+type PingPoint = number | null
 
-const STATUS_LABEL: Record<Status, string> = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
+function pingLogsToChart(logs: PingLogApi[]): PingPoint[] {
+  const sorted = [...logs].sort(
+    (a, b) => new Date(a.pinged_at + (a.pinged_at.endsWith('Z') ? '' : 'Z')).getTime()
+           - new Date(b.pinged_at + (b.pinged_at.endsWith('Z') ? '' : 'Z')).getTime()
+  )
+  const last48 = sorted.slice(-48)
+  if (last48.length === 0) return Array(48).fill(null)
+  return last48.map(p => (p.is_alive && p.latency_ms != null) ? Math.round(Number(p.latency_ms)) : null)
+}
 
-/* ── Deterministic pseudo-random ─────────────────────────────── */
+function pingLogsToUptime(logs: PingLogApi[]): UiStatus[] {
+  const now = Date.now()
+  return Array.from({ length: 30 }, (_, i) => {
+    const dayStart = now - (29 - i + 1) * 86400_000
+    const dayEnd   = dayStart + 86400_000
+    const dayLogs  = logs.filter(p => {
+      const t = new Date(p.pinged_at + (p.pinged_at.endsWith('Z') ? '' : 'Z')).getTime()
+      return t >= dayStart && t < dayEnd
+    })
+    if (dayLogs.length === 0) return 'ok'
+    const failCount = dayLogs.filter(p => !p.is_alive).length
+    const pct = failCount / dayLogs.length
+    if (pct > 0.2) return 'alert'
+    if (pct > 0)   return 'warn'
+    return 'ok'
+  })
+}
+
+/* ── Pseudo-random fallback (when ping-logs unavailable) ─────── */
 function rng(seed: number, i: number): number {
   return (((seed * 1103515245 + i * 12345) >>> 0) & 0x7fffffff) / 0x7fffffff
 }
-
-function camSeed(id: string): number {
-  return id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+function camSeed(id: string | number): number {
+  return String(id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)
 }
-
-/* ── Ping history (48 samples = every 30 min = last 24h) ─────── */
-function generatePings(id: string, status: Status): Array<number | null> {
+function mockPings(id: string | number, status: UiStatus): PingPoint[] {
   const s = camSeed(id)
   return Array.from({ length: 48 }, (_, i) => {
     if (status === 'alert' && i >= 32) return null
-    if (status === 'warn') {
-      if (rng(s, i * 7) > 0.88) return null
-      return Math.round(20 + rng(s, i) * 80)
-    }
+    if (status === 'warn') { if (rng(s, i * 7) > 0.88) return null; return Math.round(20 + rng(s, i) * 80) }
     return Math.round(2 + rng(s, i) * 13)
   })
 }
-
-/* ── 30-day uptime blocks ────────────────────────────────────── */
-function dayStatus(id: string, status: Status, day: number): Status {
+function mockUptime(id: string | number, status: UiStatus): UiStatus[] {
   const s = camSeed(id)
-  if (status === 'alert' && day === 29) return 'alert'
-  const r = rng(s, day * 97)
-  if (status === 'warn') return r > 0.55 ? 'warn' : 'ok'
-  return r > 0.96 ? 'warn' : 'ok'
+  return Array.from({ length: 30 }, (_, i) => {
+    if (status === 'alert' && i === 29) return 'alert'
+    const r = rng(s, i * 97)
+    if (status === 'warn') return r > 0.55 ? 'warn' : 'ok'
+    return r > 0.96 ? 'warn' : 'ok'
+  })
 }
 
-/* ── Ping line chart ─────────────────────────────────────────── */
-function PingChart({ pings }: { pings: Array<number | null> }) {
-  const H = 100
-  const W = 800
-  const PAD = 8
+/* ── Ping chart SVG ──────────────────────────────────────────── */
+function PingChart({ pings }: { pings: PingPoint[] }) {
+  const H = 100, W = 800, PAD = 8
   const valid = pings.filter((p): p is number => p !== null)
   const maxRtt = Math.max(...valid, 1)
-
   const pts = pings.map((rtt, i) => {
     const x = (i / (pings.length - 1)) * W
-    const y = rtt === null
-      ? H - PAD
-      : PAD + (1 - rtt / maxRtt) * (H - PAD * 2)
+    const y = rtt === null ? H - PAD : PAD + (1 - rtt / maxRtt) * (H - PAD * 2)
     return [x, y] as [number, number]
   })
-
   const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
   const area = line + ` L${W},${H} L0,${H} Z`
-
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      style={{ width: '100%', height: H, display: 'block' }}
-      preserveAspectRatio="none"
-    >
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: H, display: 'block' }} preserveAspectRatio="none">
       <defs>
         <linearGradient id="ping-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.18" />
@@ -100,12 +97,45 @@ function PingChart({ pings }: { pings: Array<number | null> }) {
   )
 }
 
+/* ── Format helpers ──────────────────────────────────────────── */
+function fmtLastSeen(raw: string | null): string {
+  if (!raw) return '—'
+  const d = new Date(raw + (raw.endsWith('Z') ? '' : 'Z'))
+  if (isNaN(d.getTime())) return raw
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 120)   return `${Math.round(diff)}s ago`
+  if (diff < 3600)  return `${Math.round(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.round(diff / 3600)}h ago`
+  return d.toLocaleDateString('th-TH')
+}
+
+/* ── Main component ──────────────────────────────────────────── */
 export default function CameraDetailPage() {
   const { cameraId } = useParams<{ cameraId: string }>()
   const navigate = useNavigate()
+  const numId = parseInt(cameraId ?? '', 10)
+  const isNumeric = !isNaN(numId)
 
-  const cam = CAMERAS.find(c => c.id === cameraId) ?? CAMERAS[0]
-  const pings   = generatePings(cam.id, cam.status)
+  const { data: cam, isLoading, isError, refetch, isFetching } = useQuery<CameraApi | null>({
+    queryKey: ['camera', cameraId],
+    queryFn: () => isNumeric ? getCameraById(numId) : Promise.resolve(null),
+    enabled: isNumeric,
+  })
+
+  const { data: pingLogs = [], isError: pingError } = useQuery<PingLogApi[]>({
+    queryKey: ['ping-logs', cameraId],
+    queryFn: () => getPingLogs(numId),
+    enabled: isNumeric,
+    retry: false,
+  })
+
+  /* ── Derived data ── */
+  const status = cam ? toUiStatus(cam.status) : 'ok'
+  const hasPings = pingLogs.length > 0 && !pingError
+
+  const pings      = hasPings ? pingLogsToChart(pingLogs)  : mockPings(cameraId ?? '', status)
+  const uptimeDays = hasPings ? pingLogsToUptime(pingLogs) : mockUptime(cameraId ?? '', status)
+
   const valid   = pings.filter((p): p is number => p !== null)
   const minRtt  = valid.length ? Math.min(...valid) : 0
   const maxRtt  = valid.length ? Math.max(...valid) : 0
@@ -115,34 +145,68 @@ export default function CameraDetailPage() {
     : 0
   const lossRaw = Math.round((pings.filter(p => p === null).length / pings.length) * 100)
 
-  const uptimeDays  = Array.from({ length: 30 }, (_, i) => dayStatus(cam.id, cam.status, i))
-  const okDays      = uptimeDays.filter(d => d === 'ok').length
-  const uptimePct   = ((okDays / 30) * 100).toFixed(1)
-  const uptimeCls   = lossRaw > 20 ? 'alert' : lossRaw > 5 ? 'warn' : ''
+  const okDays    = uptimeDays.filter(d => d === 'ok').length
+  const uptimePct = ((okDays / 30) * 100).toFixed(1)
+  const uptimeCls = lossRaw > 20 ? 'alert' : lossRaw > 5 ? 'warn' : ''
+
+  /* ── Loading / error states ── */
+  if (isLoading) return (
+    <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>Loading camera…</div>
+  )
+  if (isError || (!isLoading && cam === null && isNumeric)) return (
+    <div style={{ padding: 48, color: 'var(--alert)', textAlign: 'center' }}>
+      Camera {cameraId} not found.
+      <div style={{ marginTop: 8 }}>
+        <button className="icon-btn" onClick={() => navigate('/dashboard/cameras')}>
+          <ArrowLeft size={14} /> Back to list
+        </button>
+      </div>
+    </div>
+  )
+
+  const displayName   = cam?.device_name ?? `Camera ${cameraId}`
+  const displayId     = cam ? `#${cam.id}` : cameraId ?? ''
+  const displayModel  = [cam?.brand, cam?.model].filter(Boolean).join(' ') || '—'
+  const displayIp     = cam?.ip_address ?? '—'
+  const displayMac    = cam?.mac_address ?? '—'
+  const displayNvr    = cam?.NVR_ID ?? '—'
+  const displaySite   = cam?.Site_ID ?? '—'
+  const displayBldg   = cam?.Building_ID ?? '—'
+  const displayFloor  = cam?.Floor_ID ?? '—'
+  const displayLoc    = cam?.install_location ?? '—'
+  const displayType   = cam?.camera_type ?? '—'
+  const displayRes    = cam?.resolution ?? '—'
+  const displayFw     = cam?.firmware_version ?? '—'
+  const displaySeen   = fmtLastSeen(cam?.last_seen ?? null)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="page-head">
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-          <button
-            className="icon-btn"
-            style={{ marginTop: 2, flex: 'none' }}
-            onClick={() => navigate('/dashboard/cameras')}
-          >
+          <button className="icon-btn" style={{ marginTop: 2, flex: 'none' }} onClick={() => navigate('/dashboard/cameras')}>
             <ArrowLeft size={16} />
           </button>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <Video size={18} style={{ color: 'var(--ink-3)' }} />
-              <h1 style={{ margin: 0 }}>{cam.name}</h1>
-              <span className={`cam-status-badge ${cam.status}`}>
+              <h1 style={{ margin: 0 }}>{displayName}</h1>
+              <span className={`cam-status-badge ${status}`}>
                 <span className="sb-dot" />
-                {STATUS_LABEL[cam.status]}
+                {STATUS_LABEL[status]}
               </span>
             </div>
-            <p className="page-sub" style={{ marginTop: 0 }}>{cam.id} · {cam.model}</p>
+            <p className="page-sub" style={{ marginTop: 0 }}>{displayId} · {displayModel}</p>
           </div>
         </div>
+        <button
+          className="icon-btn"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', width: 'auto' }}
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw size={13} style={{ animation: isFetching ? 'spin 1s linear infinite' : 'none' }} />
+          Refresh
+        </button>
       </div>
 
       <div className="canvas-wrap" style={{ flex: 1, minHeight: 0 }}>
@@ -154,70 +218,30 @@ export default function CameraDetailPage() {
 
               <div className="cam-card">
                 <div className="cam-card-title">Location</div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Site</span>
-                  <span className="cam-row-val">{cam.site}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Building</span>
-                  <span className="cam-row-val">{cam.building}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Floor</span>
-                  <span className="cam-row-val">{cam.floor}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Room</span>
-                  <span className="cam-row-val">{cam.room}</span>
-                </div>
+                <div className="cam-row"><span className="cam-row-label">Site</span><span className="cam-row-val">{displaySite}</span></div>
+                <div className="cam-row"><span className="cam-row-label">Building</span><span className="cam-row-val">{displayBldg}</span></div>
+                <div className="cam-row"><span className="cam-row-label">Floor</span><span className="cam-row-val">{displayFloor}</span></div>
+                <div className="cam-row"><span className="cam-row-label">Location</span><span className="cam-row-val">{displayLoc}</span></div>
               </div>
 
               <div className="cam-card">
                 <div className="cam-card-title">Network</div>
-                <div className="cam-row">
-                  <span className="cam-row-label">IP</span>
-                  <span className="cam-row-val mono">{cam.ip}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">MAC</span>
-                  <span className="cam-row-val mono">{cam.mac}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">NVR</span>
-                  <span className="cam-row-val mono">{cam.nvr}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Switch port</span>
-                  <span className="cam-row-val mono">{cam.switchPort}</span>
-                </div>
+                <div className="cam-row"><span className="cam-row-label">IP</span><span className="cam-row-val mono">{displayIp}</span></div>
+                <div className="cam-row"><span className="cam-row-label">MAC</span><span className="cam-row-val mono">{displayMac}</span></div>
+                <div className="cam-row"><span className="cam-row-label">NVR</span><span className="cam-row-val mono">{displayNvr}</span></div>
+                {cam?.nvr_channel != null && (
+                  <div className="cam-row"><span className="cam-row-label">NVR Channel</span><span className="cam-row-val mono">CH {cam.nvr_channel}</span></div>
+                )}
+                <div className="cam-row"><span className="cam-row-label">Last seen</span><span className="cam-row-val">{displaySeen}</span></div>
               </div>
 
               <div className="cam-card">
                 <div className="cam-card-title">Device</div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Type</span>
-                  <span className="cam-row-val" style={{ textTransform: 'capitalize' }}>{cam.type}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Resolution</span>
-                  <span className="cam-row-val mono">{cam.resolution}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Frame rate</span>
-                  <span className="cam-row-val mono">{cam.fps} fps</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Codec</span>
-                  <span className="cam-row-val mono">{cam.codec}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Firmware</span>
-                  <span className="cam-row-val mono">{cam.firmware}</span>
-                </div>
-                <div className="cam-row">
-                  <span className="cam-row-label">Installed</span>
-                  <span className="cam-row-val">{cam.installedAt}</span>
-                </div>
+                <div className="cam-row"><span className="cam-row-label">Type</span><span className="cam-row-val" style={{ textTransform: 'capitalize' }}>{displayType}</span></div>
+                {displayRes !== '—' && <div className="cam-row"><span className="cam-row-label">Resolution</span><span className="cam-row-val mono">{displayRes}</span></div>}
+                {displayFw !== '—'  && <div className="cam-row"><span className="cam-row-label">Firmware</span><span className="cam-row-val mono">{displayFw}</span></div>}
+                {cam?.serial_no && <div className="cam-row"><span className="cam-row-label">Serial</span><span className="cam-row-val mono">{cam.serial_no}</span></div>}
+                {cam?.vlan_id && <div className="cam-row"><span className="cam-row-label">VLAN</span><span className="cam-row-val mono">{cam.vlan_id}</span></div>}
               </div>
 
             </div>
@@ -226,7 +250,10 @@ export default function CameraDetailPage() {
             <div className="cam-chart-col">
 
               <div className="ping-chart-wrap">
-                <div className="ping-chart-title">Ping History — Last 24 Hours</div>
+                <div className="ping-chart-title">
+                  Ping History — Last 24 Hours
+                  {pingError && <span style={{ fontSize: 10, color: 'var(--ink-4)', fontWeight: 400, marginLeft: 8 }}>(estimated — admin access required for live data)</span>}
+                </div>
                 <div className="ping-svg-wrap">
                   <PingChart pings={pings} />
                 </div>
@@ -234,29 +261,29 @@ export default function CameraDetailPage() {
                   <div className="ping-stat">
                     <span className="ping-stat-label">Min</span>
                     <span className="ping-stat-val">
-                      {cam.status === 'alert' ? '—' : minRtt}
-                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                      {status === 'alert' ? '—' : minRtt}
+                      {status !== 'alert' && <span className="ping-stat-unit">ms</span>}
                     </span>
                   </div>
                   <div className="ping-stat">
                     <span className="ping-stat-label">Max</span>
                     <span className={`ping-stat-val${maxRtt > 100 ? ' alert' : ''}`}>
-                      {cam.status === 'alert' ? '—' : maxRtt}
-                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                      {status === 'alert' ? '—' : maxRtt}
+                      {status !== 'alert' && <span className="ping-stat-unit">ms</span>}
                     </span>
                   </div>
                   <div className="ping-stat">
                     <span className="ping-stat-label">Average</span>
                     <span className={`ping-stat-val${avgRtt > 50 ? ' warn' : ''}`}>
-                      {cam.status === 'alert' ? '—' : avgRtt}
-                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                      {status === 'alert' ? '—' : avgRtt}
+                      {status !== 'alert' && <span className="ping-stat-unit">ms</span>}
                     </span>
                   </div>
                   <div className="ping-stat">
                     <span className="ping-stat-label">Jitter</span>
                     <span className={`ping-stat-val${jitter > 10 ? ' warn' : ''}`}>
-                      {cam.status === 'alert' ? '—' : jitter}
-                      {cam.status !== 'alert' && <span className="ping-stat-unit">ms</span>}
+                      {status === 'alert' ? '—' : jitter}
+                      {status !== 'alert' && <span className="ping-stat-unit">ms</span>}
                     </span>
                   </div>
                 </div>
@@ -277,6 +304,13 @@ export default function CameraDetailPage() {
                   <span>Today</span>
                 </div>
               </div>
+
+              {cam?.notes && (
+                <div className="cam-card">
+                  <div className="cam-card-title">Notes</div>
+                  <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0, lineHeight: 1.6 }}>{cam.notes}</p>
+                </div>
+              )}
 
             </div>
           </div>

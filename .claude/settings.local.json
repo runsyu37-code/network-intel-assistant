@@ -9,7 +9,9 @@
       "Bash(git checkout *)",
       "Bash(git merge *)",
       "Bash(git cherry-pick *)",
-      "Bash(python sanitizer/sanitize.py samples/fake_input_02.txt output/demo_clean.txt --report output/demo_report.json)"
+      "Bash(python sanitizer/sanitize.py samples/fake_input_02.txt output/demo_clean.txt --report output/demo_report.json)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

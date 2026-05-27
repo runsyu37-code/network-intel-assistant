@@ -1,35 +1,42 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search, RefreshCw } from 'lucide-react'
+import { getSwitches } from '../api/switches'
 
-type Status = 'ok' | 'warn' | 'alert'
-
-interface Switch {
-  id: string; name: string; ip: string; status: Status
-  site: string; building: string; rack: string; floor: string
-  model: string; ports: number; activePorts: number; powerW: number; budgetW: number
+const STATUS_COLOR: Record<string, string> = {
+  online:  'var(--ok)',
+  warning: 'var(--warn)',
+  offline: 'var(--alert)',
+}
+const STATUS_LABEL: Record<string, string> = {
+  online:  'Online',
+  warning: 'Warning',
+  offline: 'Offline',
 }
 
-const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
-const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
-
-const SWITCHES: Switch[] = [
-  { id:'SW-HQ-CORE',    name:'Core Switch HQ',     ip:'192.168.1.2',   status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F2', rack:'Rack A1', model:'Cisco SG350X-24P',  ports:24, activePorts:22, powerW:185, budgetW:370 },
-  { id:'SW-HQ-FLOOR3',  name:'Floor 3 Switch',     ip:'192.168.1.3',   status:'alert', site:'HQ Bangkok',    building:'Building A', floor:'F3', rack:'Rack A1', model:'Cisco CBS350-24P',  ports:24, activePorts:0,  powerW:0,   budgetW:370 },
-  { id:'SW-HQ-FLOOR2',  name:'Floor 2 Switch',     ip:'192.168.1.4',   status:'warn',  site:'HQ Bangkok',    building:'Building A', floor:'F2', rack:'Rack A1', model:'Cisco CBS350-24P',  ports:24, activePorts:20, powerW:310, budgetW:370 },
-  { id:'SW-MINI-01',    name:'Mini Switch 01',      ip:'192.168.1.5',   status:'ok',    site:'HQ Bangkok',    building:'Building A', floor:'F2', rack:'Rack A1', model:'TP-Link TL-SG1016PE',ports:16,activePorts:12, powerW:95,  budgetW:150 },
-  { id:'SW-MINI-02',    name:'Mini Switch 02',      ip:'192.168.1.6',   status:'warn',  site:'HQ Bangkok',    building:'Building A', floor:'F2', rack:'Rack A1', model:'TP-Link TL-SG1016PE',ports:16,activePorts:14, powerW:128, budgetW:150 },
-  { id:'SW-CM-01',      name:'Chiang Mai Core',     ip:'192.168.10.2',  status:'ok',    site:'Chiang Mai DC', building:'Building A', floor:'F1', rack:'Rack C1', model:'Cisco SG350-28P',   ports:28, activePorts:14, powerW:120, budgetW:375 },
-  { id:'SW-PK-01',      name:'Phuket Switch',       ip:'192.168.20.2',  status:'ok',    site:'Phuket Branch', building:'Building A', floor:'F1', rack:'Rack P1', model:'Cisco CBS350-16P',  ports:16, activePorts:8,  powerW:74,  budgetW:240 },
-  { id:'SW-KK-01',      name:'Khon Kaen Switch',    ip:'192.168.30.2',  status:'ok',    site:'Khon Kaen',     building:'Building A', floor:'F1', rack:'Rack K1', model:'TP-Link TL-SG1016PE',ports:16,activePorts:5,  powerW:42,  budgetW:150 },
-]
+function statusOf(s: string | null): string {
+  const v = (s ?? '').toLowerCase()
+  if (v === 'online')  return 'online'
+  if (v === 'warning') return 'warning'
+  return 'offline'
+}
 
 export default function SwitchesPage() {
   const navigate = useNavigate()
   const [q, setQ] = useState('')
-  const filtered = SWITCHES.filter(s =>
-    !q || [s.id, s.name, s.ip, s.site].some(v => v.toLowerCase().includes(q.toLowerCase()))
-  )
+
+  const { data: switches = [], isLoading, isError, refetch, isFetching } = useQuery({
+    queryKey: ['poe-switches'],
+    queryFn: () => getSwitches(),
+    refetchInterval: 30_000,
+  })
+
+  const filtered = switches.filter(s => {
+    if (!q) return true
+    const search = q.toLowerCase()
+    return [s.SW_ID, s.device_name, s.ip_address ?? '', s.Site_ID].some(v => v.toLowerCase().includes(search))
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
@@ -38,6 +45,15 @@ export default function SwitchesPage() {
           <h1>PoE Switches</h1>
           <p className="page-sub">Power over Ethernet switches managing camera power delivery</p>
         </div>
+        <button
+          className="icon-btn"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', width: 'auto' }}
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw size={13} style={{ animation: isFetching ? 'spin 1s linear infinite' : 'none' }} />
+          Refresh
+        </button>
       </div>
 
       <div className="dl-toolbar">
@@ -45,7 +61,7 @@ export default function SwitchesPage() {
           <Search size={14} style={{ color: 'var(--ink-3)', flex: 'none' }} />
           <input placeholder="Search by name, IP, or site…" value={q} onChange={e => setQ(e.target.value)} />
         </div>
-        <span className="dl-stat" style={{ marginLeft: 'auto' }}>{SWITCHES.length} total</span>
+        <span className="dl-stat" style={{ marginLeft: 'auto' }}>{switches.length} total</span>
       </div>
 
       <div className="dl-table-wrap">
@@ -58,45 +74,51 @@ export default function SwitchesPage() {
               <th>Location</th>
               <th>Model</th>
               <th>Ports</th>
-              <th>PoE Power</th>
+              <th>PoE Budget</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && (
+            {isLoading && (
+              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--ink-3)' }}>Loading switches…</td></tr>
+            )}
+            {isError && !isLoading && (
+              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>Failed to load switches — check API connection</td></tr>
+            )}
+            {!isLoading && !isError && filtered.length === 0 && (
               <tr><td colSpan={7} className="dl-empty">No switches found</td></tr>
             )}
             {filtered.map(s => {
-              const powerPct = s.budgetW > 0 ? Math.round(s.powerW / s.budgetW * 100) : 0
-              const powerHigh = powerPct > 75
+              const st = statusOf(s.status)
+              const budget = s.poe_budget_w ?? 0
               return (
-                <tr key={s.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/switches/${s.id}`)}>
+                <tr key={s.SW_ID} style={{ cursor: 'pointer' }} onClick={() => navigate(`/dashboard/switches/${s.SW_ID}`)}>
                   <td>
                     <span className="dl-status">
-                      <span className="s-dot" style={{ background: STATUS_COLOR[s.status] }} />
-                      {STATUS_LABEL[s.status]}
+                      <span className="s-dot" style={{ background: STATUS_COLOR[st] }} />
+                      {STATUS_LABEL[st]}
                     </span>
                   </td>
                   <td>
-                    <div className="td-name">{s.name}</div>
-                    <div className="td-sub">{s.id} · {s.rack} · {s.floor}</div>
+                    <div className="td-name">{s.device_name}</div>
+                    <div className="td-sub">{s.SW_ID} · {s.Rack_ID || '—'} · {s.Floor_ID || '—'}</div>
                   </td>
-                  <td className="td-mono">{s.ip}</td>
+                  <td className="td-mono">{s.ip_address ?? '—'}</td>
                   <td>
-                    <div style={{ fontSize: 12, color: 'var(--ink)' }}>{s.site}</div>
-                    <div className="td-sub">{s.building}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink)' }}>{s.Site_ID}</div>
+                    <div className="td-sub">{s.Building_ID}</div>
                   </td>
-                  <td className="td-mono" style={{ fontSize: 11 }}>{s.model}</td>
+                  <td className="td-mono" style={{ fontSize: 11 }}>
+                    {[s.brand, s.model].filter(Boolean).join(' ') || '—'}
+                  </td>
                   <td>
-                    <div style={{ fontSize: 12, color: s.status === 'alert' ? 'var(--alert)' : 'var(--ink)' }}>
-                      {s.activePorts} / {s.ports} active
+                    <div style={{ fontSize: 12, color: st === 'offline' ? 'var(--alert)' : 'var(--ink)' }}>
+                      {s.total_ports ?? '—'} ports
                     </div>
+                    <div className="td-sub">{s.poe_ports != null ? `${s.poe_ports} PoE` : ''}</div>
                   </td>
                   <td>
-                    <div style={{ fontSize: 12, color: powerHigh ? 'var(--warn)' : 'var(--ink)' }}>
-                      {s.powerW} W · {powerPct}%
-                    </div>
-                    <div style={{ marginTop: 4, height: 4, background: 'var(--surface-2)', borderRadius: 999, width: 80, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${powerPct}%`, background: powerHigh ? 'var(--warn)' : 'var(--accent)', borderRadius: 999 }} />
+                    <div style={{ fontSize: 12, color: 'var(--ink)' }}>
+                      {budget > 0 ? `${budget} W` : '—'}
                     </div>
                   </td>
                 </tr>

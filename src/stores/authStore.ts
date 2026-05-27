@@ -3,7 +3,8 @@ import { create } from 'zustand'
 interface User {
   id: number
   username: string
-  role: 'admin' | 'viewer'
+  displayName: string
+  role: 'admin' | 'user' | 'viewer'
 }
 
 interface AuthState {
@@ -12,6 +13,7 @@ interface AuthState {
   setAuth: (user: User, token: string) => void
   logout: () => void
   isAdmin: () => boolean
+  canEdit: () => boolean
 }
 
 function loadUser(): User | null {
@@ -37,4 +39,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user: null, token: null })
   },
   isAdmin: () => get().user?.role === 'admin',
+  canEdit: () => {
+    const role = get().user?.role
+    return role === 'admin' || role === 'user'
+  },
 }))

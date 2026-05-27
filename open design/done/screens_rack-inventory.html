@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+    <link rel="stylesheet" href="../mpmh6ze9-rack.css">
+    <style>
+        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
+        .page-content { position: relative; overflow: hidden; height: calc(100vh - 120px); }
+    </style>
+</head>
+<body>
+    <div class="page-head">
+        <div>
+            <h1>Rack Inventory</h1>
+            <div class="page-sub">Physical asset tracking for Rack A-04 (Main Server Room)</div>
+        </div>
+        <div class="topbar-right">
+             <div class="dl-stat">42U Rack</div>
+             <div class="dl-stat">Power: <span style="color:var(--ok)">1.2kW</span></div>
+        </div>
+    </div>
+
+    <div class="page-content" style="padding: 0 32px 32px;">
+        <div class="rack-wrap">
+            <div class="rack">
+                <div class="rack-header">
+                    <div class="rack-rid">RACK-A-04</div>
+                    <div class="rack-rsub">SITE-CENTRAL</div>
+                </div>
+                <div class="rack-body">
+                    <div class="u-labels">
+                        <div class="u-label-row">42</div>
+                        <div class="u-label-row even">41</div>
+                        <div class="u-label-row">40</div>
+                        <div class="u-label-row even">39</div>
+                        <div class="u-label-row">38</div>
+                        <div class="u-label-row even">37</div>
+                        <div class="u-label-row">36</div>
+                        <div class="u-label-row even">35</div>
+                        <div class="u-label-row">34</div>
+                        <div class="u-label-row even">33</div>
+                        <div class="u-label-row">32</div>
+                        <div class="u-label-row even">31</div>
+                        <div class="u-label-row">30</div>
+                        <div class="u-label-row even">29</div>
+                        <div class="u-label-row">28</div>
+                    </div>
+                    <div class="u-slots">
+                        <div class="device" style="top: 0; height: 32px;">
+                            <div class="dv-glyph">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line></svg>
+                            </div>
+                            <div class="dv-name">PATCH-PANEL-01</div>
+                            <div class="dv-size">1U</div>
+                            <div class="dv-dot"></div>
+                        </div>
+                        <div class="device" style="top: 36px; height: 32px;">
+                            <div class="dv-glyph">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line></svg>
+                            </div>
+                            <div class="dv-name">SW-CORE-01</div>
+                            <div class="dv-size">1U</div>
+                            <div class="dv-dot"></div>
+                        </div>
+                        <div class="device alert" style="top: 72px; height: 68px;">
+                            <div class="dv-glyph">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                            </div>
+                            <div class="dv-name">NVR-PRIMARY-01</div>
+                            <div class="dv-size">2U</div>
+                            <div class="dv-dot"></div>
+                        </div>
+                        <div class="device" style="top: 144px; height: 104px;">
+                            <div class="dv-glyph">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                            </div>
+                            <div class="dv-name">STORAGE-01</div>
+                            <div class="dv-size">3U</div>
+                            <div class="dv-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rack-footer">
+                    <span class="rack-pill">42U Total</span>
+                    <span class="rack-pill">12U Used</span>
+                </div>
+            </div>
+
+            <div class="rack-info">
+                <div class="info-row">
+                    <div class="info-card">
+                        <div class="ic-label">Rack Capacity</div>
+                        <div class="ic-big">28<span class="ic-unit">U Free</span></div>
+                        <div class="ic-bar"><span style="width: 28%;"></span></div>
+                        <div class="ic-foot">A-04 Slots available</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="ic-label">Power Load</div>
+                        <div class="ic-big">1.2<span class="ic-unit">kW</span></div>
+                        <div class="ic-bar warn"><span style="width: 75%;"></span></div>
+                        <div class="ic-foot">Current draw: 75%</div>
+                    </div>
+                </div>
+
+                <div class="info-card inv-card">
+                    <div class="ic-label">Inventory List</div>
+                    <div style="margin-top: 16px;">
+                        <table class="inv-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Type</th>
+                                    <th>U Pos</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="it-dot"></span> <span class="it-name">SW-CORE-01</span></td>
+                                    <td><span class="it-type">SWITCH</span></td>
+                                    <td class="it-u">U41</td>
+                                    <td>Online</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="it-dot r"></span> <span class="it-name">NVR-PRIMARY-01</span></td>
+                                    <td><span class="it-type">NVR</span></td>
+                                    <td class="it-u">U39-40</td>
+                                    <td>Degraded</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="it-dot"></span> <span class="it-name">STORAGE-01</span></td>
+                                    <td><span class="it-type">STORAGE</span></td>
+                                    <td class="it-u">U36-38</td>
+                                    <td>Online</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../mpmh6zea-tokens.css">
+    <link rel="stylesheet" href="../mpmh6ze9-layout.css">
+    <link rel="stylesheet" href="../mpmh6ze9-devicelist.css">
+    <style>
+        body { margin: 0; padding: 0; background: transparent; font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body>
+    <div class="page-head">
+        <div>
+            <h1>Device Management</h1>
+            <div class="page-sub">Monitor and configure all network endpoints</div>
+        </div>
+        <button class="icon-btn" style="width: auto; padding: 0 16px; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Device
+        </button>
+    </div>
+
+    <div class="dl-toolbar">
+        <div class="dl-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.5;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" placeholder="Search by name, IP, or MAC...">
+        </div>
+        <div class="dl-stat">
+            Type: <span style="color:var(--ink)">All</span>
+        </div>
+        <div class="dl-stat">
+            Site: <span style="color:var(--ink)">Central Hub</span>
+        </div>
+        <div class="dl-stat" style="margin-left:auto;">
+            Showing 128 devices
+        </div>
+    </div>
+
+    <div class="dl-table-wrap">
+        <table class="dl-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Device Name</th>
+                    <th>IP Address</th>
+                    <th>Type</th>
+                    <th>MAC Address</th>
+                    <th>Uptime</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><div class="dl-status"><span class="s-dot" style="background:var(--ok)"></span> Online</div></td>
+                    <td>
+                        <div class="td-name">CAM-01-ENTRANCE</div>
+                        <div class="td-sub">Lobby Main Entry</div>
+                    </td>
+                    <td><span class="td-mono">192.168.1.104</span></td>
+                    <td><span class="dl-badge">IP CAMERA</span></td>
+                    <td><span class="td-mono">00:25:96:FF:FE:12</span></td>
+                    <td>14d 2h 12m</td>
+                </tr>
+                <tr>
+                    <td><div class="dl-status"><span class="s-dot" style="background:var(--alert)"></span> Offline</div></td>
+                    <td>
+                        <div class="td-name">CAM-04-NORTH</div>
+                        <div class="td-sub">North Parking Lot</div>
+                    </td>
+                    <td><span class="td-mono">192.168.1.108</span></td>
+                    <td><span class="dl-badge">IP CAMERA</span></td>
+                    <td><span class="td-mono">00:25:96:FF:FE:15</span></td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td><div class="dl-status"><span class="s-dot" style="background:var(--ok)"></span> Online</div></td>
+                    <td>
+                        <div class="td-name">SW-CORE-01</div>
+                        <div class="td-sub">Main Server Room</div>
+                    </td>
+                    <td><span class="td-mono">192.168.1.1</span></td>
+                    <td><span class="dl-badge">SWITCH</span></td>
+                    <td><span class="td-mono">00:25:96:AA:BB:CC</span></td>
+                    <td>42d 18h 04m</td>
+                </tr>
+                <tr>
+                    <td><div class="dl-status"><span class="s-dot" style="background:var(--warn)"></span> Warning</div></td>
+                    <td>
+                        <div class="td-name">NVR-PRIMARY-01</div>
+                        <div class="td-sub">Rack A-04</div>
+                    </td>
+                    <td><span class="td-mono">192.168.1.20</span></td>
+                    <td><span class="dl-badge">NVR</span></td>
+                    <td><span class="td-mono">00:25:96:DD:EE:FF</span></td>
+                    <td>122d 4h 55m</td>
+                </tr>
+                <!-- Skeleton rows -->
+                <tr class="dl-table-skeleton">
+                    <td><div class="skeleton" style="height:12px; width:60px;"></div></td>
+                    <td>
+                        <div class="skeleton" style="height:12px; width:120px; margin-bottom:4px;"></div>
+                        <div class="skeleton" style="height:8px; width:80px;"></div>
+                    </td>
+                    <td><div class="skeleton" style="height:12px; width:90px;"></div></td>
+                    <td><div class="skeleton" style="height:20px; width:70px; border-radius:6px;"></div></td>
+                    <td><div class="skeleton" style="height:12px; width:110px;"></div></td>
+                    <td><div class="skeleton" style="height:12px; width:50px;"></div></td>
+                </tr>
+                <tr class="dl-table-skeleton">
+                    <td><div class="skeleton" style="height:12px; width:60px;"></div></td>
+                    <td>
+                        <div class="skeleton" style="height:12px; width:100px; margin-bottom:4px;"></div>
+                        <div class="skeleton" style="height:8px; width:60px;"></div>
+                    </td>
+                    <td><div class="skeleton" style="height:12px; width:90px;"></div></td>
+                    <td><div class="skeleton" style="height:20px; width:70px; border-radius:6px;"></div></td>
+                    <td><div class="skeleton" style="height:12px; width:110px;"></div></td>
+                    <td><div class="skeleton" style="height:12px; width:50px;"></div></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
