@@ -1,0 +1,51 @@
+info:
+  name: RBAC20 - PUT /api/users/{id} with role="" → 200, role preserved
+  type: http
+  seq: 20
+
+# WHAT THIS TESTS:
+#   Phase 12 close condition: Case C (empty string role) must map to DBNull → preserve
+#   body sends role: "" explicitly (not absent, not null — empty string)
+#   IsNullOrWhiteSpace("") = true → @role = DBNull → CASE WHEN NULL IS NULL → preserve
+#
+# SETUP:
+#   - Fill admin_token with fresh token from login (admin_test / Test@1234)
+#   - User_ID 6 = user_test (role: "user") — adjust if your DB differs
+#
+# STEPS:
+#   1. GET /api/users?User_ID=6 → note current role (should be "user")
+#   2. Run this request (POST with role: "")
+#   3. GET /api/users?User_ID=6 → assert role is STILL "user"
+#
+# PASS if: 200 OK and role unchanged after update
+# FAIL if: 400 Bad Request ("role is required" regression)
+# FAIL if: role becomes "" or null in DB
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users/6
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "user_test",
+        "display_name": "Updated Name",
+        "is_active": true,
+        "role": ""
+      }
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

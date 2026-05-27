@@ -29,7 +29,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         private static readonly Dictionary<string, AttemptRecord> _attempts =
             new Dictionary<string, AttemptRecord>(StringComparer.OrdinalIgnoreCase);
         private static readonly object _lock = new object();
-        private static int _requestCount = 0;
+        private static long _requestCount = 0;
         private const int EvictionInterval = 200;
 
         private const int MaxFails       = 10;
@@ -196,16 +196,28 @@ namespace BNO_Survei_MonitorAPI.Controllers
             }
             catch (Exception ex)
             {
-                // Audit DB write failed — fall back to Windows Event Log so the lockout is never silently lost
+                // Audit DB write failed — fall back to file log (grep-able, no admin privileges needed)
                 try
                 {
-                    System.Diagnostics.EventLog.WriteEntry(
-                        "Application",
-                        $"[BNO Monitor] Audit log write failed. Event: lockout for username '{username}' (IP: {ip}). Error: {ex.Message}",
-                        System.Diagnostics.EventLogEntryType.Warning,
-                        1001);
+                    var appRoot = System.Web.HttpRuntime.AppDomainAppPath;
+                    var logPath = System.IO.Path.Combine(appRoot, "App_Data", "security.log");
+                    var message = $"{DateTime.UtcNow:O} LOCKOUT_AUDIT_FAIL user={username} ip={ip} err={ex.Message}{Environment.NewLine}";
+
+                    // Rotate at 10 MB so the file never grows unbounded
+                    var fi = new System.IO.FileInfo(logPath);
+                    if (fi.Exists && fi.Length > 10 * 1024 * 1024)
+                        System.IO.File.Move(logPath, logPath + $".{DateTime.UtcNow:yyyyMMdd-HHmmss}.bak");
+
+                    System.IO.File.AppendAllText(logPath, message);
                 }
-                catch { /* Event Log also unavailable — accept silent loss at this point */ }
+                catch (Exception fileEx)
+                {
+                    // File write also failed — last resort: IIS trace log (always available, no setup required)
+                    System.Diagnostics.Trace.TraceError(
+                        $"SECURITY CRITICAL: Lockout audit double-failure. " +
+                        $"Primary: {ex.Message} | File fallback: {fileEx.Message} | " +
+                        $"Event: lockout for username '{username}' (IP: {ip})");
+                }
             }
         }
 
