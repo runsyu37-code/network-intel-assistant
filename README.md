@@ -78,15 +78,18 @@ Invoke-RestMethod `
 
 ## Role Matrix
 
+> Full spec: [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md)
+
 | Action | admin | user | viewer |
 |---|---|---|---|
 | GET sites / buildings / floors / floor-plans / hierarchy | YES | YES | YES |
 | GET rooms / racks | YES | YES | NO (403) |
 | GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO (403) | NO (403) |
-| POST/UPDATE cameras, NVRs, buildings, devices... | YES | YES | NO (403) |
-| PATCH camera position | YES | YES | NO (403) |
-| POST/UPDATE/DELETE users | YES | NO (403) | NO (403) |
+| POST/UPDATE/DELETE any resource | YES | NO (403) | NO (403) |
+| PATCH camera position | YES | NO (403) | NO (403) |
 | Floor plan upload/register | YES | NO (403) | NO (403) |
+
+**All write operations are admin only without exception.**
 
 ---
 

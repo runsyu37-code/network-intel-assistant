@@ -215,22 +215,30 @@ Hide them from UI entirely for now.
 
 ## Role Matrix -- Frontend Display Rules
 
+> Source of truth: `review/ROLE_MATRIX.md` -- confirmed by Ran, implemented Phase 10.
+> **All write operations are admin only. No exceptions.**
+
 | Element | admin | user | viewer |
 |---|---|---|---|
-| Edit/Delete buttons (cameras, NVRs, etc.) | Show | Show | **Hide** |
-| Camera pin drag-and-drop | Allow | Allow | **Disable** |
+| See cameras / NVRs / devices | YES | **NO** (hide page) | **NO** (hide page) |
+| See rooms / racks | YES | YES | **NO** |
+| Edit/Delete buttons (any resource) | Show | **Hide** | **Hide** |
+| Camera pin drag-and-drop | Allow | **Disable** (403 if attempted) | **Disable** |
 | User management page | Show | **Hide** | **Hide** |
 | Floor plan upload | Show | **Hide** | **Hide** |
-| Alert logs page | Show | **Hide** | **Hide** |
+| Alert / audit / ping logs | Show | **Hide** | **Hide** |
 | Dashboard page | Show | **Hide** | **Hide** |
 
 ```js
 const { user } = useAuthStore();
 const isAdmin = user?.role === 'admin';
-const canEdit = user?.role === 'admin' || user?.role === 'user';
+const canSeeDevices = user?.role === 'admin';          // cameras, NVRs, switches
+const canSeeRooms   = user?.role === 'admin' || user?.role === 'user';
 
-{canEdit && <DragPin />}
+// All write actions gated to admin only
+{isAdmin && <EditButton />}
 {isAdmin && <DeleteButton />}
+{isAdmin && <DragPin />}
 {isAdmin && <UserManagementLink />}
 ```
 

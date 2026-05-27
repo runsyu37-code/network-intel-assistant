@@ -44,14 +44,22 @@ Response: { "token": "eyJ...", "username": "admin", "role": "admin", "userId": 1
 
 ## Role Matrix — What Each Role Can Do
 
+> **Source of truth:** `review/ROLE_MATRIX.md` (confirmed by Ran, implemented Phase 10)
+
 | Endpoint | admin | user | viewer |
 |----------|-------|------|--------|
-| GET all resources | ✅ | ✅ | ✅ |
-| POST/UPDATE cameras, NVRs, buildings, etc. | ✅ | ✅ | ❌ 403 |
-| PATCH `/api/cameras/{id}/position` | ✅ | ✅ | ❌ 403 |
+| GET /api/sites, buildings, floors, floor-plans, hierarchy | ✅ | ✅ | ✅ |
+| GET /api/rooms, racks | ✅ | ✅ | ❌ 403 |
+| GET /api/cameras, nvrs, poe-switches, users, logs, dashboard | ✅ | ❌ 403 | ❌ 403 |
+| POST/UPDATE/DELETE any resource (cameras, NVRs, buildings, etc.) | ✅ | ❌ 403 | ❌ 403 |
+| PATCH `/api/cameras/{id}/position` | ✅ | ❌ 403 | ❌ 403 |
 | POST/UPDATE/DELETE `/api/users` | ✅ | ❌ 403 | ❌ 403 |
-| POST `/api/floors/{id}/floor-plan` (upload) | ✅ | ❌ 403 | ❌ 403 |
+| POST `/api/floor-plans` (register floor plan) | ✅ | ❌ 403 | ❌ 403 |
 | GET `/api/floors/{id}/floor-plan/image` | ✅ | ✅ | ✅ |
+
+**user role = read-only structural view** (sites down to racks, no device/credential data)  
+**viewer role = read-only layout view** (sites down to floor-plans only)  
+**All write operations = admin only without exception**
 
 ---
 
