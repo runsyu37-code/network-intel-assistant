@@ -1,194 +1,196 @@
-# Network Intelligence Assistant
+# SSM Network Monitor — Backend API
 
-**A privacy-first toolchain for network operations** — sanitize, parse, and analyze
-infrastructure data without sending sensitive information to cloud AI services.
+**ASP.NET Web API (.NET Framework 4.7.2)** — REST backend for the SSM Network Monitor system.
+Manages sites, buildings, floors, rooms, racks, cameras, NVRs, PoE switches, and users
+with JWT authentication and full role-based access control (RBAC).
 
----
-
-## Problem
-
-Network engineers collect device inventory daily: switch MAC tables, ARP entries, and
-port descriptions that link cameras to rack locations across buildings and floors. This
-data is operationally critical but too sensitive to process with cloud AI — real IPs,
-MAC addresses, and hostnames reveal physical topology and security boundaries.
-
-This project solves that constraint with a **local-only sanitizer** that replaces every
-sensitive value with a consistent, traceable placeholder *before* any AI ever sees the
-data. Once sanitized, the output flows safely to any cloud tool or public repository.
+> **Working from a new machine?** Start with [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) —
+> it covers everything: what is built, what is pending, and how to get the server running.
+> Latest session log: [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md)
 
 ---
 
-## Architecture: Three Phases
+## Branch Structure
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│ Phase A — Build  (personal machine, fake data only)                 │
-│                                                                     │
-│   Claude Code + synthetic samples  →  sanitize.py  (regex-based)   │
-│   Real data never touches the AI.                                   │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │  copy script to work machine
-┌────────────────────────────▼────────────────────────────────────────┐
-│ Phase B — Run  (work machine, fully offline)                        │
-│                                                                     │
-│   real_config.txt  ──►  python sanitize.py  ──►  clean_config.txt  │
-│   No internet. No AI. No cloud call. Plain Python only.             │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │  sanitized file is now safe to share
-┌────────────────────────────▼────────────────────────────────────────┐
-│ Phase C — Use  (anywhere)                                           │
-│                                                                     │
-│   Paste clean_config.txt into Claude / ChatGPT / Gemini, or        │
-│   push it to a public GitHub repo as a documented sample.           │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## What It Sanitizes
-
-| Sensitive value | Input example | Output placeholder |
-|---|---|---|
-| IPv4 address | `203.0.113.10` | `10.0.0.1` |
-| MAC — colon format | `aa:bb:cc:dd:ee:ff` | `fa:fe:00:00:00:01` |
-| MAC — hyphen format | `aa-bb-cc-dd-ee-ff` | `fa-fe-00-00-00-01` |
-| MAC — Cisco dot format | `0011.22ab.cd01` | `fafe.0000.0001` |
-| Hostname | `PROD-SW-FLOOR3-01` | `SW-001` |
-| Building | `Building EX-A` | `Building-A` |
-| Floor | `Floor 3` | `Floor-1` |
-| Room | `Room R-301` | `Room-001` |
-| Rack | `Rack RK-12` | `Rack-01` |
-
-Replacement is **consistent within a run**: the same real value always maps to the same
-placeholder, so topology relationships survive in the sanitized output.
+| Branch | Contents |
+|---|---|
+| `backend` | This branch — ASP.NET Web API source |
+| `master` | Main branch — merge target |
 
 ---
 
 ## Quick Start
 
-No installation required. Requires **Python 3.11+** and the standard library only.
+**Prerequisites:** Visual Studio 2019 or later with ASP.NET workload installed.
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/runsyu37-code/network-intel-assistant.git
-cd network-intel-assistant
-
-# 2. Sanitize a file
-python sanitizer/sanitize.py samples/fake_input_01.txt output/clean_01.txt
-
-# 3. Sanitize with a full mapping audit report
-python sanitizer/sanitize.py samples/fake_input_02.txt output/clean_02.txt \
-    --report output/report_02.json
-
-# 4. Keep mappings stable across multiple files (same real IP → same fake IP every run)
-python sanitizer/sanitize.py samples/fake_input_03.txt output/clean_03.txt \
-    --persist-mapping
 ```
+1. Clone and switch to the backend branch:
+   git clone <repo-url>
+   git checkout backend
 
-**Expected output:**
-```
-Sanitized 18 IPs, 18 MACs, 1 hostnames -> output/clean_02.txt
-Mapping report written -> output/report_02.json
-```
+2. Copy the config template (Web.config is gitignored — contains secrets):
+   copy BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI\Web.config.template ^
+        BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI\Web.config
 
-**Run tests:**
-```bash
-python -m unittest discover tests -v
-# 24 tests, OK
+3. Fill in Web.config:
+   - JwtSecret:         any 256-bit base64 string (generate one and keep it secret)
+   - connectionString:  your SQL Server connection details
+
+4. Open the solution in Visual Studio:
+   BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.sln
+
+5. Press Ctrl+F5 to start IIS Express.
+   Server will be available at: http://localhost:50680
 ```
 
 ---
 
-## Sample: Before and After
+## Test the Server
 
-**Input** — `samples/fake_input_03.txt` (excerpt):
-```
-EXAMPLE-SW-FLOOR3-01#show running-config
-!
-hostname EXAMPLE-SW-FLOOR3-01
-!
-interface GigabitEthernet1/0/1
- description [Building EX-A][Floor 3][Room R-301] EXAMPLE-CAM-R301-01
- switchport access vlan 10
- spanning-tree portfast
-!
-interface GigabitEthernet1/0/47
- description [Building EX-A][Floor 3][Rack RK-12] UPLINK-TO-EXAMPLE-SW-FLOOR2-01
- switchport mode trunk
+```powershell
+# Login — should return 200 with token + role
+Invoke-RestMethod -Method Post `
+  -Uri http://localhost:50680/api/auth/login `
+  -ContentType "application/json" `
+  -Body '{"username":"admin_test","password":"Test@1234"}'
+
+# Dashboard summary — admin only
+$token = "<paste token from login above>"
+Invoke-RestMethod `
+  -Uri http://localhost:50680/api/dashboard/summary `
+  -Headers @{ Authorization = "Bearer $token" }
 ```
 
-**Output** — `output/clean_03.txt` (same lines):
-```
-SW-001#show running-config
-!
-hostname SW-001
-!
-interface GigabitEthernet1/0/1
- description [Building-A][Floor-1][Room-001] CAM-001
- switchport access vlan 10
- spanning-tree portfast
-!
-interface GigabitEthernet1/0/47
- description [Building-A][Floor-1][Rack-01] SW-002
- switchport mode trunk
-```
+---
 
-Interface numbers, VLAN IDs, and switch commands are preserved intact.
-Only the sensitive identifying values are replaced.
+## Test Accounts
+
+| Username | Password | Role | Access |
+|---|---|---|---|
+| `admin_test` | `Test@1234` | admin | Full read + write on everything |
+| `user_test` | `Test@1234` | user | Read-only: sites/buildings/floors/rooms/racks |
+| `viewer_test` | `Test@1234` | viewer | Read-only: sites/buildings/floors/floor-plans only |
+
+> **Note:** If the JWT secret in Web.config was changed, all previous tokens are invalid.
+> Re-login after any secret rotation.
+
+---
+
+## Role Matrix
+
+| Action | admin | user | viewer |
+|---|---|---|---|
+| GET sites / buildings / floors / floor-plans | ✅ | ✅ | ✅ |
+| GET rooms / racks | ✅ | ✅ | ❌ |
+| GET cameras / nvrs / poe-switches / users / logs | ✅ | ❌ | ❌ |
+| GET dashboard/summary | ✅ | ❌ | ❌ |
+| POST / PUT / DELETE (all resources) | ✅ | ❌ | ❌ |
+
+---
+
+## API Endpoints (All Live)
+
+| Method | Endpoint | Role |
+|---|---|---|
+| POST | `/api/auth/login` | Public |
+| GET | `/api/sites` | All |
+| GET | `/api/buildings` | All |
+| GET | `/api/floors` | All |
+| GET | `/api/floor-plans` | All |
+| GET | `/api/hierarchy/tree` | All |
+| GET | `/api/rooms` | admin + user |
+| GET | `/api/racks` | admin + user |
+| GET | `/api/cameras` | admin |
+| GET | `/api/nvrs` | admin |
+| GET | `/api/poe-switches` | admin |
+| GET | `/api/users` | admin |
+| GET | `/api/ping-logs` | admin |
+| GET | `/api/alert-logs` | admin |
+| GET | `/api/audit-logs` | admin |
+| GET | `/api/dashboard/summary` | admin |
+
+All write endpoints (POST/PUT/DELETE) are admin only.
+
+---
+
+## JWT Notes
+
+The backend uses **full URI claim keys** (not short names). When decoding the JWT on the
+frontend, read:
+
+| Field | Claim key |
+|---|---|
+| User ID | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier` |
+| Username | `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name` |
+| Role | `http://schemas.microsoft.com/ws/2008/06/identity/claims/role` |
+
+The login response body also returns `role` and `displayName` directly — no need to
+decode the JWT just for those fields.
+
+---
+
+## Bruno API Tests
+
+Test collections are in `bruno/`. All tokens are stripped from committed files
+(`FILL_IN_TOKEN` placeholder). To run tests:
+
+1. Open Bruno → open collection from `bruno/phase10-rbac-tests/`
+2. Login with one of the test accounts above
+3. Paste the token into the appropriate environment variable
+4. Run the collection — all 17 RBAC tests should pass
+
+---
+
+## Project Documentation
+
+| File | Contents |
+|---|---|
+| [`review/PROJECT_STATUS.md`](review/PROJECT_STATUS.md) | **Start here** — full project state, what's built, what's pending |
+| [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) | Latest session log (Phase 11) |
+| [`review/PHASE10_SESSION_2026-05-27.md`](review/PHASE10_SESSION_2026-05-27.md) | Phase 10 — full RBAC implementation |
+| [`review/ROLE_MATRIX.md`](review/ROLE_MATRIX.md) | Confirmed role access matrix |
+| [`Web.config.template`](BNO_Survei_MonitorAPI/BNO_Survei_MonitorAPI/Web.config.template) | Config template for new developer setup |
 
 ---
 
 ## Project Structure
 
 ```
-network-intel-assistant/
-├── sanitizer/
-│   ├── sanitize.py      # CLI entry point — Sanitizer class + argparse
-│   ├── patterns.py      # All regex patterns, separated for easy extension
-│   └── mappings.json    # Persistent hostname mapping (used with --persist-mapping)
-├── samples/             # Synthetic (fake) switch/ARP/config samples — safe to share
-├── tests/
-│   └── test_sanitize.py # 24 unit tests covering IPv4, MAC x3, consistency, no-leakage
-└── output/              # Sanitized output (git-ignored — stays local)
+API/
+├── BNO_Survei_MonitorAPI/
+│   └── BNO_Survei_MonitorAPI/
+│       ├── Controllers/          # All API controllers (15 controllers)
+│       ├── ConnectDB/            # SqlConnection wrapper
+│       ├── Models/               # Data models
+│       ├── Security/             # Rate limiter, audit logger
+│       ├── App_Start/            # WebApiConfig (CORS, routing, JWT auth)
+│       ├── Web.config            # ⚠ Gitignored — copy from Web.config.template
+│       └── Web.config.template   # Template for new developers
+├── bruno/
+│   └── phase10-rbac-tests/       # 17 RBAC test files (tokens stripped)
+└── review/
+    ├── PROJECT_STATUS.md         # Master status document
+    ├── ROLE_MATRIX.md
+    ├── PHASE11_SESSION_2026-05-27.md
+    └── PHASE10_SESSION_2026-05-27.md
 ```
 
 ---
 
-## Limitations
+## Phase 11 Pending Items
 
-- **Regex-based only.** The sanitizer uses pattern matching, not semantic understanding.
-  Values in unusual formats (decimal-encoded IPs, base64 strings) will not be detected.
-- **Subnet masks get replaced.** `255.255.255.0` is a valid IPv4 pattern and is
-  substituted with a placeholder. The output remains safe; the mask is just cosmetically
-  absent.
-- **Plain text only.** PDF reports, Excel spreadsheets, and Visio diagrams require
-  pre-conversion to text before sanitization.
-- **English location keywords.** Patterns for `Building`, `Floor`, `Room`, and `Rack`
-  are hardcoded in English. Sites using other languages need updates in `patterns.py`.
-- **Not a DLP product.** This tool is a workflow aid for a specific, well-understood
-  format (Cisco / Linux CLI text output). It is not a substitute for a formal
-  Data Loss Prevention system.
+These are accepted fixes not yet implemented:
 
----
+| # | Fix |
+|---|---|
+| 1 | `[RequireRole]` attribute — replace all inline `IsInRole()` calls |
+| 2 | Per-username lockout (currently per-IP) |
+| 3 | `CASE WHEN` for role field on Update in usersController |
+| 4 | Windows Event Log on audit write failure |
+| 5 | Stale record eviction in rate limiter |
 
-## Roadmap
-
-| Phase | Agent | Status |
-|---|---|---|
-| A | **`data-sanitizer-agent`** — this repo | ✅ Complete |
-| B | `network-inventory-agent` — MAC/ARP tables → structured JSON/CSV | Planned |
-| C | `topology-mapper-agent` — inventory JSON → Mermaid network diagram | Planned |
-| D | `alert-triage-agent` — CCTV failure + topology → likely-cause runbook | Planned |
+See [`review/PHASE11_SESSION_2026-05-27.md`](review/PHASE11_SESSION_2026-05-27.md) for full context.
 
 ---
 
-## Background
-
-Built during a network engineering internship (May–October 2026) to unblock a real
-data-collection bottleneck: mapping which CCTV camera connects to which switch port,
-NVR, building, and rack — manually, across dozens of devices. The sanitizer is the
-foundation layer that lets every downstream AI tool operate on safe, de-identified data.
-
----
-
-*Python 3.11+ · Standard library only · No external dependencies*
+*ASP.NET Web API · .NET Framework 4.7.2 · SQL Server · IIS Express (port 50680)*
