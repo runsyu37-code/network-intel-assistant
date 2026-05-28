@@ -509,6 +509,17 @@ On 401:                   redirect to /login
 
 ---
 
+## Code Review Docs
+
+| File | For |
+|---|---|
+| [`docs/sessions/REVIEW_BRIEF.md`](docs/sessions/REVIEW_BRIEF.md) | External reviewer — how to run, page tour, role matrix |
+| [`docs/sessions/REVIEWER_AGENT.md`](docs/sessions/REVIEWER_AGENT.md) | Claude reviewer agent — achieve, instructions, first prompt |
+| [`docs/sessions/FRONTEND_BUILDER_BRIEF.md`](docs/sessions/FRONTEND_BUILDER_BRIEF.md) | Frontend builder — decisions, API map, reviewer Q&A |
+| [`docs/sessions/BACKEND_BUILDER_BRIEF.md`](docs/sessions/BACKEND_BUILDER_BRIEF.md) | Backend builder — decisions, endpoint map, reviewer Q&A |
+
+---
+
 ## F9 — Frontend Wiring Status
 
 Frontend รันที่ `http://localhost:3001` — CORS allow แล้ว
@@ -520,6 +531,7 @@ Frontend รันที่ `http://localhost:3001` — CORS allow แล้ว
 | [`docs/sessions/F9_BACKEND_REPLY_R1.md`](docs/sessions/F9_BACKEND_REPLY_R1.md) | Backend ตอบ 5 issues ครบ |
 | [`docs/sessions/F9_BACKEND_REPLY_R3.md`](docs/sessions/F9_BACKEND_REPLY_R3.md) | R3 — GET /api/racks + GET /api/racks/{rackId} detail |
 | [`docs/sessions/F9_BACKEND_REPLY_R4.md`](docs/sessions/F9_BACKEND_REPLY_R4.md) | R4 — PATCH position 0–100, building cameraCount/nvrCount |
+| [`docs/sessions/F9_SESSION_R4_2026-05-28.md`](docs/sessions/F9_SESSION_R4_2026-05-28.md) | Session log — R4 changes + review prep docs |
 
 **CORS origins (dev):**
 ```
