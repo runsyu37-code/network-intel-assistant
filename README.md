@@ -187,7 +187,7 @@ Invoke-RestMethod `
 ### Read Endpoints
 | Method | Endpoint | Role |
 |---|---|---|
-| GET | `/api/hierarchy/tree` | All | Full site tree in 1 call (use for sidebar nav) |
+| GET | `/api/hierarchy/tree` | All | Full site tree in 1 call — building includes `cameraCount` + `nvrCount` |
 | GET | `/api/dashboard/summary` | admin | Aggregate device/alert counts |
 | GET | `/api/status/devices` | All | Lightweight — for 30s polling (status + last_seen only) |
 | GET | `/api/sites` | All | |
@@ -210,7 +210,7 @@ Invoke-RestMethod `
 | POST | `/api/cameras` | admin + user | Body: array `[{...}]` |
 | POST | `/api/cameras/{id}` | admin + user | Update — single object |
 | POST | `/api/cameras/delete/{id}` | admin | DELETE uses POST pattern |
-| PATCH | `/api/cameras/{id}/position` | admin + user | Body: `{"x": 0.35, "y": 0.72}` |
+| PATCH | `/api/cameras/{id}/position` | admin + user | Body: `{"x": 35.0, "y": 72.0}` — x/y as 0–100 percentage |
 | POST | `/api/floor-plans/validate-path` | admin | 6-layer file validation |
 | POST | `/api/floor-plans` | admin | Register floor plan (re-validates inside) |
 | POST | `/api/users` | admin | |
@@ -278,7 +278,7 @@ Validation error. Check the `Message` field in the response body — it says exa
 Common causes:
 - Missing required field (username, password on login)
 - Invalid role value on user update (must be `admin`, `user`, or `viewer`)
-- Invalid position value on camera PATCH (x/y must be 0.0-1.0)
+- Invalid position value on camera PATCH (x/y must be 0–100)
 
 ### When the server won't start
 
@@ -489,6 +489,7 @@ On 401:                   redirect to /login
 | 13 | Reflection security gate (43/43 PASS) | Done |
 | F1–F8 | React SPA — 12 pages, Buono purple theme | Done |
 | F9 | Wire all pages to real API | Done |
+| F9 R4 | PATCH position 0–100, building cameraCount/nvrCount | Done |
 
 ---
 
@@ -517,6 +518,8 @@ Frontend รันที่ `http://localhost:3001` — CORS allow แล้ว
 | [`docs/sessions/F9_PLAN_2026-05-28.md`](docs/sessions/F9_PLAN_2026-05-28.md) | แผน F9 — mapping หน้าเว็บ → endpoint |
 | [`docs/sessions/F9_FRONTEND_REPLY_R1.md`](docs/sessions/F9_FRONTEND_REPLY_R1.md) | Frontend ตอบ 6 ข้อ + issues |
 | [`docs/sessions/F9_BACKEND_REPLY_R1.md`](docs/sessions/F9_BACKEND_REPLY_R1.md) | Backend ตอบ 5 issues ครบ |
+| [`docs/sessions/F9_BACKEND_REPLY_R3.md`](docs/sessions/F9_BACKEND_REPLY_R3.md) | R3 — GET /api/racks + GET /api/racks/{rackId} detail |
+| [`docs/sessions/F9_BACKEND_REPLY_R4.md`](docs/sessions/F9_BACKEND_REPLY_R4.md) | R4 — PATCH position 0–100, building cameraCount/nvrCount |
 
 **CORS origins (dev):**
 ```
