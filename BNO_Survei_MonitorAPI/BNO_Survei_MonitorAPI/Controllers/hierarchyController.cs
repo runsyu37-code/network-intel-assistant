@@ -54,7 +54,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                            (SELECT COUNT(*) FROM cameras WHERE Building_ID = b.Building_ID AND status IN ('offline','warning'))
                            + (SELECT COUNT(*) FROM nvrs WHERE Building_ID = b.Building_ID AND status IN ('offline','warning'))
                            + (SELECT COUNT(*) FROM poe_switches WHERE Building_ID = b.Building_ID AND status IN ('offline','warning'))
-                           AS alert_count
+                           AS alert_count,
+                           (SELECT COUNT(*) FROM cameras WHERE Building_ID = b.Building_ID) AS camera_count,
+                           (SELECT COUNT(*) FROM nvrs WHERE Building_ID = b.Building_ID) AS nvr_count
                     FROM buildings b ORDER BY b.name", con))
                 using (var r = cmd.ExecuteReader())
                     while (r.Read())
@@ -65,7 +67,9 @@ namespace BNO_Survei_MonitorAPI.Controllers
                             buildingName = r["name"].ToString(),
                             buildingCode = r["code"] == DBNull.Value ? null : r["code"].ToString(),
                             floorCount = r["floor_count"] == DBNull.Value ? 0 : Convert.ToInt32(r["floor_count"]),
-                            alertCount = Convert.ToInt32(r["alert_count"])
+                            alertCount = Convert.ToInt32(r["alert_count"]),
+                            cameraCount = Convert.ToInt32(r["camera_count"]),
+                            nvrCount = Convert.ToInt32(r["nvr_count"])
                         });
 
                 // 3. All floors with camera count and alert count
@@ -407,6 +411,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
             public string buildingCode { get; set; }
             public int floorCount { get; set; }
             public int alertCount { get; set; }
+            public int cameraCount { get; set; }
+            public int nvrCount { get; set; }
             public List<FloorTreeDto> floors { get; set; } = new List<FloorTreeDto>();
         }
 

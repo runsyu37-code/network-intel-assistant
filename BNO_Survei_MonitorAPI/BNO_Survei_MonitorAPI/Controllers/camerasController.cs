@@ -274,8 +274,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
             if (req == null || !req.x.HasValue || !req.y.HasValue)
                 return BadRequest("x and y are required");
 
-            if (req.x < 0 || req.x > 1 || req.y < 0 || req.y > 1)
-                return BadRequest("x and y must be between 0.0 and 1.0");
+            if (req.x < 0 || req.x > 100 || req.y < 0 || req.y > 100)
+                return BadRequest("x and y must be between 0 and 100");
 
             var identity = RequestContext.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
             var userIdStr = identity?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
