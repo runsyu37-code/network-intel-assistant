@@ -478,7 +478,7 @@ On 401:                   redirect to /login
 ## Current Status
 
 **Backend: Phase 13 complete — maintenance mode.**  
-**Frontend: 15 pages done — presentation ready 2026-05-29.**
+**Frontend: F9 in progress — wiring 12 pages to real API.**
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -488,7 +488,40 @@ On 401:                   redirect to /login
 | 12 | All 5 review items closed | Done |
 | 13 | Reflection security gate (43/43 PASS) | Done |
 | F1–F8 | React SPA — 15 pages, Buono purple theme | Done |
-| **F9** | Wire remaining 12 pages to real API | **Next** |
+| **F9** | Wire 12 pages to real API | **In Progress** |
+
+---
+
+## Cross-Machine Setup Note (2026-05-28)
+
+ถ้า pull มาแล้ว server ไม่ขึ้น ดู [`docs/sessions/CROSSMACHINE_FIX_2026-05-28.md`](docs/sessions/CROSSMACHINE_FIX_2026-05-28.md)
+
+สาเหตุหลัก: NuGet auto-upgrade `Microsoft.Web.Infrastructure` บน home PC แล้ว commit ขึ้นมา ทำให้ assembly version mismatch บนเครื่องอื่น
+
+**Quick fix checklist:**
+1. ตรวจ `packages.config` — `Microsoft.Web.Infrastructure` ต้องเป็น `version="1.0.0.0"`
+2. ตรวจ `.csproj` — HintPath ต้องชี้ที่ `packages\Microsoft.Web.Infrastructure.1.0.0.0\`
+3. `Web.config` ต้องมี `<runtime><assemblyBinding>` — copy จาก template ได้เลย (template มี binding redirects ครบแล้ว)
+4. Build → Clean Solution → Rebuild Solution → Ctrl+F5
+
+ถ้าเจอ `0x80131040` บน DLL ใดก็ตาม → ดู quick reference ใน CROSSMACHINE_FIX doc
+
+---
+
+## F9 — Frontend Wiring Status
+
+Frontend รันที่ `http://localhost:3001` — CORS allow แล้ว
+
+| เอกสาร | เนื้อหา |
+|---|---|
+| [`docs/sessions/F9_PLAN_2026-05-28.md`](docs/sessions/F9_PLAN_2026-05-28.md) | แผน F9 — mapping หน้าเว็บ → endpoint |
+| [`docs/sessions/F9_FRONTEND_REPLY_R1.md`](docs/sessions/F9_FRONTEND_REPLY_R1.md) | Frontend ตอบ 6 ข้อ + issues |
+| [`docs/sessions/F9_BACKEND_REPLY_R1.md`](docs/sessions/F9_BACKEND_REPLY_R1.md) | Backend ตอบ 5 issues ครบ |
+
+**CORS origins (dev):**
+```
+http://localhost:5173   http://localhost:3000   http://localhost:5174   http://localhost:3001
+```
 
 ---
 
