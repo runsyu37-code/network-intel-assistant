@@ -1,0 +1,35 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/alert-logs/1
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "id": 1,
+        "device_type": "camera",
+        "device_id": "3",
+        "device_name": "CAM-BKK-01",
+        "alert_type": "back_online",
+        "message": "Camera back online",
+        "webhook_sent": true,
+        "resolved_at": "2026-05-21T10:00:00"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

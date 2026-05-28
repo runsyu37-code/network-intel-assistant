@@ -1,0 +1,32 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users/1
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "admin",
+        "display_name": "Administrator (Updated)",
+        "role": "admin",
+        "is_active": true,
+        "password": "NewPassword@1234"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

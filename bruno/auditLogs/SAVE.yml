@@ -1,0 +1,35 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/audit-logs
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "user_id": 1,
+          "action": "INSERT",
+          "table_name": "sites",
+          "record_id": "S_T",
+          "old_value": null,
+          "new_value": "{\"Site_ID\":\"S_T\",\"name\":\"Test\"}"
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,24 @@
+﻿info:
+  name: TEST1 - Error sanitization (no stack trace)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:50680/api/cameras/99999
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+    - name: Content-Type
+      value: application/json
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

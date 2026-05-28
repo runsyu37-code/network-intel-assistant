@@ -1,0 +1,40 @@
+﻿info:
+  name: TEST5 - Update user without role returns 400
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users/6
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "user_test",
+        "password": "Test@1234",
+        "display_name": "User Test",
+        "is_active": true
+      }
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+# User_ID 6 = user_test (role: user)
+# EXPECT: 400 Bad Request
+# PASS if: status 400, body = "role is required"
+# FAIL if: status 200 (role wiped to NULL in DB)
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

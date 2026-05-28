@@ -1,0 +1,32 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites/S001
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Site_ID": "S001",
+        "name": "Head Office (Updated)",
+        "code": "HQ",
+        "location": "Bangkok",
+        "description": "Updated via Bruno test"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

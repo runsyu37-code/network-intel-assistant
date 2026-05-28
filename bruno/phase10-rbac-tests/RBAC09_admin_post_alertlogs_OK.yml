@@ -1,0 +1,24 @@
+info:
+  name: RBAC09 - admin POST /api/alert-logs → NOT 403 (admin allowed)
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:50680/api/alert-logs
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+    - name: Content-Type
+      value: application/json
+
+runtime:
+  variables:
+    - name: admin_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjUiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiYWRtaW5fdGVzdCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6ImFkbWluIiwianRpIjoiMzVlYThlMmEtMzM4Ni00MWMzLWI5MGEtZTg1NjRiM2JjZWFlIiwiZXhwIjoxNzc5ODk1NjQ1LCJpc3MiOiJTU00tQVBJIiwiYXVkIjoiU1NNLUZyb250ZW5kIn0.XLgV90vbgVIlKvDcjr-oKjekWiBjsSgHBBMN9354rTg
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,26 @@
+﻿info:
+  name: GET
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:50680/api/racks
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

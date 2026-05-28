@@ -1,0 +1,22 @@
+info:
+  name: RBAC11 - viewer GET /api/sites → 200 (read is always allowed)
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: http://localhost:50680/api/sites
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoidmlld2VyX3Rlc3QiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJ2aWV3ZXIiLCJqdGkiOiI0ODI0NWU0ZC1hZDlmLTQ5NjAtYjE3OC1lODE3YTNhNDZjOWIiLCJleHAiOjE3Nzk4OTU0ODIsImlzcyI6IlNTTS1BUEkiLCJhdWQiOiJTU00tRnJvbnRlbmQifQ.HodB307EnyTh4zdQyOQdze6msaTRBAKxoiIJ2BArWSc
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

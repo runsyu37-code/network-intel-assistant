@@ -1,0 +1,43 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/alert-logs
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "device_type": "camera",
+          "device_id": "3",
+          "device_name": "CAM-BKK-01",
+          "brand": "Dahua",
+          "ip_address": "10.10.2.101",
+          "site_name": "à¸ªà¸²à¸‚à¸²à¹€à¸«à¸™à¸·à¸­",
+          "building_name": "à¸­à¸²à¸„à¸²à¸£ B",
+          "floor_name": "à¸Šà¸±à¹‰à¸™ 2",
+          "room_name": null,
+          "poe_switch_name": "Switch-BKK-01",
+          "poe_port": 1,
+          "alert_type": "offline",
+          "message": "Camera not responding",
+          "webhook_sent": false
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

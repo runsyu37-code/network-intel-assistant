@@ -1,0 +1,36 @@
+info:
+  name: UPDATE
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/floors/F001
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Floor_ID": "F001",
+        "Site_ID": "S001",
+        "Building_ID": "B001",
+        "floor_number": 1,
+        "name": "à¸Šà¸±à¹‰à¸™ 1 (Updated)",
+        "function": "Server Room",
+        "has_cctv": true,
+        "image_data": null,
+        "note": null
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

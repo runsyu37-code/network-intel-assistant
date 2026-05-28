@@ -1,0 +1,42 @@
+﻿info:
+  name: TEST4 - Invalid role returns 400 (not 500)
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "username": "phase8test",
+          "password": "Test@1234",
+          "display_name": "Phase8 Test",
+          "role": "superadmin",
+          "is_active": true
+        }
+      ]
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+# EXPECT: 400 Bad Request
+# PASS if: status 400, body = "Invalid role value: superadmin"
+# FAIL if: status 500 (ValidRoles check not reached)
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

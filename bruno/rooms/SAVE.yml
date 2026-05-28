@@ -1,0 +1,38 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/rooms
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "Room_ID": "RM_T",
+          "Site_ID": "S001",
+          "Building_ID": "B001",
+          "Floor_ID": "F001",
+          "name": "Test Room",
+          "type": "server",
+          "has_nvr": false,
+          "has_sw": false,
+          "note": null
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

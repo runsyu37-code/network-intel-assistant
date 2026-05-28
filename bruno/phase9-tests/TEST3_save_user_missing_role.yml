@@ -1,0 +1,41 @@
+﻿info:
+  name: TEST3 - Save user without role returns 400
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/users
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "username": "no_role_user",
+          "password": "Test@1234",
+          "display_name": "No Role User",
+          "is_active": true
+        }
+      ]
+
+runtime:
+  variables:
+    - name: admin_token
+      value: FILL_IN_TOKEN
+
+# EXPECT: 400 Bad Request
+# PASS if: status 400, body = "role is required"
+# FAIL if: status 200 (user created with NULL role) or 500
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

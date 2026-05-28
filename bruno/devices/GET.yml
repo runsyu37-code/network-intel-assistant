@@ -1,0 +1,41 @@
+info:
+  name: GET
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost:50680/api/devices
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+  auth: inherit
+  params:
+    - name: device_type
+      value: ""
+      enabled: false
+    - name: Site_ID
+      value: ""
+      enabled: false
+    - name: Building_ID
+      value: ""
+      enabled: false
+    - name: Floor_ID
+      value: ""
+      enabled: false
+    - name: device_name
+      value: ""
+      enabled: false
+    - name: ip_address
+      value: ""
+      enabled: false
+    - name: status
+      value: ""
+      enabled: false
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

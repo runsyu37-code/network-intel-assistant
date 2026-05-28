@@ -1,0 +1,19 @@
+info:
+  name: DELETE
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites/delete/S_T
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

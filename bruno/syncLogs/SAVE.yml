@@ -1,0 +1,36 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sync-logs
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "device_type": "camera",
+          "device_id": "1",
+          "synced_by": 1,
+          "sync_type": "manual",
+          "fields_updated": "{\"status\":\"online\"}",
+          "status": "success",
+          "message": "Test sync log"
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

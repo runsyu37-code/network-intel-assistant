@@ -1,0 +1,34 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/sites
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "Site_ID": "S_T",
+          "name": "Test Site",
+          "code": "TST",
+          "location": "Bangkok Test",
+          "description": "Mock test record"
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,43 @@
+info:
+  name: TEST3 - Viewer blocked from camera update (403)
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:50680/api/cameras/1
+  headers:
+    - name: Authorization
+      value: Bearer {{viewer_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "Site_ID": "S001",
+        "Building_ID": "B001",
+        "Floor_ID": "F001",
+        "device_name": "should-be-blocked",
+        "ip_address": "10.10.1.101",
+        "status": "online",
+        "fail_count": 0
+      }
+
+runtime:
+  variables:
+    - name: viewer_token
+      value: PASTE_VIEWER_TOKEN_HERE
+
+# SETUP: สร้าง viewer account ก่อน แล้ว login → copy token มาใส่ viewer_token ด้านบน
+# EXPECT: 403 Forbidden
+# PASS if: status 403
+# FAIL if: status 200 หรือ 404 (viewer ผ่าน role check ได้)
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,52 @@
+info:
+  name: RBAC18 - per-username lockout → 429 (not per-IP)
+  type: http
+  seq: 18
+
+# WHAT THIS TESTS:
+#   Phase 12 changed lockout key from IP → username.
+#   Send 10+ failed logins for "dummy_lockout_user" → that username gets 429.
+#   admin_test on the SAME machine must still login fine (different username key).
+#
+# HOW TO TRIGGER (PowerShell — run in terminal):
+#   1..11 | ForEach-Object {
+#     Invoke-RestMethod http://localhost:50680/api/auth/login `
+#       -Method POST -ContentType application/json `
+#       -Body '{"username":"dummy_lockout_user","password":"WRONG"}' `
+#       -ErrorAction SilentlyContinue
+#   }
+#
+# EXPECTED:
+#   Attempts 1-10 : 401 Unauthorized
+#   Attempt  11+  : 429 Too Many Requests  ← this request sends attempt 11
+#
+# KEY DIFFERENCE FROM PHASE 9 (per-IP):
+#   After "dummy_lockout_user" is locked, POST login with "admin_test" / "Test@1234"
+#   must still return 200. If it does → per-username lockout confirmed working.
+#   If admin_test also gets 429 → regression to per-IP behavior.
+
+http:
+  method: POST
+  url: http://localhost:50680/api/auth/login
+  headers:
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      {
+        "username": "dummy_lockout_user",
+        "password": "WRONG_PASSWORD_TRIGGER_LOCKOUT"
+      }
+
+# PASS if: 429 on this request (run after 10 previous fails)
+# PASS if: admin_test login still returns 200 after this lockout
+# FAIL if: 401 on 11th attempt (lockout not triggering)
+# FAIL if: admin_test gets 429 too (still using IP-based lockout)
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: false
+  maxRedirects: 5

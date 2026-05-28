@@ -1,0 +1,54 @@
+info:
+  name: SAVE
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:50680/api/poe-switches
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{admin_token}}
+      enabled: true
+    - name: Content-Type
+      value: application/json
+      enabled: true
+  body:
+    mode: json
+    json: |-
+      [
+        {
+          "SW_ID": "SW_T",
+          "Site_ID": "S001",
+          "Building_ID": "B001",
+          "Floor_ID": "F001",
+          "Room_ID": "R001",
+          "Rack_ID": "RK001",
+          "u_position": 5,
+          "u_subposition": 1,
+          "device_name": "Switch-Test",
+          "switch_type": "PoE",
+          "brand": "Test Brand",
+          "model": "Test Model",
+          "serial_no": null,
+          "mac_address": null,
+          "os_version": null,
+          "vlan_id": 10,
+          "ip_address": "192.168.1.99",
+          "total_ports": 24,
+          "poe_ports": 20,
+          "poe_budget_w": 185,
+          "poe_used_w": 0,
+          "uplink_port": "Gi1/1",
+          "status": "online",
+          "fail_count": 0,
+          "notes": null
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

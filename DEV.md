@@ -1,26 +1,45 @@
-# DEV — Quick Start
+# DEV — Quick Resume Guide
 
-> โหลดไฟล์นี้เมื่อ: แค่จะโค้ด / รัน dev / แก้ bug
+> โหลดไฟล์นี้เมื่อ: resume session / แค่จะโค้ด / รัน dev
 > โหลด `CLAUDE.md` เมื่อ: ต้องการ context เต็ม / ออกแบบ feature ใหม่
+
+---
+
+## สถานะ ณ 2026-05-28 (ล่าสุด)
+
+| งาน | สถานะ |
+|---|---|
+| F1–F9 ทุกหน้า | ✅ เสร็จ + wired real API |
+| README.md | ✅ เขียนแล้ว |
+| Builder/FRONTEND_BUILDER_BRIEF.md | ✅ เขียนแล้ว (แก้ discrepancy กับ code แล้ว) |
+| Builder/BACKEND_BUILDER_BRIEF.md | ✅ เขียนแล้ว (role matrix แก้แล้ว) |
+| Review brief | ✅ อยู่ที่ `C:\ai-playground\API\docs\sessions\REVIEW_BRIEF.md` |
 
 ---
 
 ## Start
 
-```powershell
+```bash
+# Backend — Visual Studio
+# Open: C:\ai-playground\API\BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx
+# Ctrl+F5 → http://localhost:50680
+
+# Frontend
 cd C:\ai-playground\Frontend
-npm run dev   # → http://localhost:3000
+npm run dev   # → http://localhost:3001
 ```
 
-Login: ใส่อะไรก็ได้ → Admin (mock fallback)
-Real account: `admin_test / Test@1234`
+Login: `admin_test / Test@1234`
 
 ---
 
-## งานที่ค้าง
+## Open Items (ยังค้างอยู่)
 
-→ [`BACKLOG.md`](BACKLOG.md) section **งานที่ยังเหลือ**
-งานหลัก: เชื่อม API จริง 12 หน้า — ทุกหน้ายังเป็น mock data
+| Issue | รายละเอียด |
+|---|---|
+| Floor plan position ไม่ restore หลัง reload | GET /api/cameras ยัง return position_x/y ไม่ได้ — รอ backend |
+| Topology: REVIEW_BRIEF บอก "collapsible tree" | UI จริงคือ React Flow diagram — ต้อง align ก่อน review |
+| Role matrix: `user` เห็น cameras/NVRs ได้มั้ย | REVIEW_BRIEF บอก NO แต่ code canEdit() = admin OR user — ต้องตกลง |
 
 ---
 
@@ -37,21 +56,12 @@ Real account: `admin_test / Test@1234`
 ## Key Files
 
 ```
-src/pages/              ← 15 page components (1 route = 1 file)
-src/api/types.ts        ← TypeScript interfaces ทุก type
-src/api/client.ts       ← axios instance + JWT interceptor
-src/stores/authStore.ts ← { id, username, displayName, role }
-src/styles/tokens.css   ← CSS custom properties (light/dark)
-BACKLOG.md              ← งานค้าง + API gotchas
+src/pages/                        ← 1 route = 1 file
+src/api/types.ts                  ← TypeScript interfaces ทุก type
+src/api/client.ts                 ← axios instance + JWT interceptor
+src/stores/authStore.ts           ← { id, username, displayName, role }
+src/styles/tokens.css             ← CSS custom properties (light/dark)
+Builder/FRONTEND_BUILDER_BRIEF.md ← prep doc สำหรับ review (frontend)
+Builder/BACKEND_BUILDER_BRIEF.md  ← prep doc สำหรับ review (backend)
+vite.config.ts                    ← proxy /api/* → localhost:50680
 ```
-
----
-
-## Backend (เปิดเฉพาะตอน wire API จริง)
-
-```powershell
-cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
-dotnet run (หรือ IIS Express)   # → http://localhost:50680
-```
-
-Proxy `/api/*` → `localhost:44342` ตั้งค่าใน `vite.config.ts` แล้ว
