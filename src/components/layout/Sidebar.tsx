@@ -1,11 +1,13 @@
-import type { ElementType } from 'react'
+import { type ElementType, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Network, Building2, Camera, HardDrive,
   PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useThemeStore } from '../../stores/themeStore'
 import { useAuthStore } from '../../stores/authStore'
+import { getDashboardSummary } from '../../api/hierarchy'
 
 const BUILDING_LABEL: Record<string, string> = {
   a: 'Building A', b: 'Building B', c: 'Building C', d: 'Building D',
@@ -78,6 +80,22 @@ export default function Sidebar() {
   const user        = useAuthStore((s) => s.user)
   const locationCtx = useLocationCtx()
 
+  const { data: summaryData } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: () => getDashboardSummary(),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  })
+
+  const dynCounts = useMemo(() => {
+    if (!summaryData?.length) return {} as Record<string, number>
+    return {
+      Cameras:      summaryData.reduce((s, d) => s + d.totalCameras, 0),
+      NVRs:         summaryData.reduce((s, d) => s + d.totalNvrs, 0),
+      'PoE Switches': summaryData.reduce((s, d) => s + d.totalSwitches, 0),
+    }
+  }, [summaryData])
+
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : 'RN'
 
   function navClass({ to, matchPrefixes, exact }: NavItem) {
@@ -89,11 +107,12 @@ export default function Sidebar() {
 
   function renderItem(item: NavItem) {
     const { to, Icon, label, count } = item
+    const displayCount = dynCounts[label] ?? count
     return (
       <Link key={label} to={to} className={navClass(item)}>
         <Icon className="nav-ico" size={18} />
         {label}
-        {count !== undefined && <span className="nav-count">{count}</span>}
+        {displayCount !== undefined && <span className="nav-count">{displayCount}</span>}
       </Link>
     )
   }

@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { App } from 'antd'
+import { getSwitches, createSwitch, updateSwitch, deleteSwitch } from '../api/switches'
+import type { PoeSwitchApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -16,15 +20,32 @@ interface Switch {
   note: string
 }
 
-const INIT_SWITCHES: Switch[] = [
-  { id: 'sw1', name: 'SW-CORE-01',   ip: '192.168.1.1', model: 'Cisco SG350-28',       ports: 28, uptime: '45d 2h',  site: 'สำนักงานใหญ่',  status: 'online',  note: '' },
-  { id: 'sw2', name: 'SW-FLOOR-A1',  ip: '192.168.1.2', model: 'Cisco SG250-24',       ports: 24, uptime: '30d 14h', site: 'สำนักงานใหญ่',  status: 'online',  note: '' },
-  { id: 'sw3', name: 'SW-FLOOR-B2',  ip: '192.168.1.3', model: 'TP-Link TL-SG3424',   ports: 24, uptime: '12d 6h',  site: 'สาขาสีลม',      status: 'warning', note: '' },
-  { id: 'sw4', name: 'SW-FLOOR-C1',  ip: '192.168.1.4', model: 'Cisco SG250-18',       ports: 18, uptime: '28d 0h',  site: 'สาขาลาดพร้าว', status: 'online',  note: '' },
-  { id: 'sw5', name: 'SW-SITE-BN',   ip: '192.168.1.5', model: 'Netgear GS324T',       ports: 24, uptime: '5d 3h',   site: 'สาขาบางนา',    status: 'online',  note: '' },
+function mapSwitch(a: PoeSwitchApi): Switch {
+  const s = a.status ?? ''
+  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
+  return {
+    id: a.SW_ID,
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    ports: a.total_ports ?? 0,
+    uptime: '—',
+    site: a.Site_ID,
+    status,
+    note: a.notes ?? '',
+  }
+}
+
+const FALLBACK_SWITCHES: Switch[] = [
+  { id: 'SW-HQ-CORE',   name: 'Core Switch HQ',   ip: '192.168.1.2',  model: 'Cisco SG350X-24P',    ports: 24, uptime: '45d 2h',  site: 'HQ', status: 'online',  note: '' },
+  { id: 'SW-HQ-FLOOR2', name: 'Floor 2 Switch',   ip: '192.168.1.4',  model: 'Cisco CBS350-24P',    ports: 24, uptime: '12d 6h',  site: 'HQ', status: 'warning', note: '' },
+  { id: 'SW-HQ-FLOOR3', name: 'Floor 3 Switch',   ip: '192.168.1.3',  model: 'Cisco CBS350-24P',    ports: 24, uptime: '0d 0h',   site: 'HQ', status: 'offline', note: '' },
+  { id: 'SW-MINI-01',   name: 'Mini Switch 01',   ip: '192.168.1.5',  model: 'TP-Link TL-SG1016PE', ports: 16, uptime: '30d 14h', site: 'HQ', status: 'online',  note: '' },
+  { id: 'SW-CM-01',     name: 'Chiang Mai Core',  ip: '192.168.10.2', model: 'Cisco SG350-28P',     ports: 28, uptime: '60d 10h', site: 'CM', status: 'online',  note: '' },
+  { id: 'SW-PK-01',     name: 'Phuket Switch',    ip: '192.168.20.2', model: 'Cisco CBS350-16P',    ports: 16, uptime: '22d 0h',  site: 'PK', status: 'online',  note: '' },
 ]
 
-const SITES = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
+const SITES = ['สำนักงานใหญ่', 'สาขาเชียงใหม่', 'สาขาภูเก็ต', 'สาขาขอนแก่น', 'สาขาหาดใหญ่']
 
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
@@ -32,12 +53,33 @@ const BADGE: Record<Status, { cls: string; label: string }> = {
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
-interface FormState { name: string; ip: string; model: string; ports: string; site: string; note: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', ports: '24', site: SITES[0], note: '' }
+interface FormState { swId: string; name: string; ip: string; model: string; ports: string; site: string; note: string }
+const EMPTY_FORM: FormState = { swId: '', name: '', ip: '', model: '', ports: '24', site: SITES[0], note: '' }
 
 export default function SwitchesPage() {
-  const navigate = useNavigate()
-  const [switches, setSwitches]     = useState<Switch[]>(INIT_SWITCHES)
+  const navigate    = useNavigate()
+  const { message } = App.useApp()
+  const queryClient = useQueryClient()
+  const { data } = useQuery({ queryKey: ['switches'], queryFn: () => getSwitches() })
+  const [switches, setSwitches] = useState<Switch[]>(FALLBACK_SWITCHES)
+  useEffect(() => { if (data?.length) setSwitches(data.map(mapSwitch)) }, [data])
+
+  const createMut = useMutation({
+    mutationFn: () => createSwitch({ SW_ID: form.swId.trim(), device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), total_ports: parseInt(form.ports) || 24, Site_ID: form.site }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
+    onError: () => {},
+  })
+  const updateMut = useMutation({
+    mutationFn: (id: string) => updateSwitch(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), total_ports: parseInt(form.ports) || 24 }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
+    onError: () => {},
+  })
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteSwitch(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
+    onError: () => {},
+  })
+
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Switch>(null)
@@ -57,40 +99,34 @@ export default function SwitchesPage() {
   }
 
   function openEdit(s: Switch) {
-    setForm({ name: s.name, ip: s.ip, model: s.model, ports: String(s.ports), site: s.site, note: s.note })
+    setForm({ swId: s.id, name: s.name, ip: s.ip, model: s.model, ports: String(s.ports), site: s.site, note: s.note })
     setModalMode(s)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
     const ports = parseInt(form.ports) || 24
     if (modalMode === 'create') {
-      const sw: Switch = {
-        id: `sw-${Date.now()}`,
-        name: form.name.trim(),
-        ip: form.ip.trim(),
-        model: form.model.trim(),
-        ports,
-        uptime: '0d 0h',
-        site: form.site,
-        note: form.note.trim(),
-        status: 'online',
-      }
+      if (!form.swId.trim()) return
+      const sw: Switch = { id: form.swId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, uptime: '0d 0h', site: form.site, note: form.note.trim(), status: 'online' }
       setSwitches(prev => [...prev, sw])
+      setModalMode(null)
+      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${sw.name} สำเร็จ`) }
+      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
     } else if (modalMode && typeof modalMode === 'object') {
-      setSwitches(prev => prev.map(s =>
-        s.id === modalMode.id
-          ? { ...s, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, site: form.site, note: form.note.trim() }
-          : s
-      ))
+      setSwitches(prev => prev.map(s => s.id === modalMode.id ? { ...s, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, site: form.site, note: form.note.trim() } : s))
+      setModalMode(null)
+      try { await updateMut.mutateAsync(modalMode.id); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
+      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
     }
-    setModalMode(null)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteTarget) return
     setSwitches(prev => prev.filter(s => s.id !== deleteTarget.id))
     setDel(null)
+    try { await deleteMut.mutateAsync(deleteTarget.id); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
+    catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -181,9 +217,16 @@ export default function SwitchesPage() {
               </button>
             </div>
             <div className="crud-modal-body">
+              {!isEditing && (
+                <div className="form-group">
+                  <label className="form-label">Switch ID <span style={{ color: 'var(--alert)' }}>*</span></label>
+                  <input className="form-ctrl mono" placeholder="e.g. SW-HQ-FLOOR4"
+                    value={form.swId} onChange={e => setForm(f => ({ ...f, swId: e.target.value }))} />
+                </div>
+              )}
               <div className="form-group">
                 <label className="form-label">ชื่อ Switch</label>
-                <input className="form-ctrl" placeholder="e.g. SW-FLOOR-X1"
+                <input className="form-ctrl" placeholder="e.g. Floor 4 Switch"
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="form-group">

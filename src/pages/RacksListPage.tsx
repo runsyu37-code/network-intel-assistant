@@ -1,5 +1,9 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Server, MapPin } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getRacks } from '../api/racks'
+import type { RackApi } from '../api/types'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -12,16 +16,34 @@ interface Rack {
 
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 
-const RACKS: Rack[] = [
-  { id:'rack-a1', name:'Rack A1', status:'alert', site:'HQ Bangkok',    building:'Building A', room:'Server Room F2', usedU:14, totalU:42, devices:12, powerKw:1.24, budgetKw:2.5 },
-  { id:'rack-a2', name:'Rack A2', status:'ok',    site:'HQ Bangkok',    building:'Building A', room:'Server Room F2', usedU:8,  totalU:42, devices:7,  powerKw:0.82, budgetKw:2.5 },
-  { id:'rack-b1', name:'Rack B1', status:'warn',  site:'HQ Bangkok',    building:'Building B', room:'Network Room F3',usedU:10, totalU:24, devices:8,  powerKw:0.91, budgetKw:1.5 },
-  { id:'rack-c1', name:'Rack C1', status:'ok',    site:'Chiang Mai DC', building:'Building A', room:'Data Center F1', usedU:18, totalU:42, devices:14, powerKw:1.65, budgetKw:3.0 },
-  { id:'rack-p1', name:'Rack P1', status:'ok',    site:'Phuket Branch', building:'Building A', room:'Server Room F1', usedU:6,  totalU:24, devices:5,  powerKw:0.44, budgetKw:1.5 },
-  { id:'rack-k1', name:'Rack K1', status:'ok',    site:'Khon Kaen',     building:'Building A', room:'Server Room F1', usedU:4,  totalU:18, devices:4,  powerKw:0.28, budgetKw:1.0 },
+const FALLBACK_RACKS: Rack[] = [
+  { id:'rack-a1', name:'Rack A1', status:'alert', site:'HQ Bangkok',    building:'Building A', room:'Server Room F2',  usedU:14, totalU:42, devices:12, powerKw:1.24, budgetKw:2.5 },
+  { id:'rack-a2', name:'Rack A2', status:'ok',    site:'HQ Bangkok',    building:'Building A', room:'Server Room F2',  usedU:8,  totalU:42, devices:7,  powerKw:0.82, budgetKw:2.5 },
+  { id:'rack-b1', name:'Rack B1', status:'warn',  site:'HQ Bangkok',    building:'Building B', room:'Network Room F3', usedU:10, totalU:24, devices:8,  powerKw:0.91, budgetKw:1.5 },
+  { id:'rack-c1', name:'Rack C1', status:'ok',    site:'Chiang Mai DC', building:'Building A', room:'Data Center F1',  usedU:18, totalU:42, devices:14, powerKw:1.65, budgetKw:3.0 },
+  { id:'rack-p1', name:'Rack P1', status:'ok',    site:'Phuket Branch', building:'Building A', room:'Server Room F1',  usedU:6,  totalU:24, devices:5,  powerKw:0.44, budgetKw:1.5 },
+  { id:'rack-k1', name:'Rack K1', status:'ok',    site:'Khon Kaen',     building:'Building A', room:'Server Room F1',  usedU:4,  totalU:18, devices:4,  powerKw:0.28, budgetKw:1.0 },
 ]
 
 const SITE_ORDER = ['HQ Bangkok', 'Chiang Mai DC', 'Phuket Branch', 'Khon Kaen']
+
+function mapRack(a: RackApi): Rack {
+  const s = a.status ?? ''
+  const status: Status = s === 'online' ? 'ok' : s === 'warning' ? 'warn' : 'alert'
+  return {
+    id: a.Rack_ID,
+    name: a.name,
+    status,
+    site: a.site_name,
+    building: a.building_name,
+    room: a.room_name,
+    usedU: a.used_units,
+    totalU: a.total_units,
+    devices: a.device_count,
+    powerKw: a.power_kw,
+    budgetKw: a.power_budget_kw ?? 2.5,
+  }
+}
 
 function groupBySite(racks: Rack[]): { site: string; racks: Rack[] }[] {
   const map = new Map<string, Rack[]>()
@@ -29,7 +51,11 @@ function groupBySite(racks: Rack[]): { site: string; racks: Rack[] }[] {
     if (!map.has(r.site)) map.set(r.site, [])
     map.get(r.site)!.push(r)
   }
-  return SITE_ORDER.filter(s => map.has(s)).map(site => ({ site, racks: map.get(site)! }))
+  const ordered = [
+    ...SITE_ORDER.filter(s => map.has(s)),
+    ...[...map.keys()].filter(s => !SITE_ORDER.includes(s)),
+  ]
+  return ordered.map(site => ({ site, racks: map.get(site)! }))
 }
 
 function siteStatus(racks: Rack[]): Status {
@@ -40,7 +66,10 @@ function siteStatus(racks: Rack[]): Status {
 
 export default function RacksListPage() {
   const navigate = useNavigate()
-  const groups   = groupBySite(RACKS)
+  const { data } = useQuery({ queryKey: ['racks'], queryFn: () => getRacks() })
+  const [racks, setRacks] = useState<Rack[]>(FALLBACK_RACKS)
+  useEffect(() => { if (data?.length) setRacks(data.map(mapRack)) }, [data])
+  const groups = groupBySite(racks)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -58,21 +87,21 @@ export default function RacksListPage() {
 
       <div className="canvas-wrap" style={{ flex: 1, minHeight: 0 }}>
         <div className="canvas" style={{ overflowY: 'auto' }}>
-          {groups.map(({ site, racks }) => {
-            const st = siteStatus(racks)
+          {groups.map(({ site, racks: siteRacks }) => {
+            const st = siteStatus(siteRacks)
             return (
               <div key={site} className="rack-site-section">
                 <div className="rack-site-head">
                   <MapPin size={13} style={{ color: 'var(--ink-3)', flex: 'none' }} />
                   <span className="rsh-name">{site}</span>
                   <span className="rsh-dot" style={{ background: STATUS_COLOR[st] }} />
-                  <span className="rsh-count">{racks.length} rack{racks.length > 1 ? 's' : ''}</span>
+                  <span className="rsh-count">{siteRacks.length} rack{siteRacks.length > 1 ? 's' : ''}</span>
                 </div>
 
                 <div className="bldg-grid" style={{ padding: 0, paddingBottom: 4 }}>
-                  {racks.map(r => {
-                    const uPct   = Math.round(r.usedU / r.totalU * 100)
-                    const pwrPct = Math.round(r.powerKw / r.budgetKw * 100)
+                  {siteRacks.map(r => {
+                    const uPct    = Math.round(r.usedU / r.totalU * 100)
+                    const pwrPct  = Math.round(r.powerKw / r.budgetKw * 100)
                     const pwrHigh = pwrPct > 75
 
                     return (

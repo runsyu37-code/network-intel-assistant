@@ -1,5 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { HardDrive, Wifi, MapPin, Server, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { HardDrive, Wifi, MapPin, Server, AlertTriangle, ArrowLeft, Cable } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getNvrs } from '../api/nvrs'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -17,6 +19,14 @@ interface Channel {
   offline: boolean
 }
 
+interface NvrPort {
+  name: string
+  role: 'Uplink' | 'Camera'
+  speed: string
+  connectedTo: string
+  status: 'ok' | 'alert'
+}
+
 interface NVR {
   id: string; name: string; ip: string; mac: string; status: Status
   site: string; building: string; floor: string; rack: string
@@ -25,6 +35,7 @@ interface NVR {
   retentionDays: number
   hdds: HDD[]
   connectedCams: string[]
+  nvrPorts: NvrPort[]
 }
 
 const NVRS: Record<string, NVR> = {
@@ -38,6 +49,10 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
     ],
     connectedCams: ['CAM-001','CAM-002','CAM-005','CAM-006','CAM-007','CAM-008'],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-HQ-CORE',   status: 'ok' },
+      { name: 'ETH2', role: 'Camera',  speed: '1G',   connectedTo: 'SW-HQ-FLOOR2', status: 'ok' },
+    ],
   },
   'NVR-HQ-02': {
     id: 'NVR-HQ-02', name: 'NVR HQ 02', ip: '192.168.1.201', mac: '00:1A:2B:3C:4D:02',
@@ -49,6 +64,10 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD2', usedGB: 455, totalGB: 931, pct: 49 },
     ],
     connectedCams: ['CAM-003','CAM-004'],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-HQ-CORE',   status: 'ok' },
+      { name: 'ETH2', role: 'Camera',  speed: '1G',   connectedTo: 'SW-HQ-FLOOR2', status: 'ok' },
+    ],
   },
   'NVR-HQ-03': {
     id: 'NVR-HQ-03', name: 'NVR HQ 03', ip: '192.168.1.202', mac: '00:1A:2B:3C:4D:03',
@@ -60,6 +79,10 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
     ],
     connectedCams: ['CAM-014'],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-HQ-CORE',  status: 'ok'    },
+      { name: 'ETH2', role: 'Camera',  speed: '1G',   connectedTo: 'SW-MINI-01',  status: 'alert' },
+    ],
   },
   'NVR-CM-01': {
     id: 'NVR-CM-01', name: 'NVR Chiang Mai', ip: '192.168.10.200', mac: '00:1A:2B:3C:4D:04',
@@ -70,6 +93,10 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD1', usedGB: 494, totalGB: 931, pct: 53 },
     ],
     connectedCams: ['CAM-015','CAM-016'],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-CM-01', status: 'ok' },
+      { name: 'ETH2', role: 'Camera',  speed: '100M', connectedTo: 'SW-CM-01', status: 'ok' },
+    ],
   },
   'NVR-PK-01': {
     id: 'NVR-PK-01', name: 'NVR Phuket', ip: '192.168.20.200', mac: '00:1A:2B:3C:4D:05',
@@ -80,6 +107,10 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD1', usedGB: 289, totalGB: 931, pct: 31 },
     ],
     connectedCams: [],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-PK-01', status: 'ok' },
+      { name: 'ETH2', role: 'Camera',  speed: '100M', connectedTo: 'SW-PK-01', status: 'ok' },
+    ],
   },
   'NVR-KK-01': {
     id: 'NVR-KK-01', name: 'NVR Khon Kaen', ip: '192.168.30.200', mac: '00:1A:2B:3C:4D:06',
@@ -90,7 +121,17 @@ const NVRS: Record<string, NVR> = {
       { label: 'HDD1', usedGB: 410, totalGB: 931, pct: 44 },
     ],
     connectedCams: [],
+    nvrPorts: [
+      { name: 'ETH1', role: 'Uplink',  speed: '1G',   connectedTo: 'SW-KK-01', status: 'ok' },
+      { name: 'ETH2', role: 'Camera',  speed: '100M', connectedTo: 'SW-KK-01', status: 'ok' },
+    ],
   },
+}
+
+function mapStatus(s: string | null): Status {
+  if (s === 'online') return 'ok'
+  if (s === 'warning') return 'warn'
+  return 'alert'
 }
 
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
@@ -139,7 +180,32 @@ export default function NVRDetailPage() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const backTo    = (location.state as { from?: string } | null)?.from ?? '/dashboard/nvrs'
-  const nvr       = NVRS[nvrId ?? '']
+
+  const { data: nvrsData } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
+
+  const mockData = NVRS[nvrId ?? '']
+  const apiItem  = nvrsData?.find(n => n.NVR_ID === nvrId)
+  const nvr: NVR | undefined = !mockData ? undefined : !apiItem ? mockData : {
+    ...mockData,
+    name:          apiItem.device_name,
+    ip:            apiItem.ip_internet ?? apiItem.ip_cctv ?? mockData.ip,
+    mac:           apiItem.mac_address ?? mockData.mac,
+    model:         apiItem.model ?? mockData.model,
+    site:          apiItem.Site_ID,
+    building:      apiItem.Building_ID,
+    floor:         apiItem.Floor_ID,
+    rack:          apiItem.Rack_ID,
+    channels:      apiItem.total_channels ?? mockData.channels,
+    usedCh:        apiItem.active_channels ?? mockData.usedCh,
+    retentionDays: apiItem.retention_days ?? mockData.retentionDays,
+    status:        mapStatus(apiItem.status),
+    hdds: apiItem.hdd_total_tb ? [{
+      label:   'Storage',
+      usedGB:  Math.round((apiItem.hdd_used_pct ?? 0) / 100 * (apiItem.hdd_total_tb * 1024)),
+      totalGB: Math.round(apiItem.hdd_total_tb * 1024),
+      pct:     Math.round(apiItem.hdd_used_pct ?? 0),
+    }] : mockData.hdds,
+  }
 
   if (!nvr) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
@@ -241,6 +307,100 @@ export default function NVRDetailPage() {
                 Day Retention
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Network Interfaces diagram */}
+        <div className="cam-card" style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Cable size={15} /> Network Interfaces
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+
+            {/* Left switch — Uplink */}
+            {(() => { const p = nvr.nvrPorts[0]; const isOk = p.status === 'ok'; return (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div style={{
+                  background: 'var(--surface-2)', border: '1.5px solid var(--border)',
+                  borderRadius: 8, padding: '10px 16px', textAlign: 'center', width: '100%',
+                }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
+                    {p.connectedTo}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    Uplink / Internet
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: isOk ? 'var(--ok)' : 'var(--alert)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: isOk ? 'var(--ok)' : 'var(--alert)', boxShadow: `0 0 4px ${isOk ? 'var(--ok)' : 'var(--alert)'}` }} />
+                  {p.speed} · {isOk ? 'Link up' : 'Link down'}
+                </div>
+              </div>
+            )})()}
+
+            {/* Cable left */}
+            <div style={{ display: 'flex', alignItems: 'center', width: 48, flexShrink: 0 }}>
+              <div style={{ flex: 1, height: 2, background: nvr.nvrPorts[0].status === 'ok' ? 'var(--ok)' : 'var(--alert)', borderRadius: 1 }} />
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--surface-3)', border: '1.5px solid var(--border)', flexShrink: 0 }} />
+            </div>
+
+            {/* NVR box center */}
+            <div style={{
+              background: 'var(--surface)', border: '2px solid var(--border-2, var(--border))',
+              borderRadius: 10, padding: '14px 20px', textAlign: 'center', flexShrink: 0,
+              boxShadow: 'var(--shadow-1)',
+            }}>
+              <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
+                {nvr.nvrPorts.map(p => (
+                  <div key={p.name} style={{
+                    width: 28, height: 20, borderRadius: 3,
+                    background: 'var(--surface-2)', border: '1.5px solid var(--border)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                  }}>
+                    <div style={{ width: 16, height: 3, background: 'var(--border)', borderRadius: 1 }} />
+                    <div style={{ display: 'flex', gap: 2 }}>
+                      {[0,1,2,3].map(i => (
+                        <div key={i} style={{ width: 2, height: 6, background: p.status === 'ok' ? 'var(--ok)' : 'var(--alert)', borderRadius: 1 }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink)', fontFamily: 'JetBrains Mono, monospace' }}>
+                {nvr.id}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--ink-3)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                ETH1 &nbsp;·&nbsp; ETH2
+              </div>
+            </div>
+
+            {/* Cable right */}
+            <div style={{ display: 'flex', alignItems: 'center', width: 48, flexShrink: 0 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--surface-3)', border: '1.5px solid var(--border)', flexShrink: 0 }} />
+              <div style={{ flex: 1, height: 2, background: nvr.nvrPorts[1].status === 'ok' ? 'var(--ok)' : 'var(--alert)', borderRadius: 1 }} />
+            </div>
+
+            {/* Right switch — Camera */}
+            {(() => { const p = nvr.nvrPorts[1]; const isOk = p.status === 'ok'; return (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div style={{
+                  background: 'var(--surface-2)', border: '1.5px solid var(--border)',
+                  borderRadius: 8, padding: '10px 16px', textAlign: 'center', width: '100%',
+                }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
+                    {p.connectedTo}
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 3, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    Camera Network
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: isOk ? 'var(--ok)' : 'var(--alert)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: isOk ? 'var(--ok)' : 'var(--alert)', boxShadow: `0 0 4px ${isOk ? 'var(--ok)' : 'var(--alert)'}` }} />
+                  {p.speed} · {isOk ? 'Link up' : 'Link down'}
+                </div>
+              </div>
+            )})()}
+
           </div>
         </div>
 

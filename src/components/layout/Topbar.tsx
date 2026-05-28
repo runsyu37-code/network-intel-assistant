@@ -1,6 +1,10 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, Settings, AlertCircle, AlertTriangle, X } from 'lucide-react'
+import { Bell, Settings, AlertCircle, AlertTriangle, X, LogOut } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useAuthStore } from '../../stores/authStore'
+import { getAlertLogs } from '../../api/hierarchy'
+import type { AlertLogApi } from '../../api/types'
 
 interface Crumb { label: string; to?: string }
 
@@ -45,6 +49,35 @@ const RACK_LABEL: Record<string, string> = {
 
 const SIMPLE_PAGE: Record<string, string> = {
   users: 'Users',
+}
+
+function alertLevel(type: string | null): 'alert' | 'warn' {
+  if (!type) return 'warn'
+  const t = type.toLowerCase()
+  if (t.includes('critical') || t.includes('offline') || t.includes('lost') || t.includes('fail') || t.includes('hdd')) return 'alert'
+  return 'warn'
+}
+
+function timeAgo(ts: string | null): string {
+  if (!ts) return '—'
+  const diff = Date.now() - new Date(ts + 'Z').getTime()
+  const m = Math.floor(diff / 60_000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+function mapAlert(a: AlertLogApi) {
+  const level = alertLevel(a.alert_type)
+  const devType = a.device_type?.toLowerCase() ?? ''
+  const href = devType === 'camera'
+    ? `/dashboard/cameras/${a.device_id ?? ''}`
+    : devType === 'nvr'
+    ? `/dashboard/nvrs/${a.device_id ?? ''}`
+    : `/dashboard/switches/${a.device_id ?? ''}`
+  return { id: a.device_id ?? String(a.id), name: a.device_name ?? '—', msg: a.message, level, time: timeAgo(a.alerted_at), href }
 }
 
 const MOCK_ALERTS = [
@@ -128,8 +161,25 @@ function useBreadcrumbs(): Crumb[] {
 export default function Topbar() {
   const crumbs   = useBreadcrumbs()
   const navigate = useNavigate()
+  const logout   = useAuthStore(s => s.logout)
   const [alertsOpen, setAlertsOpen] = useState(false)
   const alertRef = useRef<HTMLDivElement>(null)
+
+  const { data: alertData } = useQuery({
+    queryKey: ['alert-logs-topbar'],
+    queryFn: () => getAlertLogs({ limit: 5 }),
+    refetchInterval: 30_000,
+  })
+
+  const alerts = alertData?.length
+    ? alertData.filter(a => !a.resolved_at).slice(0, 5).map(mapAlert)
+    : MOCK_ALERTS
+  const alertCount = alerts.length
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   useEffect(() => {
     const parts = crumbs.map(c => c.label)
@@ -175,7 +225,7 @@ export default function Topbar() {
             onClick={() => setAlertsOpen(o => !o)}
           >
             <i className="pill-dot" />
-            2 alerts
+            {alertCount} alert{alertCount !== 1 ? 's' : ''}
           </button>
 
           {alertsOpen && (
@@ -186,7 +236,7 @@ export default function Topbar() {
                   <X size={13} />
                 </button>
               </div>
-              {MOCK_ALERTS.map(a => (
+              {alerts.map(a => (
                 <div
                   key={a.id}
                   className={`alerts-dd-item ${a.level}`}
@@ -211,6 +261,9 @@ export default function Topbar() {
 
         <button className="icon-btn"><Bell size={16} /></button>
         <button className="icon-btn"><Settings size={16} /></button>
+        <button className="icon-btn" title="Logout" onClick={handleLogout} style={{ color: 'var(--alert)' }}>
+          <LogOut size={16} />
+        </button>
       </div>
     </header>
   )

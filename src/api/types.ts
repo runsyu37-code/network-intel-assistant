@@ -118,6 +118,8 @@ export interface BuildingTreeDto {
   buildingCode: string | null
   floorCount: number
   alertCount: number
+  cameraCount: number
+  nvrCount: number
   floors: FloorTreeDto[]
 }
 
@@ -184,4 +186,54 @@ export interface AlertLogApi {
   resolved_at: string | null
   alerted_at: string | null
   updated_at: string
+}
+
+export interface RackApi {
+  Rack_ID: string
+  name: string
+  Site_ID: string
+  Building_ID: string
+  Floor_ID: string
+  Room_ID: string
+  room_name: string
+  site_name: string
+  building_name: string
+  total_units: number
+  used_units: number
+  device_count: number
+  power_kw: number
+  power_budget_kw: number | null
+  status: string
+}
+
+export interface RackDeviceApi {
+  device_id: string
+  device_name: string
+  device_type: 'nvr' | 'switch'
+  model: string | null
+  status: string
+  ip_address: string | null
+  rack_unit: number | null
+}
+
+export interface RackAlertApi {
+  status: string
+  device_name: string
+  message: string
+  alerted_at: string
+}
+
+export interface RackDetailApi {
+  Rack_ID: string
+  name: string
+  site_name: string
+  building_name: string
+  room_name: string
+  total_units: number
+  used_units: number
+  power_kw: number
+  power_budget_kw: number | null
+  status: string
+  devices: RackDeviceApi[]
+  alerts: RackAlertApi[]
 }

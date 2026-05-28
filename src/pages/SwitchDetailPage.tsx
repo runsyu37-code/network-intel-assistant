@@ -1,5 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Network, ArrowLeft } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getSwitches } from '../api/switches'
 
 type Status = 'ok' | 'warn' | 'alert'
 type PortStatus = 'active' | 'inactive' | 'error'
@@ -125,13 +127,19 @@ const SWITCHES: Record<string, SwitchDevice> = {
   },
 }
 
+function mapStatus(s: string | null): Status {
+  if (s === 'online') return 'ok'
+  if (s === 'warning') return 'warn'
+  return 'alert'
+}
+
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
 
 const LED_COLOR: Record<PortStatus, string> = {
   active:   '#17A34A',
-  inactive: '#444',
-  error:    '#EAB308',
+  inactive: '#6B7280',
+  error:    '#EF4444',
 }
 
 const PORT_BADGE: Record<PortStatus, { bg: string; color: string; label: string }> = {
@@ -214,7 +222,24 @@ export default function SwitchDetailPage() {
   const navigate     = useNavigate()
   const location     = useLocation()
   const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/switches'
-  const sw           = SWITCHES[switchId ?? '']
+
+  const { data: switchesData } = useQuery({ queryKey: ['switches'], queryFn: () => getSwitches() })
+
+  const mockData = SWITCHES[switchId ?? '']
+  const apiItem  = switchesData?.find(s => s.SW_ID === switchId)
+  const sw: SwitchDevice | undefined = !mockData ? undefined : !apiItem ? mockData : {
+    ...mockData,
+    name:    apiItem.device_name,
+    ip:      apiItem.ip_address ?? mockData.ip,
+    model:   apiItem.model ?? mockData.model,
+    ports:   apiItem.total_ports ?? mockData.ports,
+    powerW:  Math.round(apiItem.poe_used_w ?? mockData.powerW),
+    budgetW: Math.round(apiItem.poe_budget_w ?? mockData.budgetW),
+    site:    apiItem.Site_ID,
+    building: apiItem.Building_ID,
+    floor:   apiItem.Floor_ID,
+    status:  mapStatus(apiItem.status),
+  }
 
   if (!sw) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
@@ -307,9 +332,9 @@ export default function SwitchDetailPage() {
                 <HardwarePortMap sw={sw} />
                 <div style={{ display: 'flex', gap: 16, fontSize: 11, color: 'var(--ink-3)', marginTop: 10 }}>
                   {[
-                    { color: LED_COLOR.active,   label: 'Active'   },
-                    { color: LED_COLOR.error,    label: 'Error'    },
-                    { color: LED_COLOR.inactive, label: 'Inactive' },
+                    { color: LED_COLOR.active,   label: 'Active'          },
+                    { color: LED_COLOR.error,    label: 'Offline / Error' },
+                    { color: LED_COLOR.inactive, label: 'Unused'          },
                   ].map(l => (
                     <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, display: 'inline-block' }} />

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider, theme as antdTheme } from 'antd'
+import { App as AntApp, ConfigProvider, theme as antdTheme } from 'antd'
 import { useThemeStore } from './stores/themeStore'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
@@ -52,11 +52,13 @@ export default function App() {
         token: antdTokens[theme],
       }}
     >
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard/*" element={<DashboardPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      <AntApp>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard/*" element={<DashboardPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AntApp>
     </ConfigProvider>
   )
 }

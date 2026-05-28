@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getCameras, patchCameraPosition } from '../api/cameras'
+import type { CameraApi } from '../api/types'
 
 const PLAN_EXTS = ['jpg', 'jpeg', 'png', 'svg', 'webp']
 
@@ -89,6 +92,24 @@ const FLOORS: Record<string, FloorData> = {
   },
 }
 
+function mapApiCamera(a: CameraApi, idx: number): Camera {
+  const s = (a.status ?? '').toLowerCase()
+  const status: CamStatus = s === 'online' ? 'ok' : s === 'warning' ? 'warn' : 'alert'
+  const left = a.position_x != null ? `${a.position_x.toFixed(1)}%` : `${10 + (idx % 4) * 22}%`
+  const top  = a.position_y != null ? `${a.position_y.toFixed(1)}%` : `${15 + Math.floor(idx / 4) * 30}%`
+  return {
+    id: String(a.id),
+    status,
+    left,
+    top,
+    rot: 135,
+    room: a.install_location ?? '—',
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '—',
+    lastSeen: a.last_seen ?? '—',
+  }
+}
+
 const DEFAULT_FLOOR: FloorData = {
   title: 'Floor Plan',
   sub: '— view mode',
@@ -165,11 +186,26 @@ export default function FloorPlanPage() {
     Object.fromEntries(floorData.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
   )
 
-  const canvasRef  = useRef<HTMLDivElement>(null)
-  const dragging   = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number } | null>(null)
-  const wasDragged = useRef(false)
-  const zoomRef    = useRef(zoom)
+  const { data: apiCameras } = useQuery({
+    queryKey: ['cameras', 'floor', floorId],
+    queryFn: () => getCameras({ Floor_ID: floorId! }),
+    enabled: !!floorId,
+  })
+
+  useEffect(() => {
+    if (!apiCameras?.length) return
+    const mapped = apiCameras.map(mapApiCamera)
+    setCameras(mapped)
+    setPositions(Object.fromEntries(mapped.map(c => [c.id, { left: c.left, top: c.top }])))
+  }, [apiCameras])
+
+  const canvasRef      = useRef<HTMLDivElement>(null)
+  const dragging       = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number } | null>(null)
+  const wasDragged     = useRef(false)
+  const zoomRef        = useRef(zoom)
+  const positionsRef   = useRef(positions)
   useEffect(() => { zoomRef.current = zoom }, [zoom])
+  useEffect(() => { positionsRef.current = positions }, [positions])
 
   useEffect(() => {
     const f = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
@@ -239,7 +275,19 @@ export default function FloorPlanPage() {
     setPositions(p => ({ ...p, [dragging.current!.id]: { left: `${newLeft.toFixed(1)}%`, top: `${newTop.toFixed(1)}%` } }))
   }
 
-  function stopDrag() { dragging.current = null }
+  function stopDrag() {
+    if (dragging.current && wasDragged.current) {
+      const { id } = dragging.current
+      const pos = positionsRef.current[id]
+      if (pos) {
+        const camId = parseInt(id)
+        if (!isNaN(camId)) {
+          patchCameraPosition(camId, parseFloat(pos.left), parseFloat(pos.top)).catch(() => {})
+        }
+      }
+    }
+    dragging.current = null
+  }
 
   function onPlanClick(e: React.MouseEvent<HTMLDivElement>) {
     if (mode !== 'edit') return
@@ -509,8 +557,13 @@ export default function FloorPlanPage() {
                   className="btn-primary"
                   style={{ width: '100%', justifyContent: 'center' }}
                   onClick={() => {
-                    const realId = 'CAM-' + panelCam.id.split('-')[1].padStart(3, '0')
-                    navigate(`/dashboard/cameras/${realId}`, { state: { from: location.pathname } })
+                    const numericId = parseInt(panelCam.id)
+                    if (!isNaN(numericId)) {
+                      navigate(`/dashboard/cameras/${numericId}`, { state: { from: location.pathname } })
+                    } else {
+                      const realId = 'CAM-' + panelCam.id.split('-')[1].padStart(3, '0')
+                      navigate(`/dashboard/cameras/${realId}`, { state: { from: location.pathname } })
+                    }
                   }}
                 >
                   Open Detail

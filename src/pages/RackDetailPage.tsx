@@ -1,5 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getRackById } from '../api/racks'
+import type { RackDeviceApi, RackAlertApi } from '../api/types'
 
 type DevStatus = 'ok' | 'alert' | 'warn' | 'passive'
 type DevType   = 'nvr' | 'switch' | 'patch' | 'pdu' | 'ups' | 'cable' | 'ap'
@@ -35,33 +38,66 @@ const RACKS: Record<string, RackData> = {
     usedU: 14, totalU: TOTAL_U,
     powerKw: 1.24, powerBudgetKw: 2.5,
     alerts: [
-      { status: 'alert', dev: 'SW-HQ-FLOOR3', what: '· offline',             ago: '8m ago'  },
-      { status: 'warn',  dev: 'SW-HQ-FLOOR2', what: '· chassis temp 62°C',   ago: '22m ago' },
+      { status: 'alert', dev: 'SW-HQ-FLOOR3', what: '· offline',           ago: '8m ago'  },
+      { status: 'warn',  dev: 'SW-HQ-FLOOR2', what: '· chassis temp 62°C', ago: '22m ago' },
     ],
     devices: [
-      { uTop: 42, size: 2, name: 'CABLE MGR',        type: 'cable',  status: 'passive' },
-      { uTop: 39, size: 2, name: 'PDU-A · 12-out',   type: 'pdu',    status: 'passive' },
-      { uTop: 37, size: 2, name: 'NVR-HQ-01',        type: 'nvr',    status: 'ok',     model: 'Hikvision DS-7732NI' },
-      { uTop: 34, size: 1, name: 'SW-HQ-CORE',       type: 'switch', status: 'ok',     model: 'Cisco SG350X 24P' },
-      { uTop: 33, size: 1, name: 'SW-HQ-FLOOR3',     type: 'switch', status: 'alert',  model: 'Cisco CBS350 24P' },
-      { uTop: 32, size: 1, name: 'SW-HQ-FLOOR2',     type: 'switch', status: 'warn',   model: 'Cisco CBS350 24P' },
-      { uTop: 31, size: 2, name: 'NVR-HQ-02',        type: 'nvr',    status: 'ok',     model: 'Hikvision DS-7732NI' },
-      { uTop: 28, size: 1, name: 'PATCH-A · 48p',    type: 'patch',  status: 'passive' },
+      { uTop: 42, size: 2, name: 'CABLE MGR',      type: 'cable',  status: 'passive' },
+      { uTop: 39, size: 2, name: 'PDU-A · 12-out', type: 'pdu',    status: 'passive' },
+      { uTop: 37, size: 2, name: 'NVR-HQ-01',      type: 'nvr',    status: 'ok',    model: 'Hikvision DS-7732NI' },
+      { uTop: 34, size: 1, name: 'SW-HQ-CORE',     type: 'switch', status: 'ok',    model: 'Cisco SG350X 24P' },
+      { uTop: 33, size: 1, name: 'SW-HQ-FLOOR3',   type: 'switch', status: 'alert', model: 'Cisco CBS350 24P' },
+      { uTop: 32, size: 1, name: 'SW-HQ-FLOOR2',   type: 'switch', status: 'warn',  model: 'Cisco CBS350 24P' },
+      { uTop: 31, size: 2, name: 'NVR-HQ-02',      type: 'nvr',    status: 'ok',    model: 'Hikvision DS-7732NI' },
+      { uTop: 28, size: 1, name: 'PATCH-A · 48p',  type: 'patch',  status: 'passive' },
       { uTop: 27, size: 1, subs: [
-        { name: 'AP-301', type: 'ap', status: 'ok'  },
-        { name: 'AP-302', type: 'ap', status: 'ok'  },
-        { name: 'AP-303', type: 'ap', status: 'ok'  },
+        { name: 'AP-301', type: 'ap', status: 'ok' },
+        { name: 'AP-302', type: 'ap', status: 'ok' },
+        { name: 'AP-303', type: 'ap', status: 'ok' },
       ]},
       { uTop: 26, size: 1, subs: [
         { name: 'SW-MINI-01', type: 'switch', status: 'ok'   },
         { name: 'SW-MINI-02', type: 'switch', status: 'warn' },
       ]},
-      { uTop: 5,  size: 4, name: 'UPS · 3 kVA',      type: 'ups',    status: 'ok',     model: 'APC SRT3000RMXLI' },
+      { uTop: 5, size: 4, name: 'UPS · 3 kVA', type: 'ups', status: 'ok', model: 'APC SRT3000RMXLI' },
     ],
   },
 }
 
 const DEFAULT_RACK: RackData = RACKS['rack-a1']
+
+function timeAgo(ts: string): string {
+  const diff = Date.now() - new Date(ts).getTime()
+  const m = Math.floor(diff / 60_000)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+function apiDevicesToDevices(apiDevices: RackDeviceApi[], totalU: number): Device[] {
+  const result: Device[] = [
+    { uTop: totalU, size: 2, name: 'CABLE MGR', type: 'cable', status: 'passive' },
+  ]
+  let cursor = totalU - 2
+  for (const dev of apiDevices) {
+    const size: number = dev.device_type === 'nvr' ? 2 : 1
+    if (cursor < size) break
+    const status: DevStatus = dev.status === 'online' ? 'ok' : dev.status === 'warning' ? 'warn' : 'alert'
+    result.push({ uTop: cursor, size, name: dev.device_name, type: dev.device_type, status, model: dev.model ?? undefined })
+    cursor -= size
+  }
+  return result
+}
+
+function mapApiAlerts(apiAlerts: RackAlertApi[]): RackData['alerts'] {
+  return apiAlerts.map(a => ({
+    status: (a.status === 'warning' ? 'warn' : 'alert') as 'alert' | 'warn',
+    dev: a.device_name,
+    what: `· ${a.message}`,
+    ago: a.alerted_at ? timeAgo(a.alerted_at) : '—',
+  }))
+}
 
 /* ── SVG glyphs per device type ─────────────────────────────── */
 function Glyph({ type }: { type: DevType }) {
@@ -142,12 +178,31 @@ export default function RackDetailPage() {
   const navigate     = useNavigate()
   const location     = useLocation()
   const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/racks'
-  const rack         = RACKS[rackId ?? ''] ?? DEFAULT_RACK
 
-  const capacityPct  = (rack.usedU / rack.totalU * 100).toFixed(0)
+  const { data: apiRack } = useQuery({
+    queryKey: ['rack-detail', rackId],
+    queryFn: () => getRackById(rackId!),
+    enabled: !!rackId,
+  })
+
+  const mockData = RACKS[rackId ?? ''] ?? DEFAULT_RACK
+  const rack: RackData = !apiRack ? mockData : {
+    title: `${apiRack.name} — ${apiRack.room_name}`,
+    sub: `${apiRack.total_units}U · ${apiRack.devices.length} devices installed`,
+    usedU: apiRack.used_units,
+    totalU: apiRack.total_units,
+    powerKw: apiRack.power_kw,
+    powerBudgetKw: apiRack.power_budget_kw ?? mockData.powerBudgetKw,
+    devices: apiRack.devices.length > 0
+      ? apiDevicesToDevices(apiRack.devices, apiRack.total_units)
+      : mockData.devices,
+    alerts: mapApiAlerts(apiRack.alerts),
+  }
+
+  const totalU       = rack.totalU
+  const capacityPct  = (rack.usedU / totalU * 100).toFixed(0)
   const powerPct     = (rack.powerKw / rack.powerBudgetKw * 100).toFixed(0)
-  const freeU        = rack.totalU - rack.usedU
-
+  const freeU        = totalU - rack.usedU
   const deviceCount  = rack.devices.reduce((n, d) => n + (d.subs ? d.subs.length : 1), 0)
 
   return (
@@ -178,14 +233,14 @@ export default function RackDetailPage() {
             <div className="rack">
               <div className="rack-header">
                 <span className="rack-rid">{rackId?.toUpperCase() ?? 'RACK A1'}</span>
-                <span className="rack-rsub">42U · 600 × 1000 mm</span>
+                <span className="rack-rsub">{totalU}U · 600 × 1000 mm</span>
               </div>
 
               <div className="rack-body">
                 {/* U labels */}
                 <div className="u-labels">
-                  {Array.from({ length: TOTAL_U }, (_, i) => {
-                    const u = TOTAL_U - i
+                  {Array.from({ length: totalU }, (_, i) => {
+                    const u = totalU - i
                     return (
                       <div key={u} className={`u-label-row${u % 2 === 0 ? ' even' : ''}`}>
                         {String(u).padStart(2, '0')}
@@ -197,11 +252,11 @@ export default function RackDetailPage() {
                 {/* Slot area with devices */}
                 <div
                   className="u-slots"
-                  style={{ backgroundSize: `100% ${(1 / TOTAL_U * 100).toFixed(4)}%` }}
+                  style={{ backgroundSize: `100% ${(1 / totalU * 100).toFixed(4)}%` }}
                 >
                   {rack.devices.map((d, i) => {
-                    const topPct    = ((TOTAL_U - d.uTop) / TOTAL_U * 100).toFixed(4) + '%'
-                    const heightPct = (d.size / TOTAL_U * 100).toFixed(4) + '%'
+                    const topPct    = ((totalU - d.uTop) / totalU * 100).toFixed(4) + '%'
+                    const heightPct = (d.size / totalU * 100).toFixed(4) + '%'
 
                     if (d.subs) {
                       return (
@@ -246,7 +301,7 @@ export default function RackDetailPage() {
               <div className="info-row">
                 <div className="info-card">
                   <div className="ic-label">Capacity</div>
-                  <div className="ic-big">{rack.usedU}<span className="ic-unit">/ {rack.totalU} U</span></div>
+                  <div className="ic-big">{rack.usedU}<span className="ic-unit">/ {totalU} U</span></div>
                   <div className="ic-bar"><span style={{ width: `${capacityPct}%` }} /></div>
                   <div className="ic-foot">{freeU}U free · {deviceCount} devices</div>
                 </div>

@@ -132,6 +132,43 @@ var(--warn)      var(--warn-soft)
 var(--alert)     var(--alert-soft)
 ```
 
+---
+
+## Future Features (ยังไม่ implement — จดไว้ก่อน)
+
+### 🗺️ Site Map — Interactive Edit Mode
+
+**หน้า:** `SitesPage.tsx` (map view)
+
+| Feature | รายละเอียด |
+|---|---|
+| Edit mode toggle | เพิ่มปุ่ม View/Edit เหมือน FloorPlanPage — ใน edit mode ลากตึกบน SVG ได้ |
+| Drag building footprint | ขยับตึกบน site map ให้ตรงตำแหน่งจริง — save ลง localStorage หรือ API |
+| Draw new building block | ตอน Add Building ให้วาด rectangle บน canvas ได้เลย (กด drag เพื่อกำหนด x,y,w,h) |
+| Resize handle | ปรับขนาด footprint ได้ (8 handle รอบ rectangle) |
+| Persist positions | `ssm.site.positions.<siteId>` ใน localStorage → อนาคต sync กับ `PATCH /api/buildings/{id}/position` |
+
+**Scope เมื่อทำจริง:**
+- เพิ่ม `editMode` state + toggle pill ใน header
+- ใช้ SVG `onMouseDown/Move/Up` สำหรับ drag และ draw
+- Store position ใน `Record<buildingId, {x,y,w,h}>`
+- New building → user วาด rect ก่อน → modal กรอก metadata ทีหลัง
+
+---
+
+### 📐 Pages อื่นๆ ที่จะ enhance ต่อ
+
+| หน้า | สิ่งที่จะเพิ่ม |
+|---|---|
+| `FloorPlanPage` | Save camera positions ลง API (`PATCH /api/cameras/{id}/position`) แทน local state |
+| `RacksListPage` | Add/Edit/Delete rack + wire API |
+| `CamerasPage` | Add camera + assign to floor |
+| `NVRsPage` / `SwitchesPage` | Add/Edit/Delete device |
+| `TopologyPage` | Save site positions ลง API แทน localStorage |
+| `BuildingDetailPage` | Floor reorder (drag-to-sort) |
+
+---
+
 ## CSS Files
 
 ```

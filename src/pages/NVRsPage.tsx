@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { App } from 'antd'
+import { getNvrs, createNvr, updateNvr, deleteNvr } from '../api/nvrs'
+import type { NvrApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -16,15 +20,32 @@ interface NVR {
   status: Status
 }
 
-const INIT_NVRS: NVR[] = [
-  { id: 'nvr1', name: 'NVR-01', ip: '192.168.1.21', model: 'Hikvision DS-7616NI-K2', chUsed: 16, chTotal: 16, hddPct: 78, site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'nvr2', name: 'NVR-02', ip: '192.168.1.22', model: 'Hikvision DS-7616NI-K2', chUsed: 12, chTotal: 16, hddPct: 45, site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'nvr3', name: 'NVR-03', ip: '192.168.1.23', model: 'Dahua NVR5216-EI',        chUsed:  8, chTotal: 16, hddPct: 91, site: 'สาขาสีลม',      status: 'warning' },
-  { id: 'nvr4', name: 'NVR-04', ip: '192.168.1.24', model: 'Hikvision DS-7632NI-K2', chUsed: 14, chTotal: 32, hddPct: 62, site: 'สาขาลาดพร้าว', status: 'online' },
-  { id: 'nvr5', name: 'NVR-05', ip: '192.168.1.25', model: 'Dahua NVR5208-EI',        chUsed:  0, chTotal:  8, hddPct:  0, site: 'สาขาบางนา',    status: 'offline' },
+function mapNvr(a: NvrApi): NVR {
+  const s = a.status ?? ''
+  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
+  return {
+    id: a.NVR_ID,
+    name: a.device_name,
+    ip: a.ip_internet ?? a.ip_cctv ?? '—',
+    model: a.model ?? '',
+    chUsed: a.active_channels ?? 0,
+    chTotal: a.total_channels ?? 0,
+    hddPct: Math.round(a.hdd_used_pct ?? 0),
+    site: a.Site_ID,
+    status,
+  }
+}
+
+const FALLBACK_NVRS: NVR[] = [
+  { id: 'NVR-HQ-01', name: 'NVR HQ 01',      ip: '192.168.1.200',  model: 'Hikvision DS-7732NI-I4', chUsed: 28, chTotal: 32, hddPct: 78, site: 'HQ',          status: 'online'  },
+  { id: 'NVR-HQ-02', name: 'NVR HQ 02',      ip: '192.168.1.201',  model: 'Hikvision DS-7732NI-I4', chUsed: 16, chTotal: 32, hddPct: 45, site: 'HQ',          status: 'online'  },
+  { id: 'NVR-HQ-03', name: 'NVR HQ 03',      ip: '192.168.1.202',  model: 'Dahua NVR5232-EI',       chUsed: 18, chTotal: 32, hddPct: 92, site: 'HQ',          status: 'warning' },
+  { id: 'NVR-CM-01', name: 'NVR Chiang Mai', ip: '192.168.10.200', model: 'Hikvision DS-7616NI-I2', chUsed: 10, chTotal: 16, hddPct: 53, site: 'CM',          status: 'online'  },
+  { id: 'NVR-PK-01', name: 'NVR Phuket',     ip: '192.168.20.200', model: 'Dahua NVR5216-EI',       chUsed:  8, chTotal: 16, hddPct: 31, site: 'PK',          status: 'online'  },
+  { id: 'NVR-KK-01', name: 'NVR Khon Kaen',  ip: '192.168.30.200', model: 'Axis S3008',             chUsed:  5, chTotal:  8, hddPct: 44, site: 'KK',          status: 'online'  },
 ]
 
-const SITES = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
+const SITES = ['สำนักงานใหญ่', 'สาขาเชียงใหม่', 'สาขาภูเก็ต', 'สาขาขอนแก่น', 'สาขาหาดใหญ่']
 
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
@@ -32,17 +53,38 @@ const BADGE: Record<Status, { cls: string; label: string }> = {
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
-interface FormState { name: string; ip: string; model: string; chTotal: string; site: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', chTotal: '16', site: SITES[0] }
+interface FormState { nvrId: string; name: string; ip: string; model: string; chTotal: string; site: string }
+const EMPTY_FORM: FormState = { nvrId: '', name: '', ip: '', model: '', chTotal: '16', site: SITES[0] }
 
 export default function NVRsPage() {
-  const navigate = useNavigate()
-  const [nvrs, setNvrs]             = useState<NVR[]>(INIT_NVRS)
+  const navigate    = useNavigate()
+  const { message } = App.useApp()
+  const queryClient = useQueryClient()
+  const { data, isLoading } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
+  const [nvrs, setNvrs]    = useState<NVR[]>(FALLBACK_NVRS)
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
   const [deleteTarget, setDel]      = useState<NVR | null>(null)
   const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+
+  useEffect(() => { if (data?.length) setNvrs(data.map(mapNvr)) }, [data])
+
+  const createMut = useMutation({
+    mutationFn: () => createNvr({ NVR_ID: form.nvrId.trim(), device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16, Site_ID: form.site }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
+    onError: () => {},
+  })
+  const updateMut = useMutation({
+    mutationFn: (id: string) => updateNvr(id, { device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16 }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
+    onError: () => {},
+  })
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteNvr(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
+    onError: () => {},
+  })
 
   const filtered = nvrs.filter(n => {
     if (siteFilter !== 'all' && n.site !== siteFilter) return false
@@ -57,39 +99,34 @@ export default function NVRsPage() {
   }
 
   function openEdit(n: NVR) {
-    setForm({ name: n.name, ip: n.ip, model: n.model, chTotal: String(n.chTotal), site: n.site })
+    setForm({ nvrId: n.id, name: n.name, ip: n.ip, model: n.model, chTotal: String(n.chTotal), site: n.site })
     setModalMode(n)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
     const chTotal = parseInt(form.chTotal) || 16
     if (modalMode === 'create') {
-      const nvr: NVR = {
-        id: `nvr-${Date.now()}`,
-        name: form.name.trim(),
-        ip: form.ip.trim(),
-        model: form.model.trim(),
-        chUsed: 0, chTotal,
-        hddPct: 0,
-        site: form.site,
-        status: 'online',
-      }
+      if (!form.nvrId.trim()) return
+      const nvr: NVR = { id: form.nvrId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chUsed: 0, chTotal, hddPct: 0, site: form.site, status: 'online' }
       setNvrs(prev => [...prev, nvr])
+      setModalMode(null)
+      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${nvr.name} สำเร็จ`) }
+      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
     } else if (modalMode && typeof modalMode === 'object') {
-      setNvrs(prev => prev.map(n =>
-        n.id === modalMode.id
-          ? { ...n, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chTotal, site: form.site }
-          : n
-      ))
+      setNvrs(prev => prev.map(n => n.id === modalMode.id ? { ...n, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chTotal, site: form.site } : n))
+      setModalMode(null)
+      try { await updateMut.mutateAsync(modalMode.id); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
+      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
     }
-    setModalMode(null)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteTarget) return
     setNvrs(prev => prev.filter(n => n.id !== deleteTarget.id))
     setDel(null)
+    try { await deleteMut.mutateAsync(deleteTarget.id); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
+    catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -134,7 +171,7 @@ export default function NVRsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !isLoading && (
               <tr><td colSpan={8} className="dl-empty">ไม่พบ NVR</td></tr>
             )}
             {filtered.map(n => {
@@ -199,9 +236,16 @@ export default function NVRsPage() {
               </button>
             </div>
             <div className="crud-modal-body">
+              {!isEditing && (
+                <div className="form-group">
+                  <label className="form-label">NVR ID <span style={{ color: 'var(--alert)' }}>*</span></label>
+                  <input className="form-ctrl mono" placeholder="e.g. NVR-HQ-07"
+                    value={form.nvrId} onChange={e => setForm(f => ({ ...f, nvrId: e.target.value }))} />
+                </div>
+              )}
               <div className="form-group">
                 <label className="form-label">ชื่อ NVR</label>
-                <input className="form-ctrl" placeholder="e.g. NVR-06"
+                <input className="form-ctrl" placeholder="e.g. NVR HQ 07"
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="form-group">

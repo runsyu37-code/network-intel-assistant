@@ -280,7 +280,7 @@
 }
 
 /* ── Page content ────────────────────────────────────────────── */
-.page-content { flex: 1; min-height: 0; overflow: hidden; }
+.page-content { flex: 1; min-height: 0; overflow-y: auto; }
 
 .page-head {
   display: flex;

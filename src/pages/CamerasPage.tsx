@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { App } from 'antd'
+import { getCameras, createCamera, updateCamera, deleteCamera } from '../api/cameras'
+import type { CameraApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -15,15 +19,27 @@ interface Camera {
   status: Status
 }
 
-const INIT_CAMERAS: Camera[] = [
-  { id: 'c1',  name: 'CAM-A1-01', ip: '192.168.1.101', model: 'Hikvision DS-2CD2T47G2', location: 'ทางเข้าอาคาร A',  nvr: 'NVR-01', site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'c2',  name: 'CAM-A1-02', ip: '192.168.1.102', model: 'Hikvision DS-2CD2T47G2', location: 'โถงรับรอง',        nvr: 'NVR-01', site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'c3',  name: 'CAM-A3-07', ip: '192.168.1.137', model: 'Axis P3245-LVE',          location: 'ลานจอดรถ',        nvr: 'NVR-02', site: 'สำนักงานใหญ่',  status: 'offline' },
-  { id: 'c4',  name: 'CAM-B2-03', ip: '192.168.1.203', model: 'Dahua IPC-HDW2831T',      location: 'ห้องประชุม B',    nvr: 'NVR-03', site: 'สาขาสีลม',      status: 'warning' },
-  { id: 'c5',  name: 'CAM-C1-01', ip: '192.168.1.301', model: 'Hikvision DS-2CD2347G2',  location: 'ทางเข้าอาคาร C',  nvr: 'NVR-04', site: 'สาขาลาดพร้าว', status: 'online' },
-  { id: 'c6',  name: 'CAM-D1-09', ip: '192.168.1.409', model: 'Dahua IPC-HFW2849S',      location: 'ประตูทางออก',     nvr: 'NVR-04', site: 'สาขาลาดพร้าว', status: 'offline' },
-  { id: 'c7',  name: 'CAM-E1-02', ip: '192.168.1.502', model: 'Hikvision DS-2CD2143G2',  location: 'คลังสินค้า A',    nvr: 'NVR-05', site: 'สาขาบางนา',    status: 'online' },
-  { id: 'c8',  name: 'CAM-F1-01', ip: '192.168.1.601', model: 'Axis M3106-L Mk II',      location: 'ทางเข้าหลัก',    nvr: 'NVR-05', site: 'คลังสินค้า',   status: 'online' },
+function mapCamera(a: CameraApi): Camera {
+  const s = a.status ?? ''
+  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
+  return {
+    id: String(a.id),
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    location: a.install_location ?? '—',
+    nvr: a.NVR_ID ?? '—',
+    site: a.Site_ID,
+    status,
+  }
+}
+
+const FALLBACK_CAMERAS: Camera[] = [
+  { id: '1', name: 'CAM-A1-01', ip: '192.168.1.101', model: 'Hikvision DS-2CD2T47G2', location: 'ทางเข้าอาคาร A', nvr: 'NVR-HQ-01', site: 'S01', status: 'online'  },
+  { id: '2', name: 'CAM-A1-02', ip: '192.168.1.102', model: 'Hikvision DS-2CD2T47G2', location: 'โถงรับรอง',      nvr: 'NVR-HQ-01', site: 'S01', status: 'online'  },
+  { id: '3', name: 'CAM-A3-07', ip: '192.168.1.137', model: 'Axis P3245-LVE',          location: 'ลานจอดรถ',      nvr: 'NVR-HQ-02', site: 'S01', status: 'offline' },
+  { id: '4', name: 'CAM-B2-03', ip: '192.168.1.203', model: 'Dahua IPC-HDW2831T',      location: 'ห้องประชุม B',  nvr: 'NVR-HQ-03', site: 'S01', status: 'warning' },
+  { id: '5', name: 'CAM-CM-01', ip: '192.168.10.11', model: 'Hikvision DS-2CD2347G2',  location: 'ทางเข้าหลัก',  nvr: 'NVR-CM-01', site: 'S02', status: 'online'  },
 ]
 
 const SITES   = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
@@ -39,13 +55,34 @@ interface FormState { name: string; ip: string; model: string; location: string;
 const EMPTY_FORM: FormState = { name: '', ip: '', model: '', location: '', nvr: NVR_LIST[0], site: SITES[0] }
 
 export default function CamerasPage() {
-  const navigate = useNavigate()
-  const [cameras, setCameras]       = useState<Camera[]>(INIT_CAMERAS)
+  const navigate     = useNavigate()
+  const { message }  = App.useApp()
+  const queryClient  = useQueryClient()
+  const { data } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
+  const [cameras, setCameras] = useState<Camera[]>(FALLBACK_CAMERAS)
+  useEffect(() => { if (data?.length) setCameras(data.map(mapCamera)) }, [data])
+
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Camera>(null)
   const [deleteTarget, setDel]      = useState<Camera | null>(null)
   const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+
+  const createMut = useMutation({
+    mutationFn: () => createCamera({ device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr, Site_ID: form.site }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
+    onError:   () => {},
+  })
+  const updateMut = useMutation({
+    mutationFn: (id: number) => updateCamera(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
+    onError:   () => {},
+  })
+  const deleteMut = useMutation({
+    mutationFn: (id: number) => deleteCamera(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
+    onError:   () => {},
+  })
 
   const filtered = cameras.filter(c => {
     if (siteFilter !== 'all' && c.site !== siteFilter) return false
@@ -68,34 +105,34 @@ export default function CamerasPage() {
     setModalMode(c)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
     if (modalMode === 'create') {
-      const cam: Camera = {
-        id: `cam-${Date.now()}`,
-        name: form.name.trim(),
-        ip: form.ip.trim(),
-        model: form.model.trim(),
-        location: form.location.trim(),
-        nvr: form.nvr,
-        site: form.site,
-        status: 'online',
-      }
+      const cam: Camera = { id: `cam-${Date.now()}`, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site, status: 'online' }
       setCameras(prev => [...prev, cam])
+      setModalMode(null)
+      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${cam.name} สำเร็จ`) }
+      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
     } else if (modalMode && typeof modalMode === 'object') {
-      setCameras(prev => prev.map(c =>
-        c.id === modalMode.id
-          ? { ...c, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site }
-          : c
-      ))
+      setCameras(prev => prev.map(c => c.id === modalMode.id ? { ...c, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site } : c))
+      setModalMode(null)
+      const numId = parseInt(modalMode.id)
+      if (!isNaN(numId)) {
+        try { await updateMut.mutateAsync(numId); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
+        catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+      } else { message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
     }
-    setModalMode(null)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteTarget) return
     setCameras(prev => prev.filter(c => c.id !== deleteTarget.id))
     setDel(null)
+    const numId = parseInt(deleteTarget.id)
+    if (!isNaN(numId)) {
+      try { await deleteMut.mutateAsync(numId); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
+      catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+    } else { message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'

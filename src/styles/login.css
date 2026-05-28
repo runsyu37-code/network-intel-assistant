@@ -260,6 +260,39 @@
   margin-top: 12px;
 }
 
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 4px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.btn-guest {
+  width: 100%;
+  height: 40px !important;
+  background: transparent !important;
+  border-color: var(--border) !important;
+  color: var(--ink-3) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+}
+
+.btn-guest:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
 .form-footer {
   margin-top: 24px;
   text-align: center;

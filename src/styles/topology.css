@@ -300,3 +300,4 @@
   box-shadow: var(--shadow-1) !important;
 }
 .react-flow__minimap-mask { fill: rgba(0,0,0,0.12) !important; }
+.react-flow__attribution { display: none !important; }

@@ -163,6 +163,19 @@ export default function LoginPage() {
               <Layers size={16} />
               Sign in with SSO
             </Button>
+
+            <div className="login-divider"><span>or</span></div>
+
+            <Button
+              className="btn-guest"
+              disabled={loading}
+              onClick={() => {
+                setAuth({ id: 0, username: 'guest', displayName: 'Guest', role: 'viewer' }, 'guest-token')
+                navigate('/dashboard')
+              }}
+            >
+              Continue as Guest
+            </Button>
           </Form>
 
           <div className="form-footer">
