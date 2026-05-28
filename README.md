@@ -478,7 +478,7 @@ On 401:                   redirect to /login
 ## Current Status
 
 **Backend: Phase 13 complete — maintenance mode.**  
-**Frontend: F9 in progress — wiring 12 pages to real API.**
+**Frontend: F9 complete — all 12 pages wired to real API. System ready.**
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -487,8 +487,8 @@ On 401:                   redirect to /login
 | 11 | Adversarial review | Done |
 | 12 | All 5 review items closed | Done |
 | 13 | Reflection security gate (43/43 PASS) | Done |
-| F1–F8 | React SPA — 15 pages, Buono purple theme | Done |
-| **F9** | Wire 12 pages to real API | **In Progress** |
+| F1–F8 | React SPA — 12 pages, Buono purple theme | Done |
+| F9 | Wire all pages to real API | Done |
 
 ---
 
