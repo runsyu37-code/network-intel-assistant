@@ -18,24 +18,19 @@ Full-stack: React SPA (Frontend) + ASP.NET Core API (Backend)
 
 ## สถานะโปรเจกต์
 
-> อัปเดต: **2026-05-28** · Deadline: **2026-05-29 (พฤหัส)**
-> Branch หลัก: `frontend`
+> อัปเดต: **2026-05-29** · Presentation: ✅ ผ่านแล้ว · Next: **2026-06-04**
+> Branch หลัก frontend: `frontend` | Branch backend: `backend`
 
 | ส่วน | สถานะ |
 |---|---|
-| Backend API (ASP.NET Core) | ✅ เสร็จ — JWT, RBAC, 17+ endpoints |
-| Dashboard overview | ✅ stat cards + alerts + offline devices + per-site table |
-| CRUD Sites / Cameras / NVRs / Switches / Users | ✅ Add / Edit / Delete modal ครบทุกหน้า |
-| Frontend pages ทั้งหมด | ✅ 15 หน้า — ดูตารางด้านล่าง |
+| Backend API (ASP.NET Core) | ✅ เสร็จ — JWT, RBAC, 17+ endpoints (branch: `backend`) |
+| Frontend UI — ทุกหน้า | ✅ 15 หน้า + BuildingMapPage (branch: `frontend`) |
 | Open design mockups | ✅ ทุก HTML mockup implement เสร็จแล้ว |
-| UX — Back navigation | ✅ Camera/Rack/NVR/Switch detail ทุกหน้ามีปุ่ม ← back |
-| UX — Floor plan side panel | ✅ คลิกกล้อง → แสดง IP/model/status + Open Detail |
-| UX — Topology legend panel | ✅ left panel + hide offline toggle |
-| Theme — Buono brand purple | ✅ `--accent #8B44AA` ทุกหน้า (login + sidebar + topology) |
-| Floor plan — camera icons | ✅ จุดวงกลมสี + FOV cone โปรเจคเตอร์ (ไม่มีรูป video) |
-| Floor plan — camera positions | ✅ ติดผนังทุก floor (a-f1 → a-f6) FOV ชี้เข้าห้อง |
-| Login — mock fallback | ✅ เข้าได้แม้ backend error / DB ไม่ตอบ |
-| เชื่อม API จริงทุกหน้า | 🟡 Camera Detail ใช้ API — หน้าอื่นใช้ mock data |
+| RouteGuard — Login required | ✅ `RequireAuth` redirect ถ้าไม่ login |
+| Theme — Buono brand purple | ✅ `--accent #8B44AA` |
+| Floor plan — hover tooltip + warning pulse | ✅ |
+| Building Map — Leaflet + real lat/lng | ✅ (ต้อง run DB migration ก่อน) |
+| **เชื่อม API จริง — 7/12 หน้า** | 🟡 ดูตารางด้านล่าง |
 
 ---
 
@@ -127,22 +122,24 @@ network-intel-assistant/         ← git clone จาก branch: frontend
 
 ## Quick Start
 
-### Frontend
+### Frontend (branch: `frontend`)
 
 ```powershell
-cd C:\ai-playground\Frontend
+git checkout frontend
 npm install
 npm run dev   # → http://localhost:3000
 ```
 
-### Backend (เปิดเฉพาะตอน wire API จริง)
+### Backend (branch: `backend`)
 
 ```powershell
-cd C:\ai-playground\Frontend\BNO_Survei_Monitor\BNO_Survei_Monitor
-IIS Express (Ctrl+F5 ใน VS)   # → http://localhost:50680
+git checkout backend
+# เปิด BNO_Survei_MonitorAPI.sln ใน Visual Studio → F5
+# → http://localhost:50680
 ```
 
-> **ทุกหน้าใช้ mock data** ยกเว้น Camera Detail — ดูได้ครบโดยไม่ต้องเปิด backend
+> **7/12 หน้าใช้ API จริง** — หน้าที่ยัง Mock ดูได้โดยไม่ต้องเปิด backend
+> ดู branch `backend` → `docs/sessions/` สำหรับ backend session logs
 
 ### Login ทดสอบ
 
@@ -159,20 +156,21 @@ IIS Express (Ctrl+F5 ใน VS)   # → http://localhost:50680
 | Route | ไฟล์ | Data | สถานะ |
 |---|---|---|---|
 | `/dashboard` | `OverviewPage.tsx` | Mock | ✅ stat cards + alerts |
-| `/dashboard/topology` | `TopologyPage.tsx` | Mock | ✅ legend panel + hide offline |
-| `/dashboard/sites` | `SitesCrudPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/sites/:siteId` | `SitesPage.tsx` | Mock | ✅ building cards |
-| `/dashboard/buildings/:id` | `BuildingDetailPage.tsx` | Mock | ✅ isometric view |
-| `/dashboard/floors/:id` | `FloorPlanPage.tsx` | Mock | ✅ View/Edit mode + side panel |
-| `/dashboard/cameras` | `CamerasPage.tsx` | Mock | ✅ CRUD |
+| `/dashboard/topology` | `TopologyPage.tsx` | Mock | ✅ legend + hide offline |
+| `/dashboard/map` | `BuildingMapPage.tsx` | **API** | ✅ Leaflet map + site filter |
+| `/dashboard/sites` | `SitesCrudPage.tsx` | Mock | ✅ |
+| `/dashboard/sites/:siteId` | `SitesPage.tsx` | **API** | ✅ hierarchy tree |
+| `/dashboard/buildings/:id` | `BuildingDetailPage.tsx` | Mock | 🟡 wiring next |
+| `/dashboard/floors/:id` | `FloorPlanPage.tsx` | Mock | 🟡 wiring next |
+| `/dashboard/cameras` | `CamerasPage.tsx` | **API** | ✅ real list + site filter |
 | `/dashboard/cameras/:id` | `CameraDetailPage.tsx` | **API** | ✅ ping chart + uptime |
-| `/dashboard/nvrs` | `NVRsPage.tsx` | Mock | ✅ CRUD + HDD progress |
-| `/dashboard/nvrs/:id` | `NVRDetailPage.tsx` | Mock | ✅ HDD per-drive + channels table |
-| `/dashboard/switches` | `SwitchesPage.tsx` | Mock | ✅ CRUD |
-| `/dashboard/switches/:id` | `SwitchDetailPage.tsx` | Mock | ✅ port map + port status table |
-| `/dashboard/racks` | `RacksListPage.tsx` | Mock | ✅ per-site grouping |
-| `/dashboard/racks/:id` | `RackDetailPage.tsx` | Mock | ✅ rack frame visualization |
-| `/dashboard/users` | `UsersPage.tsx` | Mock | ✅ CRUD + Admin only |
+| `/dashboard/nvrs` | `NVRsPage.tsx` | **API** | ✅ real list + HDD progress |
+| `/dashboard/nvrs/:id` | `NVRDetailPage.tsx` | **API** | ✅ channels + storage |
+| `/dashboard/switches` | `SwitchesPage.tsx` | **API** | ✅ real list |
+| `/dashboard/switches/:id` | `SwitchDetailPage.tsx` | **API** | ✅ port map + power |
+| `/dashboard/racks` | `RacksListPage.tsx` | Mock | 🟡 wiring next |
+| `/dashboard/racks/:id` | `RackDetailPage.tsx` | Mock | 🟡 wiring next |
+| `/dashboard/users` | `UsersPage.tsx` | **API** (read) | ✅ real users; CRUD local |
 
 ---
 
