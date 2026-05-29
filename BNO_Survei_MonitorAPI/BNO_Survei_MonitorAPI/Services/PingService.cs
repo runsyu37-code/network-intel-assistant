@@ -238,9 +238,11 @@ namespace BNO_Survei_MonitorAPI.Services
             string table = TableFor(d.DeviceType);
             string pkCol = PkColFor(d.DeviceType);
 
+            // warning at 1–2 fails, offline at FailThreshold+ — both derived from closed set, not user input
+            string newStatus = alive ? "online" : ((d.FailCount + 1) >= FailThreshold ? "offline" : "warning");
             string sql = alive
-                ? $"UPDATE {table} SET status='online',  fail_count=0,                       last_seen=@now WHERE {pkCol}=@id"
-                : $"UPDATE {table} SET status='offline', fail_count=ISNULL(fail_count,0)+1              WHERE {pkCol}=@id";
+                ? $"UPDATE {table} SET status='online',   fail_count=0,                       last_seen=@now WHERE {pkCol}=@id"
+                : $"UPDATE {table} SET status='{newStatus}', fail_count=ISNULL(fail_count,0)+1              WHERE {pkCol}=@id";
 
             using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
