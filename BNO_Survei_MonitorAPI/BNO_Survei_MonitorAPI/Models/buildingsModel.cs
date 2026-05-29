@@ -40,5 +40,11 @@ namespace TestAPBNO_Survei_MonitorAPI.Models
 
         [JsonProperty(PropertyName = "updated_at")]
         public string updated_at { get; set; }
+
+        [JsonProperty(PropertyName = "lat")]
+        public decimal? lat { get; set; }
+
+        [JsonProperty(PropertyName = "lng")]
+        public decimal? lng { get; set; }
     }
 }
