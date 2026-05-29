@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { getNvrs } from '../api/nvrs'
+import { getSites } from '../api/hierarchy'
+import type { NvrApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -16,33 +20,70 @@ interface NVR {
   status: Status
 }
 
-const INIT_NVRS: NVR[] = [
-  { id: 'nvr1', name: 'NVR-01', ip: '192.168.1.21', model: 'Hikvision DS-7616NI-K2', chUsed: 16, chTotal: 16, hddPct: 78, site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'nvr2', name: 'NVR-02', ip: '192.168.1.22', model: 'Hikvision DS-7616NI-K2', chUsed: 12, chTotal: 16, hddPct: 45, site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'nvr3', name: 'NVR-03', ip: '192.168.1.23', model: 'Dahua NVR5216-EI',        chUsed:  8, chTotal: 16, hddPct: 91, site: 'สาขาสีลม',      status: 'warning' },
-  { id: 'nvr4', name: 'NVR-04', ip: '192.168.1.24', model: 'Hikvision DS-7632NI-K2', chUsed: 14, chTotal: 32, hddPct: 62, site: 'สาขาลาดพร้าว', status: 'online' },
-  { id: 'nvr5', name: 'NVR-05', ip: '192.168.1.25', model: 'Dahua NVR5208-EI',        chUsed:  0, chTotal:  8, hddPct:  0, site: 'สาขาบางนา',    status: 'offline' },
-]
-
-const SITES = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
-
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
   warning: { cls: 'dl-badge warn',  label: 'Warning' },
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapNvr(a: NvrApi, siteMap: Record<string, string>): NVR {
+  return {
+    id: a.NVR_ID,
+    name: a.device_name,
+    ip: a.ip_cctv ?? a.ip_internet ?? '—',
+    model: a.model ?? '',
+    chUsed: a.active_channels ?? 0,
+    chTotal: a.total_channels ?? 0,
+    hddPct: a.hdd_used_pct ?? 0,
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
+  }
+}
+
 interface FormState { name: string; ip: string; model: string; chTotal: string; site: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', chTotal: '16', site: SITES[0] }
 
 export default function NVRsPage() {
   const navigate = useNavigate()
-  const [nvrs, setNvrs]             = useState<NVR[]>(INIT_NVRS)
+
+  const { data: apiNvrs = [], isLoading: nvrLoading } = useQuery({
+    queryKey: ['nvrs'],
+    queryFn: () => getNvrs(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [nvrs, setNvrs]             = useState<NVR[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
   const [deleteTarget, setDel]      = useState<NVR | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [form, setForm]             = useState<FormState>({ name: '', ip: '', model: '', chTotal: '16', site: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (nvrLoading || siteLoading) return
+    initialized.current = true
+    setNvrs(apiNvrs.map(a => mapNvr(a, siteMap)))
+  }, [apiNvrs, nvrLoading, siteLoading, siteMap])
 
   const filtered = nvrs.filter(n => {
     if (siteFilter !== 'all' && n.site !== siteFilter) return false
@@ -52,7 +93,7 @@ export default function NVRsPage() {
   })
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ name: '', ip: '', model: '', chTotal: '16', site: siteNames[0] ?? '' })
     setModalMode('create')
   }
 
@@ -95,6 +136,12 @@ export default function NVRsPage() {
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
 
+  if (nvrLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading NVRs...
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
@@ -114,7 +161,7 @@ export default function NVRsPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {SITES.map(s => <option key={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{nvrs.length} total</span>
       </div>
@@ -222,7 +269,7 @@ export default function NVRsPage() {
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>

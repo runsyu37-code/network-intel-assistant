@@ -24,12 +24,12 @@ export default function BuildingMapPage() {
 
   const { data: buildings, isPending: bPending, isError: bError } = useQuery({
     queryKey: ['buildings'],
-    queryFn: getBuildings,
+    queryFn: () => getBuildings(),
   })
 
   const { data: sites } = useQuery({
     queryKey: ['sites'],
-    queryFn: getSites,
+    queryFn: () => getSites(),
   })
 
   const siteNames = useMemo(() => {

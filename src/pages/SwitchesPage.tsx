@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { getSwitches } from '../api/switches'
+import { getSites } from '../api/hierarchy'
+import type { PoeSwitchApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -10,21 +14,10 @@ interface Switch {
   ip: string
   model: string
   ports: number
-  uptime: string
   site: string
   status: Status
   note: string
 }
-
-const INIT_SWITCHES: Switch[] = [
-  { id: 'sw1', name: 'SW-CORE-01',   ip: '192.168.1.1', model: 'Cisco SG350-28',       ports: 28, uptime: '45d 2h',  site: 'สำนักงานใหญ่',  status: 'online',  note: '' },
-  { id: 'sw2', name: 'SW-FLOOR-A1',  ip: '192.168.1.2', model: 'Cisco SG250-24',       ports: 24, uptime: '30d 14h', site: 'สำนักงานใหญ่',  status: 'online',  note: '' },
-  { id: 'sw3', name: 'SW-FLOOR-B2',  ip: '192.168.1.3', model: 'TP-Link TL-SG3424',   ports: 24, uptime: '12d 6h',  site: 'สาขาสีลม',      status: 'warning', note: '' },
-  { id: 'sw4', name: 'SW-FLOOR-C1',  ip: '192.168.1.4', model: 'Cisco SG250-18',       ports: 18, uptime: '28d 0h',  site: 'สาขาลาดพร้าว', status: 'online',  note: '' },
-  { id: 'sw5', name: 'SW-SITE-BN',   ip: '192.168.1.5', model: 'Netgear GS324T',       ports: 24, uptime: '5d 3h',   site: 'สาขาบางนา',    status: 'online',  note: '' },
-]
-
-const SITES = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
 
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
@@ -32,17 +25,63 @@ const BADGE: Record<Status, { cls: string; label: string }> = {
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapSwitch(a: PoeSwitchApi, siteMap: Record<string, string>): Switch {
+  return {
+    id: a.SW_ID,
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    ports: a.total_ports ?? 0,
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
+    note: a.notes ?? '',
+  }
+}
+
 interface FormState { name: string; ip: string; model: string; ports: string; site: string; note: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', ports: '24', site: SITES[0], note: '' }
 
 export default function SwitchesPage() {
   const navigate = useNavigate()
-  const [switches, setSwitches]     = useState<Switch[]>(INIT_SWITCHES)
+
+  const { data: apiSwitches = [], isLoading: swLoading } = useQuery({
+    queryKey: ['switches'],
+    queryFn: () => getSwitches(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [switches, setSwitches]     = useState<Switch[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Switch>(null)
   const [deleteTarget, setDel]      = useState<Switch | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [form, setForm]             = useState<FormState>({ name: '', ip: '', model: '', ports: '24', site: '', note: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (swLoading || siteLoading) return
+    initialized.current = true
+    setSwitches(apiSwitches.map(a => mapSwitch(a, siteMap)))
+  }, [apiSwitches, swLoading, siteLoading, siteMap])
 
   const filtered = switches.filter(s => {
     if (siteFilter !== 'all' && s.site !== siteFilter) return false
@@ -52,7 +91,7 @@ export default function SwitchesPage() {
   })
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ name: '', ip: '', model: '', ports: '24', site: siteNames[0] ?? '', note: '' })
     setModalMode('create')
   }
 
@@ -71,7 +110,6 @@ export default function SwitchesPage() {
         ip: form.ip.trim(),
         model: form.model.trim(),
         ports,
-        uptime: '0d 0h',
         site: form.site,
         note: form.note.trim(),
         status: 'online',
@@ -96,6 +134,12 @@ export default function SwitchesPage() {
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
 
+  if (swLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading switches...
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
@@ -115,7 +159,7 @@ export default function SwitchesPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {SITES.map(s => <option key={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{switches.length} total</span>
       </div>
@@ -129,14 +173,13 @@ export default function SwitchesPage() {
               <th>IP Address</th>
               <th>รุ่น</th>
               <th>Ports</th>
-              <th>Uptime</th>
               <th>สาขา</th>
               <th style={{ width: 80 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="dl-empty">ไม่พบ Switch</td></tr>
+              <tr><td colSpan={7} className="dl-empty">ไม่พบ Switch</td></tr>
             )}
             {filtered.map(s => (
               <tr
@@ -152,7 +195,6 @@ export default function SwitchesPage() {
                 <td className="td-mono">{s.ip}</td>
                 <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{s.model || '—'}</td>
                 <td className="td-mono">{s.ports}</td>
-                <td className="td-mono" style={{ color: 'var(--ink-3)' }}>{s.uptime}</td>
                 <td style={{ fontSize: 12.5 }}>{s.site}</td>
                 <td onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -204,7 +246,7 @@ export default function SwitchesPage() {
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div className="form-group">

@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { getCameras } from '../api/cameras'
+import { getSites } from '../api/hierarchy'
+import type { CameraApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -15,37 +19,69 @@ interface Camera {
   status: Status
 }
 
-const INIT_CAMERAS: Camera[] = [
-  { id: 'c1',  name: 'CAM-A1-01', ip: '192.168.1.101', model: 'Hikvision DS-2CD2T47G2', location: 'ทางเข้าอาคาร A',  nvr: 'NVR-01', site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'c2',  name: 'CAM-A1-02', ip: '192.168.1.102', model: 'Hikvision DS-2CD2T47G2', location: 'โถงรับรอง',        nvr: 'NVR-01', site: 'สำนักงานใหญ่',  status: 'online' },
-  { id: 'c3',  name: 'CAM-A3-07', ip: '192.168.1.137', model: 'Axis P3245-LVE',          location: 'ลานจอดรถ',        nvr: 'NVR-02', site: 'สำนักงานใหญ่',  status: 'offline' },
-  { id: 'c4',  name: 'CAM-B2-03', ip: '192.168.1.203', model: 'Dahua IPC-HDW2831T',      location: 'ห้องประชุม B',    nvr: 'NVR-03', site: 'สาขาสีลม',      status: 'warning' },
-  { id: 'c5',  name: 'CAM-C1-01', ip: '192.168.1.301', model: 'Hikvision DS-2CD2347G2',  location: 'ทางเข้าอาคาร C',  nvr: 'NVR-04', site: 'สาขาลาดพร้าว', status: 'online' },
-  { id: 'c6',  name: 'CAM-D1-09', ip: '192.168.1.409', model: 'Dahua IPC-HFW2849S',      location: 'ประตูทางออก',     nvr: 'NVR-04', site: 'สาขาลาดพร้าว', status: 'offline' },
-  { id: 'c7',  name: 'CAM-E1-02', ip: '192.168.1.502', model: 'Hikvision DS-2CD2143G2',  location: 'คลังสินค้า A',    nvr: 'NVR-05', site: 'สาขาบางนา',    status: 'online' },
-  { id: 'c8',  name: 'CAM-F1-01', ip: '192.168.1.601', model: 'Axis M3106-L Mk II',      location: 'ทางเข้าหลัก',    nvr: 'NVR-05', site: 'คลังสินค้า',   status: 'online' },
-]
-
-const SITES   = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
-const NVR_LIST = ['NVR-01', 'NVR-02', 'NVR-03', 'NVR-04', 'NVR-05']
-
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
   warning: { cls: 'dl-badge warn',  label: 'Warning' },
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapCamera(a: CameraApi, siteMap: Record<string, string>): Camera {
+  return {
+    id: String(a.id),
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    location: a.install_location ?? '',
+    nvr: a.NVR_ID ?? '—',
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
+  }
+}
+
 interface FormState { name: string; ip: string; model: string; location: string; nvr: string; site: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', location: '', nvr: NVR_LIST[0], site: SITES[0] }
 
 export default function CamerasPage() {
   const navigate = useNavigate()
-  const [cameras, setCameras]       = useState<Camera[]>(INIT_CAMERAS)
+
+  const { data: apiCameras = [], isLoading: camLoading } = useQuery({
+    queryKey: ['cameras'],
+    queryFn: () => getCameras(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [cameras, setCameras]       = useState<Camera[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Camera>(null)
   const [deleteTarget, setDel]      = useState<Camera | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [form, setForm]             = useState<FormState>({ name: '', ip: '', model: '', location: '', nvr: '', site: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (camLoading || siteLoading) return
+    initialized.current = true
+    setCameras(apiCameras.map(a => mapCamera(a, siteMap)))
+  }, [apiCameras, camLoading, siteLoading, siteMap])
 
   const filtered = cameras.filter(c => {
     if (siteFilter !== 'all' && c.site !== siteFilter) return false
@@ -59,7 +95,7 @@ export default function CamerasPage() {
   const warning = cameras.filter(c => c.status === 'warning').length
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ name: '', ip: '', model: '', location: '', nvr: '', site: siteNames[0] ?? '' })
     setModalMode('create')
   }
 
@@ -77,7 +113,7 @@ export default function CamerasPage() {
         ip: form.ip.trim(),
         model: form.model.trim(),
         location: form.location.trim(),
-        nvr: form.nvr,
+        nvr: form.nvr.trim(),
         site: form.site,
         status: 'online',
       }
@@ -85,7 +121,7 @@ export default function CamerasPage() {
     } else if (modalMode && typeof modalMode === 'object') {
       setCameras(prev => prev.map(c =>
         c.id === modalMode.id
-          ? { ...c, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site }
+          ? { ...c, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr.trim(), site: form.site }
           : c
       ))
     }
@@ -100,6 +136,12 @@ export default function CamerasPage() {
 
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
+
+  if (camLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading cameras...
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
@@ -120,7 +162,7 @@ export default function CamerasPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {SITES.map(s => <option key={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--ok)' }} />{online} online</span>
         {warning > 0 && <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--warn)' }} />{warning} warning</span>}
@@ -208,15 +250,14 @@ export default function CamerasPage() {
                   value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="form-group">
-                <label className="form-label">NVR</label>
-                <select className="form-ctrl" value={form.nvr} onChange={e => setForm(f => ({ ...f, nvr: e.target.value }))}>
-                  {NVR_LIST.map(n => <option key={n}>{n}</option>)}
-                </select>
+                <label className="form-label">NVR ID</label>
+                <input className="form-ctrl mono" placeholder="e.g. NVR-HQ-01"
+                  value={form.nvr} onChange={e => setForm(f => ({ ...f, nvr: e.target.value }))} />
               </div>
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>

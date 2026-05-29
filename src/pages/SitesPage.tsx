@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { getHierarchyTree } from '../api/hierarchy'
+import type { BuildingTreeDto, FloorTreeDto } from '../api/types'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -10,19 +13,8 @@ interface FloorData {
   camerasOnline: number
 }
 
-const SITE_LABELS: Record<string, string> = {
-  'hq':     'HQ Bangkok',
-  'site-a': 'Site A — HQ Bangkok',
-  'site-b': 'Site B — Chiang Mai DC',
-  'site-c': 'Site C — Phuket Branch',
-  'site-d': 'Site D — Khon Kaen',
-  'site-e': 'Site E — Hat Yai',
-  'site-f': 'Site F — Udon Thani',
-}
-
 interface BuildingData {
   id: string
-  siteIds: string[]
   title: string
   status: Status
   floorList: FloorData[]
@@ -30,77 +22,35 @@ interface BuildingData {
   nvrs: number
 }
 
-const MOCK_BUILDINGS: BuildingData[] = [
-  {
-    id: 'a', siteIds: ['hq', 'site-a'], title: 'อาคาร A', status: 'warn', cameras: 48, nvrs: 2,
-    floorList: [
-      { id: 'a-f6', label: 'F6', cameras: 8, camerasOnline: 8 },
-      { id: 'a-f5', label: 'F5', cameras: 8, camerasOnline: 7 },
-      { id: 'a-f4', label: 'F4', cameras: 8, camerasOnline: 8 },
-      { id: 'a-f3', label: 'F3', cameras: 8, camerasOnline: 8 },
-      { id: 'a-f2', label: 'F2', cameras: 8, camerasOnline: 6 },
-      { id: 'a-f1', label: 'F1', cameras: 8, camerasOnline: 8 },
-    ],
-  },
-  {
-    id: 'b', siteIds: ['hq', 'site-a'], title: 'อาคาร B', status: 'ok', cameras: 24, nvrs: 1,
-    floorList: [
-      { id: 'b-f4', label: 'F4', cameras: 6, camerasOnline: 6 },
-      { id: 'b-f3', label: 'F3', cameras: 6, camerasOnline: 6 },
-      { id: 'b-f2', label: 'F2', cameras: 6, camerasOnline: 6 },
-      { id: 'b-f1', label: 'F1', cameras: 6, camerasOnline: 6 },
-    ],
-  },
-  {
-    id: 'c', siteIds: ['hq', 'site-a'], title: 'อาคาร C', status: 'ok', cameras: 16, nvrs: 1,
-    floorList: [
-      { id: 'c-f2', label: 'F2', cameras: 8, camerasOnline: 8 },
-      { id: 'c-f1', label: 'F1', cameras: 8, camerasOnline: 8 },
-    ],
-  },
-  {
-    id: 'd', siteIds: ['site-b'], title: 'อาคาร D', status: 'ok', cameras: 20, nvrs: 1,
-    floorList: [
-      { id: 'd-f3', label: 'F3', cameras: 7, camerasOnline: 7 },
-      { id: 'd-f2', label: 'F2', cameras: 7, camerasOnline: 7 },
-      { id: 'd-f1', label: 'F1', cameras: 6, camerasOnline: 6 },
-    ],
-  },
-  {
-    id: 'e', siteIds: ['site-c'], title: 'อาคาร E', status: 'warn', cameras: 12, nvrs: 1,
-    floorList: [
-      { id: 'e-f2', label: 'F2', cameras: 6, camerasOnline: 5 },
-      { id: 'e-f1', label: 'F1', cameras: 6, camerasOnline: 6 },
-    ],
-  },
-  {
-    id: 'f', siteIds: ['site-d'], title: 'อาคาร F', status: 'ok', cameras: 10, nvrs: 1,
-    floorList: [
-      { id: 'f-f2', label: 'F2', cameras: 5, camerasOnline: 5 },
-      { id: 'f-f1', label: 'F1', cameras: 5, camerasOnline: 5 },
-    ],
-  },
-  {
-    id: 'g', siteIds: ['site-e'], title: 'อาคาร G', status: 'alert', cameras: 8, nvrs: 1,
-    floorList: [
-      { id: 'g-f2', label: 'F2', cameras: 4, camerasOnline: 2 },
-      { id: 'g-f1', label: 'F1', cameras: 4, camerasOnline: 4 },
-    ],
-  },
-  {
-    id: 'h', siteIds: ['site-f'], title: 'อาคาร H', status: 'ok', cameras: 14, nvrs: 1,
-    floorList: [
-      { id: 'h-f3', label: 'F3', cameras: 5, camerasOnline: 5 },
-      { id: 'h-f2', label: 'F2', cameras: 5, camerasOnline: 5 },
-      { id: 'h-f1', label: 'F1', cameras: 4, camerasOnline: 4 },
-    ],
-  },
-]
-
 const DOT_COLOR: Record<Status, string> = {
   ok:    'var(--ok)',
   warn:  'var(--warn)',
   alert: 'var(--alert)',
+}
+
+function buildingStatus(alertCount: number): Status {
+  if (alertCount === 0) return 'ok'
+  if (alertCount <= 2)  return 'warn'
+  return 'alert'
+}
+
+function mapBuilding(b: BuildingTreeDto): BuildingData {
+  const totalCameras = b.floors.reduce((s, f) => s + f.cameraCount, 0)
+  return {
+    id: b.buildingId,
+    title: b.buildingName,
+    status: buildingStatus(b.alertCount),
+    cameras: totalCameras,
+    nvrs: 0,
+    floorList: [...b.floors]
+      .sort((a, b) => b.floorNumber - a.floorNumber)
+      .map((f: FloorTreeDto) => ({
+        id: f.floorId,
+        label: f.floorName ?? `F${f.floorNumber}`,
+        cameras: f.cameraCount,
+        camerasOnline: Math.max(0, f.cameraCount - f.alertCount),
+      })),
+  }
 }
 
 function IsometricSVG() {
@@ -148,15 +98,15 @@ function BuildingCard({ building, onViewBuilding, onViewPlan }: CardProps) {
           <div className="bcv2-stat-lbl">Cameras</div>
         </div>
         <div className="bcv2-stat">
-          <div className="bcv2-stat-val">{building.nvrs}</div>
-          <div className="bcv2-stat-lbl">NVRs</div>
+          <div className="bcv2-stat-val">{building.status !== 'ok' ? building.floorList.reduce((s, f) => s + (f.cameras - f.camerasOnline), 0) : 0}</div>
+          <div className="bcv2-stat-lbl">Alerts</div>
         </div>
       </div>
 
       {expanded && (
         <div className="bcv2-floors" onClick={e => e.stopPropagation()}>
           {building.floorList.map(floor => {
-            const pct = Math.round((floor.camerasOnline / floor.cameras) * 100)
+            const pct = floor.cameras > 0 ? Math.round((floor.camerasOnline / floor.cameras) * 100) : 100
             return (
               <div key={floor.id} className="bcv2-floor-row">
                 <div className="bcv2-floor-info">
@@ -164,7 +114,7 @@ function BuildingCard({ building, onViewBuilding, onViewPlan }: CardProps) {
                   <span className="bcv2-floor-count">{floor.cameras} CAMs</span>
                   <div
                     className="bcv2-bar-wrap"
-                    title={`${floor.camerasOnline} Online, ${floor.cameras - floor.camerasOnline} Offline`}
+                    title={`${floor.camerasOnline} Online, ${floor.cameras - floor.camerasOnline} Alert`}
                   >
                     <div className="bcv2-bar-fill" style={{ width: `${pct}%` }} />
                   </div>
@@ -187,8 +137,25 @@ function BuildingCard({ building, onViewBuilding, onViewPlan }: CardProps) {
 export default function SitesPage() {
   const navigate = useNavigate()
   const { siteId } = useParams<{ siteId: string }>()
-  const siteLabel = SITE_LABELS[siteId ?? ''] ?? siteId ?? 'Unknown Site'
-  const buildings = MOCK_BUILDINGS.filter(b => !siteId || b.siteIds.includes(siteId))
+
+  const { data: tree = [], isLoading } = useQuery({
+    queryKey: ['hierarchy-tree'],
+    queryFn: () => getHierarchyTree(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteData = siteId ? tree.find(s => s.siteId === siteId) : null
+  const siteLabel = siteData?.siteName ?? (siteId ? siteId : 'All Sites')
+
+  const buildings: BuildingData[] = siteId
+    ? (siteData?.buildings ?? []).map(mapBuilding)
+    : tree.flatMap(s => s.buildings.map(mapBuilding))
+
+  if (isLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading sites...
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
