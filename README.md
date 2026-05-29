@@ -429,9 +429,10 @@ axios.post('/api/cameras', [{ name: 'CAM-01', ... }])   // Save
 axios.post('/api/cameras/5', { name: 'CAM-01', ... })   // Update
 ```
 
-**4. Camera x/y is NULL until a pin is placed — handle it**
+**4. Camera `position_x`/`position_y` is NULL until a pin is placed — handle it**
 ```js
-if (camera.x === null) { /* show in "Unplaced" list */ }
+// GET /api/cameras now returns position_x and position_y (0–100 decimal, null if unplaced)
+if (camera.position_x === null) { /* grid fallback / show in "Unplaced" list */ }
 ```
 
 **5. `last_seen` is UTC — always convert before display**
@@ -477,8 +478,8 @@ On 401:                   redirect to /login
 
 ## Current Status
 
-**Backend: Phase 13 complete — maintenance mode.**  
-**Frontend: F9 complete — all 12 pages wired to real API. System ready.**
+**Backend: complete — maintenance mode.**  
+**Frontend: review done (No-Go) — Phase 1–3 fixes in progress.**
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -490,6 +491,9 @@ On 401:                   redirect to /login
 | F1–F8 | React SPA — 12 pages, Buono purple theme | Done |
 | F9 | Wire all pages to real API | Done |
 | F9 R4 | PATCH position 0–100, building cameraCount/nvrCount | Done |
+| Review 2026-05-29 | Frontend code review — 7 blockers found | No-Go ❌ |
+| Review fix | GET cameras returns position_x/y (backend) + drag save fix (frontend) | Done |
+| Review fix | Frontend Phase 1–3 (RouteGuard, fallback data, site filter, 403) | Pending |
 
 ---
 
@@ -513,16 +517,21 @@ On 401:                   redirect to /login
 
 | File | For |
 |---|---|
-| [`docs/sessions/REVIEW_BRIEF.md`](docs/sessions/REVIEW_BRIEF.md) | External reviewer — how to run, page tour, role matrix |
+| [`docs/sessions/REVIEW_BRIEF.md`](docs/sessions/REVIEW_BRIEF.md) | External reviewer — how to run, page tour, role matrix, full tech stack |
 | [`docs/sessions/REVIEWER_AGENT.md`](docs/sessions/REVIEWER_AGENT.md) | Claude reviewer agent — achieve, instructions, first prompt |
+| [`docs/sessions/REVIEWER_PROBE_ADDON.md`](docs/sessions/REVIEWER_PROBE_ADDON.md) | 3 project-specific hard questions — send mid-session |
 | [`docs/sessions/FRONTEND_BUILDER_BRIEF.md`](docs/sessions/FRONTEND_BUILDER_BRIEF.md) | Frontend builder — decisions, API map, reviewer Q&A |
 | [`docs/sessions/BACKEND_BUILDER_BRIEF.md`](docs/sessions/BACKEND_BUILDER_BRIEF.md) | Backend builder — decisions, endpoint map, reviewer Q&A |
+| [`Reviewer/FINDINGS (1).md`](Reviewer/FINDINGS%20(1).md) | Review findings — 7 blockers, 2 acceptable, fix sequence |
+| [`Reviewer/FIX_PLAN.md`](Reviewer/FIX_PLAN.md) | Frontend fix plan — Phase 1–3 with code snippets |
+| [`docs/sessions/REVIEW_SESSION_2026-05-29.md`](docs/sessions/REVIEW_SESSION_2026-05-29.md) | Live review session exchanges — for backend context |
+| [`docs/sessions/REVIEW_BACKEND_SESSION_2026-05-29.md`](docs/sessions/REVIEW_BACKEND_SESSION_2026-05-29.md) | Backend session log — open questions answered, camera fix |
 
 ---
 
 ## F9 — Frontend Wiring Status
 
-Frontend รันที่ `http://localhost:3001` — CORS allow แล้ว
+Frontend รันที่ `http://localhost:3000` — CORS allow แล้ว
 
 | เอกสาร | เนื้อหา |
 |---|---|
