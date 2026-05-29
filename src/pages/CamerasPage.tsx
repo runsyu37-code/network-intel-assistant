@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -34,14 +34,6 @@ function mapCamera(a: CameraApi): Camera {
   }
 }
 
-const FALLBACK_CAMERAS: Camera[] = [
-  { id: '1', name: 'CAM-A1-01', ip: '192.168.1.101', model: 'Hikvision DS-2CD2T47G2', location: 'ทางเข้าอาคาร A', nvr: 'NVR-HQ-01', site: 'S01', status: 'online'  },
-  { id: '2', name: 'CAM-A1-02', ip: '192.168.1.102', model: 'Hikvision DS-2CD2T47G2', location: 'โถงรับรอง',      nvr: 'NVR-HQ-01', site: 'S01', status: 'online'  },
-  { id: '3', name: 'CAM-A3-07', ip: '192.168.1.137', model: 'Axis P3245-LVE',          location: 'ลานจอดรถ',      nvr: 'NVR-HQ-02', site: 'S01', status: 'offline' },
-  { id: '4', name: 'CAM-B2-03', ip: '192.168.1.203', model: 'Dahua IPC-HDW2831T',      location: 'ห้องประชุม B',  nvr: 'NVR-HQ-03', site: 'S01', status: 'warning' },
-  { id: '5', name: 'CAM-CM-01', ip: '192.168.10.11', model: 'Hikvision DS-2CD2347G2',  location: 'ทางเข้าหลัก',  nvr: 'NVR-CM-01', site: 'S02', status: 'online'  },
-]
-
 const SITES   = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
 const NVR_LIST = ['NVR-01', 'NVR-02', 'NVR-03', 'NVR-04', 'NVR-05']
 
@@ -58,9 +50,10 @@ export default function CamerasPage() {
   const navigate     = useNavigate()
   const { message }  = App.useApp()
   const queryClient  = useQueryClient()
-  const { data } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
-  const [cameras, setCameras] = useState<Camera[]>(FALLBACK_CAMERAS)
-  useEffect(() => { if (data?.length) setCameras(data.map(mapCamera)) }, [data])
+  const { data, isPending, isError } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
+  const [cameras, setCameras] = useState<Camera[]>([])
+  useEffect(() => { if (data !== undefined) setCameras(data.map(mapCamera)) }, [data])
+  const filterSites = useMemo(() => [...new Set(cameras.map(c => c.site))].sort(), [cameras])
 
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
@@ -157,7 +150,7 @@ export default function CamerasPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {SITES.map(s => <option key={s}>{s}</option>)}
+          {filterSites.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--ok)' }} />{online} online</span>
         {warning > 0 && <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--warn)' }} />{warning} warning</span>}
@@ -179,10 +172,16 @@ export default function CamerasPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && (
+            {isPending && (
+              <tr><td colSpan={7} className="dl-empty">กำลังโหลด...</td></tr>
+            )}
+            {isError && (
+              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</td></tr>
+            )}
+            {!isPending && !isError && filtered.length === 0 && (
               <tr><td colSpan={7} className="dl-empty">ไม่พบกล้อง</td></tr>
             )}
-            {filtered.map(c => (
+            {!isPending && !isError && filtered.map(c => (
               <tr
                 key={c.id}
                 onClick={() => navigate(`/dashboard/cameras/${c.id}`)}

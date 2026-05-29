@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -36,14 +36,6 @@ function mapNvr(a: NvrApi): NVR {
   }
 }
 
-const FALLBACK_NVRS: NVR[] = [
-  { id: 'NVR-HQ-01', name: 'NVR HQ 01',      ip: '192.168.1.200',  model: 'Hikvision DS-7732NI-I4', chUsed: 28, chTotal: 32, hddPct: 78, site: 'HQ',          status: 'online'  },
-  { id: 'NVR-HQ-02', name: 'NVR HQ 02',      ip: '192.168.1.201',  model: 'Hikvision DS-7732NI-I4', chUsed: 16, chTotal: 32, hddPct: 45, site: 'HQ',          status: 'online'  },
-  { id: 'NVR-HQ-03', name: 'NVR HQ 03',      ip: '192.168.1.202',  model: 'Dahua NVR5232-EI',       chUsed: 18, chTotal: 32, hddPct: 92, site: 'HQ',          status: 'warning' },
-  { id: 'NVR-CM-01', name: 'NVR Chiang Mai', ip: '192.168.10.200', model: 'Hikvision DS-7616NI-I2', chUsed: 10, chTotal: 16, hddPct: 53, site: 'CM',          status: 'online'  },
-  { id: 'NVR-PK-01', name: 'NVR Phuket',     ip: '192.168.20.200', model: 'Dahua NVR5216-EI',       chUsed:  8, chTotal: 16, hddPct: 31, site: 'PK',          status: 'online'  },
-  { id: 'NVR-KK-01', name: 'NVR Khon Kaen',  ip: '192.168.30.200', model: 'Axis S3008',             chUsed:  5, chTotal:  8, hddPct: 44, site: 'KK',          status: 'online'  },
-]
 
 const SITES = ['สำนักงานใหญ่', 'สาขาเชียงใหม่', 'สาขาภูเก็ต', 'สาขาขอนแก่น', 'สาขาหาดใหญ่']
 
@@ -60,15 +52,16 @@ export default function NVRsPage() {
   const navigate    = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
-  const [nvrs, setNvrs]    = useState<NVR[]>(FALLBACK_NVRS)
+  const { data, isPending, isError } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
+  const [nvrs, setNvrs]    = useState<NVR[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
   const [deleteTarget, setDel]      = useState<NVR | null>(null)
   const [form, setForm]             = useState<FormState>(EMPTY_FORM)
 
-  useEffect(() => { if (data?.length) setNvrs(data.map(mapNvr)) }, [data])
+  useEffect(() => { if (data !== undefined) setNvrs(data.map(mapNvr)) }, [data])
+  const filterSites = useMemo(() => [...new Set(nvrs.map(n => n.site))].sort(), [nvrs])
 
   const createMut = useMutation({
     mutationFn: () => createNvr({ NVR_ID: form.nvrId.trim(), device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16, Site_ID: form.site }),
@@ -151,7 +144,7 @@ export default function NVRsPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {SITES.map(s => <option key={s}>{s}</option>)}
+          {filterSites.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{nvrs.length} total</span>
       </div>
@@ -171,10 +164,16 @@ export default function NVRsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && !isLoading && (
+            {isPending && (
+              <tr><td colSpan={8} className="dl-empty">กำลังโหลด...</td></tr>
+            )}
+            {isError && (
+              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</td></tr>
+            )}
+            {!isPending && !isError && filtered.length === 0 && (
               <tr><td colSpan={8} className="dl-empty">ไม่พบ NVR</td></tr>
             )}
-            {filtered.map(n => {
+            {!isPending && !isError && filtered.map(n => {
               const hddAlert = n.hddPct >= 85
               return (
                 <tr
