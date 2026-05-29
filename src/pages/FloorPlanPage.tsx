@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { App } from 'antd'
 import { getCameras, patchCameraPosition } from '../api/cameras'
 import type { CameraApi } from '../api/types'
 
@@ -199,8 +200,10 @@ export default function FloorPlanPage() {
     setPositions(Object.fromEntries(mapped.map(c => [c.id, { left: c.left, top: c.top }])))
   }, [apiCameras])
 
+  const { message } = App.useApp()
+
   const canvasRef      = useRef<HTMLDivElement>(null)
-  const dragging       = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number } | null>(null)
+  const dragging       = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number; origLeftPct: string; origTopPct: string } | null>(null)
   const wasDragged     = useRef(false)
   const zoomRef        = useRef(zoom)
   const positionsRef   = useRef(positions)
@@ -258,6 +261,8 @@ export default function FloorPlanPage() {
       id, startX: e.clientX, startY: e.clientY,
       origLeft: parseFloat(pos.left) / 100 * rect.width,
       origTop:  parseFloat(pos.top)  / 100 * rect.height,
+      origLeftPct: pos.left,
+      origTopPct:  pos.top,
     }
   }
 
@@ -277,16 +282,23 @@ export default function FloorPlanPage() {
 
   function stopDrag() {
     if (dragging.current && wasDragged.current) {
-      const { id } = dragging.current
+      const { id, origLeftPct, origTopPct } = dragging.current
       const pos = positionsRef.current[id]
+      dragging.current = null
+
       if (pos) {
         const camId = parseInt(id)
         if (!isNaN(camId)) {
-          patchCameraPosition(camId, parseFloat(pos.left), parseFloat(pos.top)).catch(() => {})
+          patchCameraPosition(camId, parseFloat(pos.left), parseFloat(pos.top))
+            .catch(() => {
+              setPositions(prev => ({ ...prev, [id]: { left: origLeftPct, top: origTopPct } }))
+              message.error('Failed to save camera position. Please try again.')
+            })
         }
       }
+    } else {
+      dragging.current = null
     }
-    dragging.current = null
   }
 
   function onPlanClick(e: React.MouseEvent<HTMLDivElement>) {
