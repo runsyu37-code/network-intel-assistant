@@ -435,17 +435,24 @@ axios.post('/api/cameras/5', { name: 'CAM-01', ... })   // Update
 if (camera.position_x === null) { /* grid fallback / show in "Unplaced" list */ }
 ```
 
-**5. `last_seen` is UTC — always convert before display**
+**5. `GET /api/buildings` now returns `lat` and `lng` (nullable) — run migration first**
+```sql
+-- db/migration_add_building_latlong.sql
+ALTER TABLE [dbo].[buildings] ADD [lat] DECIMAL(10,7) NULL, [lng] DECIMAL(10,7) NULL;
+```
+If `lat`/`lng` are null the marker is skipped — fall back to text list.
+
+**6. `last_seen` is UTC — always convert before display**
 ```js
 new Date(device.last_seen + 'Z').toLocaleString('th-TH')
 ```
 
-**6. Rate limiter: 10 wrong passwords = username locked 15 min**  
+**7. Rate limiter: 10 wrong passwords = username locked 15 min**  
 Affects integration tests. Restart IIS Express to reset the in-memory counter.
 
-**7. No Swagger** — use Bruno collection or `docs/FRONTEND_HANDOFF.md` for request shapes.
+**8. No Swagger** — use Bruno collection or `docs/FRONTEND_HANDOFF.md` for request shapes.
 
-**8. CORS allowed origins (dev)**
+**9. CORS allowed origins (dev)**
 ```
 http://localhost:5173   http://localhost:3000   http://localhost:5174
 ```
@@ -493,8 +500,9 @@ On 401:                   redirect to /login
 | F9 R4 | PATCH position 0–100, building cameraCount/nvrCount | Done |
 | Review 2026-05-29 | Frontend code review — 7 blockers found | No-Go ❌ |
 | Review fix | GET cameras returns position_x/y (backend) + drag save fix (frontend) | Done |
-| Review fix | Frontend Phase 1–3 (RouteGuard, fallback data, site filter, 403) | Pending |
+| Review fix | Frontend Phase 1–3 (RouteGuard, fallback data, site filter, 403) | Done ✅ |
 | Discord webhook | PingService sends embed alert when device goes offline | Done |
+| F9 R5 | Warning status (2 fails=warning, 3 fails=offline), lat/lng in buildings | Done |
 
 ---
 
@@ -542,6 +550,9 @@ Frontend รันที่ `http://localhost:3000` — CORS allow แล้ว
 | [`docs/sessions/F9_BACKEND_REPLY_R3.md`](docs/sessions/F9_BACKEND_REPLY_R3.md) | R3 — GET /api/racks + GET /api/racks/{rackId} detail |
 | [`docs/sessions/F9_BACKEND_REPLY_R4.md`](docs/sessions/F9_BACKEND_REPLY_R4.md) | R4 — PATCH position 0–100, building cameraCount/nvrCount |
 | [`docs/sessions/F9_SESSION_R4_2026-05-28.md`](docs/sessions/F9_SESSION_R4_2026-05-28.md) | Session log — R4 changes + review prep docs |
+| [`docs/sessions/F9_FRONTEND_R5.md`](docs/sessions/F9_FRONTEND_R5.md) | R5 spec to frontend — hover tooltip, warning status, building map |
+| [`docs/sessions/F9_FRONTEND_REPLY_R5.md`](docs/sessions/F9_FRONTEND_REPLY_R5.md) | Frontend reply — all fixes done, requesting lat/lng |
+| [`docs/sessions/F9_SESSION_R5_2026-05-29.md`](docs/sessions/F9_SESSION_R5_2026-05-29.md) | Session log — warning status + lat/lng in buildings |
 
 **CORS origins (dev):**
 ```
