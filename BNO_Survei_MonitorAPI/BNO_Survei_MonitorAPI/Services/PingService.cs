@@ -1,16 +1,20 @@
 using BNO_Survei_MonitorAPI.ConnectDB;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
+using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Text;
 using System.Threading;
 
 namespace BNO_Survei_MonitorAPI.Services
 {
     public static class PingService
     {
-        private static Timer  _timer;
-        private static int    _running = 0; // 0 = idle, 1 = running (Interlocked flag)
+        private static Timer      _timer;
+        private static int        _running = 0; // 0 = idle, 1 = running (Interlocked flag)
+        private static HttpClient _http    = new HttpClient();
 
         private const int IntervalMs     = 30_000;
         private const int FailThreshold  = 3;
@@ -299,7 +303,74 @@ namespace BNO_Survei_MonitorAPI.Services
                         $"{d.DeviceType} '{d.DeviceName}' ({d.IpAddress}) ไม่ตอบสนอง {newFailCount} รอบติดต่อกัน");
                     cmd.ExecuteNonQuery();
                 }
+
+                // send Discord alert — fire after insert so the alert exists even if webhook fails
+                string webhookUrl = ConfigurationManager.AppSettings["DiscordWebhookUrl"];
+                if (!string.IsNullOrWhiteSpace(webhookUrl))
+                {
+                    bool sent = TrySendDiscordAlert(webhookUrl, d, newFailCount);
+                    if (sent)
+                    {
+                        const string markSentSql = @"
+                            UPDATE alert_logs SET webhook_sent = 1
+                            WHERE device_type = @dt AND device_id = @did
+                              AND resolved_at IS NULL AND webhook_sent = 0";
+                        using (var cmd = new SqlCommand(markSentSql, con))
+                        {
+                            cmd.Parameters.AddWithValue("@dt",  d.DeviceType);
+                            cmd.Parameters.AddWithValue("@did", d.DeviceId);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
             }
+        }
+
+        // ---------------------------------------------------------------
+        // Discord webhook
+        // ---------------------------------------------------------------
+
+        private static bool TrySendDiscordAlert(string webhookUrl, DeviceInfo d, int failCount)
+        {
+            try
+            {
+                string location = BuildLocation(d);
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(new
+                {
+                    embeds = new[]
+                    {
+                        new
+                        {
+                            title  = $"🔴 Device Offline: {d.DeviceName}",
+                            color  = 16711680, // red
+                            fields = new object[]
+                            {
+                                new { name = "Type",     value = d.DeviceType,              inline = true  },
+                                new { name = "IP",       value = d.IpAddress ?? "—",        inline = true  },
+                                new { name = "Brand",    value = d.Brand     ?? "—",        inline = true  },
+                                new { name = "Location", value = location,                  inline = false },
+                                new { name = "Fails",    value = $"{failCount} consecutive", inline = true  },
+                            },
+                            timestamp = DateTime.UtcNow.ToString("o"),
+                            footer    = new { text = "SSM Network Monitor" }
+                        }
+                    }
+                });
+                var content  = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = _http.PostAsync(webhookUrl, content).GetAwaiter().GetResult();
+                return response.IsSuccessStatusCode;
+            }
+            catch { return false; }
+        }
+
+        private static string BuildLocation(DeviceInfo d)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(d.SiteName))     parts.Add(d.SiteName);
+            if (!string.IsNullOrEmpty(d.BuildingName)) parts.Add(d.BuildingName);
+            if (!string.IsNullOrEmpty(d.FloorName))    parts.Add(d.FloorName);
+            if (!string.IsNullOrEmpty(d.RoomName))     parts.Add(d.RoomName);
+            return parts.Count > 0 ? string.Join(" › ", parts) : "—";
         }
 
         private static void ResolveOpenAlerts(DeviceInfo d)

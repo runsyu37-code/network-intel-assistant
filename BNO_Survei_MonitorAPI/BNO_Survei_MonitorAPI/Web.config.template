@@ -12,6 +12,7 @@
     <add key="UnobtrusiveJavaScriptEnabled" value="true" />
     <add key="JwtSecret" value="CHANGE_THIS_TO_A_STRONG_RANDOM_SECRET_BEFORE_DEPLOY" />
     <add key="CorsOrigins" value="http://localhost:5173,http://localhost:3000,http://localhost:5174,http://localhost:3001" />
+    <add key="DiscordWebhookUrl" value="" />
   </appSettings>
   <connectionStrings configSource="connectionStrings.config" />
   <system.web>
