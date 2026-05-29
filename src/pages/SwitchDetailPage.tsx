@@ -1,5 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Network, ArrowLeft } from 'lucide-react'
+import { getSwitches } from '../api/switches'
+import type { PoeSwitchApi } from '../api/types'
 
 type Status = 'ok' | 'warn' | 'alert'
 type PortStatus = 'active' | 'inactive' | 'error'
@@ -33,7 +36,39 @@ function makePorts(total: number, activePorts: number, named: { device: string; 
   })
 }
 
-const SWITCHES: Record<string, SwitchDevice> = {
+function toSwStatus(s: string | null): Status {
+  if (s === 'online')  return 'ok'
+  if (s === 'warning') return 'warn'
+  return 'alert'
+}
+
+function mapApiSwitch(a: PoeSwitchApi): SwitchDevice {
+  const total  = a.total_ports ?? 24
+  const active = a.poe_ports ?? Math.floor(total * 0.6)
+  return {
+    id:          a.SW_ID,
+    name:        a.device_name,
+    ip:          a.ip_address ?? '—',
+    mac:         a.mac_address ?? '—',
+    status:      toSwStatus(a.status),
+    site:        a.Site_ID,
+    building:    a.Building_ID,
+    floor:       a.Floor_ID,
+    rack:        a.Rack_ID,
+    model:       a.model ?? '—',
+    firmware:    '—',
+    installedAt: (a.created_at ?? '').split('T')[0],
+    uptime:      '—',
+    ports:       total,
+    activePorts: active,
+    powerW:      a.poe_used_w ?? 0,
+    budgetW:     a.poe_budget_w ?? 0,
+    vlan:        '—',
+    portMap:     makePorts(total, active, []),
+  }
+}
+
+const _SWITCHES_LEGACY: Record<string, SwitchDevice> = {
   'SW-HQ-CORE': {
     id:'SW-HQ-CORE', name:'Core Switch HQ', ip:'192.168.1.2', mac:'00:1A:2B:AA:BB:01',
     status:'ok', site:'HQ Bangkok', building:'Building A', floor:'F2', rack:'Rack A1',
@@ -124,6 +159,7 @@ const SWITCHES: Record<string, SwitchDevice> = {
     ]),
   },
 }
+void _SWITCHES_LEGACY
 
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const STATUS_LABEL: Record<Status, string>  = { ok: 'Online', warn: 'Warning', alert: 'Offline' }
@@ -214,8 +250,19 @@ export default function SwitchDetailPage() {
   const navigate     = useNavigate()
   const location     = useLocation()
   const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/switches'
-  const sw           = SWITCHES[switchId ?? '']
 
+  const { data: apiList = [], isLoading } = useQuery({
+    queryKey: ['switch', switchId],
+    queryFn: () => getSwitches({ SW_ID: switchId }),
+    enabled: !!switchId,
+    refetchOnWindowFocus: false,
+  })
+
+  const sw = apiList.length > 0 ? mapApiSwitch(apiList[0]) : null
+
+  if (isLoading) return (
+    <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>Loading...</div>
+  )
   if (!sw) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
       Switch <code>{switchId}</code> not found.

@@ -1,5 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { HardDrive, Wifi, MapPin, Server, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { getNvrs } from '../api/nvrs'
+import type { NvrApi } from '../api/types'
 
 type Status = 'ok' | 'warn' | 'alert'
 
@@ -27,70 +30,35 @@ interface NVR {
   connectedCams: string[]
 }
 
-const NVRS: Record<string, NVR> = {
-  'NVR-HQ-01': {
-    id: 'NVR-HQ-01', name: 'NVR HQ 01', ip: '192.168.1.200', mac: '00:1A:2B:3C:4D:01',
-    status: 'ok', site: 'HQ Bangkok', building: 'Building A', floor: 'F2', rack: 'Rack A1',
-    model: 'Hikvision DS-7732NI-I4', firmware: 'V4.62.200', installedAt: '2023-04-12',
-    channels: 32, usedCh: 28, retentionDays: 30,
-    hdds: [
-      { label: 'HDD1', usedGB: 726, totalGB: 931, pct: 78 },
-      { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
-    ],
-    connectedCams: ['CAM-001','CAM-002','CAM-005','CAM-006','CAM-007','CAM-008'],
-  },
-  'NVR-HQ-02': {
-    id: 'NVR-HQ-02', name: 'NVR HQ 02', ip: '192.168.1.201', mac: '00:1A:2B:3C:4D:02',
-    status: 'ok', site: 'HQ Bangkok', building: 'Building A', floor: 'F2', rack: 'Rack A1',
-    model: 'Hikvision DS-7732NI-I4', firmware: 'V4.62.200', installedAt: '2023-04-12',
-    channels: 32, usedCh: 16, retentionDays: 30,
-    hdds: [
-      { label: 'HDD1', usedGB: 380, totalGB: 931, pct: 41 },
-      { label: 'HDD2', usedGB: 455, totalGB: 931, pct: 49 },
-    ],
-    connectedCams: ['CAM-003','CAM-004'],
-  },
-  'NVR-HQ-03': {
-    id: 'NVR-HQ-03', name: 'NVR HQ 03', ip: '192.168.1.202', mac: '00:1A:2B:3C:4D:03',
-    status: 'warn', site: 'HQ Bangkok', building: 'Building B', floor: 'F1', rack: 'Rack B1',
-    model: 'Dahua NVR5232-EI', firmware: 'V4.000.0000003.0', installedAt: '2023-06-01',
-    channels: 32, usedCh: 18, retentionDays: 60,
-    hdds: [
-      { label: 'HDD1', usedGB: 840, totalGB: 931, pct: 90 },
-      { label: 'HDD2', usedGB: 884, totalGB: 931, pct: 95 },
-    ],
-    connectedCams: ['CAM-014'],
-  },
-  'NVR-CM-01': {
-    id: 'NVR-CM-01', name: 'NVR Chiang Mai', ip: '192.168.10.200', mac: '00:1A:2B:3C:4D:04',
-    status: 'ok', site: 'Chiang Mai DC', building: 'Building A', floor: 'F1', rack: 'Rack C1',
-    model: 'Hikvision DS-7616NI-I2', firmware: 'V4.50.100', installedAt: '2023-09-15',
-    channels: 16, usedCh: 10, retentionDays: 30,
-    hdds: [
-      { label: 'HDD1', usedGB: 494, totalGB: 931, pct: 53 },
-    ],
-    connectedCams: ['CAM-015','CAM-016'],
-  },
-  'NVR-PK-01': {
-    id: 'NVR-PK-01', name: 'NVR Phuket', ip: '192.168.20.200', mac: '00:1A:2B:3C:4D:05',
-    status: 'ok', site: 'Phuket Branch', building: 'Building A', floor: 'F1', rack: 'Rack P1',
-    model: 'Dahua NVR5216-EI', firmware: 'V4.000.0000003.0', installedAt: '2023-11-20',
-    channels: 16, usedCh: 8, retentionDays: 30,
-    hdds: [
-      { label: 'HDD1', usedGB: 289, totalGB: 931, pct: 31 },
-    ],
+function toNvrStatus(s: string | null): Status {
+  if (s === 'online')  return 'ok'
+  if (s === 'warning') return 'warn'
+  return 'alert'
+}
+
+function mapApiNvr(a: NvrApi): NVR {
+  const totalGB = Math.round((a.hdd_total_tb ?? 1) * 1000)
+  const pct     = a.hdd_used_pct ?? 0
+  const usedGB  = Math.round(totalGB * pct / 100)
+  return {
+    id:           a.NVR_ID,
+    name:         a.device_name,
+    ip:           a.ip_cctv ?? a.ip_internet ?? '—',
+    mac:          a.mac_address ?? '—',
+    status:       toNvrStatus(a.status),
+    site:         a.Site_ID,
+    building:     a.Building_ID,
+    floor:        a.Floor_ID,
+    rack:         a.Rack_ID,
+    model:        a.model ?? '—',
+    firmware:     '—',
+    installedAt:  (a.created_at ?? '').split('T')[0],
+    channels:     a.total_channels ?? 0,
+    usedCh:       a.active_channels ?? 0,
+    retentionDays: a.retention_days ?? 30,
+    hdds:         [{ label: 'Storage', usedGB, totalGB, pct }],
     connectedCams: [],
-  },
-  'NVR-KK-01': {
-    id: 'NVR-KK-01', name: 'NVR Khon Kaen', ip: '192.168.30.200', mac: '00:1A:2B:3C:4D:06',
-    status: 'ok', site: 'Khon Kaen', building: 'Building A', floor: 'F1', rack: 'Rack K1',
-    model: 'Axis S3008', firmware: '11.8.53', installedAt: '2024-01-10',
-    channels: 8, usedCh: 5, retentionDays: 14,
-    hdds: [
-      { label: 'HDD1', usedGB: 410, totalGB: 931, pct: 44 },
-    ],
-    connectedCams: [],
-  },
+  }
 }
 
 const STATUS_COLOR: Record<Status, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
@@ -139,8 +107,19 @@ export default function NVRDetailPage() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const backTo    = (location.state as { from?: string } | null)?.from ?? '/dashboard/nvrs'
-  const nvr       = NVRS[nvrId ?? '']
 
+  const { data: apiList = [], isLoading } = useQuery({
+    queryKey: ['nvr', nvrId],
+    queryFn: () => getNvrs({ NVR_ID: nvrId }),
+    enabled: !!nvrId,
+    refetchOnWindowFocus: false,
+  })
+
+  const nvr = apiList.length > 0 ? mapApiNvr(apiList[0]) : null
+
+  if (isLoading) return (
+    <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>Loading...</div>
+  )
   if (!nvr) return (
     <div style={{ padding: 48, color: 'var(--ink-3)', textAlign: 'center' }}>
       NVR <code>{nvrId}</code> not found.

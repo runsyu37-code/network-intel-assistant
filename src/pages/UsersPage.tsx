@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Search, Plus, Pencil, PauseCircle, Trash2, X } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { getUsers } from '../api/users'
+import type { UserApi } from '../api/types'
 
 type Role   = 'admin' | 'user' | 'viewer'
 type Status = 'active' | 'inactive'
@@ -9,18 +12,24 @@ interface User {
   id: number
   username: string
   displayName: string
-  email: string
   role: Role
   status: Status
 }
 
-const INIT_USERS: User[] = [
-  { id: 1, username: 'admin_test',  displayName: 'System Admin',  email: 'admin@ssm.local',   role: 'admin',  status: 'active'   },
-  { id: 2, username: 'ran_user',    displayName: 'Ran M.',         email: 'ran.m@example.com', role: 'user',   status: 'active'   },
-  { id: 3, username: 'viewer01',    displayName: 'Guest Viewer',   email: 'viewer@ssm.local',  role: 'viewer', status: 'active'   },
-  { id: 4, username: 'old_staff',   displayName: 'Ex Employee',    email: 'old@ssm.local',     role: 'user',   status: 'inactive' },
-  { id: 5, username: 'temp_access', displayName: 'Contractor',     email: 'temp@external.com', role: 'viewer', status: 'active'   },
-]
+function toRole(r: string): Role {
+  if (r === 'admin' || r === 'user' || r === 'viewer') return r
+  return 'viewer'
+}
+
+function mapApiUser(a: UserApi): User {
+  return {
+    id:          a.User_ID,
+    username:    a.username,
+    displayName: a.display_name ?? a.username,
+    role:        toRole(a.role),
+    status:      a.is_active ? 'active' : 'inactive',
+  }
+}
 
 const ROLE_STYLE: Record<Role, { bg: string; color: string }> = {
   admin:  { bg: 'var(--alert-soft)',  color: 'var(--alert)'  },
@@ -33,14 +42,28 @@ type ModalMode = null | 'create' | User
 
 export default function UsersPage() {
   const isAdmin = useAuthStore(s => s.isAdmin())
-  const [users, setUsers]               = useState<User[]>(INIT_USERS)
+
+  const { data: apiUsers = [], isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => getUsers(),
+    refetchOnWindowFocus: false,
+  })
+
+  const [users, setUsers]               = useState<User[]>([])
   const [q, setQ]                       = useState('')
   const [roleFilter, setRoleFilter]     = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [modalMode, setModalMode]       = useState<ModalMode>(null)
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null)
-  const [form, setForm]                 = useState({ displayName: '', email: '', role: 'user' as Role, status: 'active' as Status })
-  const [addForm, setAddForm]           = useState({ username: '', displayName: '', email: '', role: 'user' as Role, password: '' })
+  const [form, setForm]                 = useState({ displayName: '', role: 'user' as Role, status: 'active' as Status })
+  const [addForm, setAddForm]           = useState({ username: '', displayName: '', role: 'user' as Role, password: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current || isLoading) return
+    initialized.current = true
+    setUsers(apiUsers.map(mapApiUser))
+  }, [apiUsers, isLoading])
 
   const filtered = users.filter(u => {
     if (roleFilter !== 'all' && u.role !== roleFilter) return false
@@ -54,12 +77,12 @@ export default function UsersPage() {
   })
 
   function openEdit(u: User) {
-    setForm({ displayName: u.displayName, email: u.email, role: u.role, status: u.status })
+    setForm({ displayName: u.displayName, role: u.role, status: u.status })
     setModalMode(u)
   }
 
   function openCreate() {
-    setAddForm({ username: '', displayName: '', email: '', role: 'user', password: '' })
+    setAddForm({ username: '', displayName: '', role: 'user', password: '' })
     setModalMode('create')
   }
 
@@ -69,7 +92,7 @@ export default function UsersPage() {
       setUsers(prev => [...prev, {
         id: Date.now(),
         username: addForm.username, displayName: addForm.displayName,
-        email: addForm.email, role: addForm.role, status: 'active',
+        role: addForm.role, status: 'active',
       }])
     } else {
       const target = modalMode
@@ -254,18 +277,6 @@ export default function UsersPage() {
                   onChange={e => isEditing
                     ? setForm(f => ({ ...f, displayName: e.target.value }))
                     : setAddForm(f => ({ ...f, displayName: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  className="form-ctrl"
-                  type="email"
-                  value={isEditing ? form.email : addForm.email}
-                  onChange={e => isEditing
-                    ? setForm(f => ({ ...f, email: e.target.value }))
-                    : setAddForm(f => ({ ...f, email: e.target.value }))
                   }
                 />
               </div>
