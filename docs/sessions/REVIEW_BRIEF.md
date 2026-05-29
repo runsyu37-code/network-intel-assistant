@@ -28,10 +28,10 @@ Audience: ~30 intranet users (network engineers, building managers). Not a publi
 ```bash
 cd C:\ai-playground\Frontend
 npm install      # first time only
-npm run dev      # starts at http://localhost:3001
+npm run dev      # starts at http://localhost:3000
 ```
 
-Open `http://localhost:3001` in browser.
+Open `http://localhost:3000` in browser.
 
 ---
 
@@ -95,7 +95,7 @@ These are intentional — not bugs:
 - **Polling, not real-time** — device status refreshes every 30 seconds via API
 - **No floor plan editor** — admin can drag camera pins, but floor plan SVG is uploaded separately
 - **JWT only, no refresh token** — session expires after 8 hours, user must re-login
-- **No Swagger / API docs in UI** — backend API contract is in `docs/FRONTEND_HANDOFF.md`
+- **No Swagger / API docs in UI** — backend API contract is in `FRONTEND_HANDOFF.md` (frontend root)
 
 ---
 
@@ -112,14 +112,30 @@ These are intentional — not bugs:
 
 ## Tech Stack
 
+**Frontend**
+
 | Layer | Technology |
 |---|---|
 | Framework | React 18 + Vite + TypeScript |
 | UI Library | Ant Design (antd) — Buono purple theme |
 | State | Zustand |
 | Routing | React Router DOM v6 |
+| Data Fetching | TanStack React Query v5 |
 | HTTP | Axios — proxied to `localhost:50680` via Vite config |
+| Topology Page | React Flow v11 |
+| Floor Plan Canvas | Konva / react-konva |
+| Charts | Recharts |
 | Auth | JWT stored in localStorage |
+
+**Backend**
+
+| Layer | Technology |
+|---|---|
+| Backend Framework | ASP.NET Web API — .NET Framework 4.8 |
+| Dev Server | IIS Express (Visual Studio → Ctrl+F5 only) |
+| Data Access | Raw ADO.NET (SqlConnection / SqlCommand) — no ORM |
+| Database | SQL Server |
+| Backend Auth | JWT — custom IAuthorizationFilter (JwtAuthFilter) |
 
 ---
 
