@@ -494,6 +494,7 @@ On 401:                   redirect to /login
 | Review 2026-05-29 | Frontend code review — 7 blockers found | No-Go ❌ |
 | Review fix | GET cameras returns position_x/y (backend) + drag save fix (frontend) | Done |
 | Review fix | Frontend Phase 1–3 (RouteGuard, fallback data, site filter, 403) | Pending |
+| Discord webhook | PingService sends embed alert when device goes offline | Done |
 
 ---
 

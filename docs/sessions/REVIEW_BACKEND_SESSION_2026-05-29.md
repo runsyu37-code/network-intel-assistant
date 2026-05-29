@@ -77,12 +77,38 @@ Reviewer reclassified camera position from 🟢 Acceptable to 🔴 Critical afte
 
 ---
 
+## Part 4 — Discord Webhook Alert (PingService)
+
+Discovered that `PingService.HandleOffline()` already inserted `alert_logs` with `webhook_sent = 0` but never actually sent to Discord. Added the missing webhook call.
+
+### Changes
+
+| File | Change |
+|---|---|
+| `Services/PingService.cs` | Added `TrySendDiscordAlert()` + `BuildLocation()` helpers; static `HttpClient`; call after INSERT; UPDATE `webhook_sent = 1` on success |
+| `Web.config.template` | Added `DiscordWebhookUrl` key (empty = disabled) |
+
+### Behavior
+- Device fails 3 consecutive pings → insert `alert_log` → send Discord embed 🔴 → `webhook_sent = 1`
+- Webhook fails → alert stays in DB, `webhook_sent = 0` (retryable)
+- `DiscordWebhookUrl` empty → skip silently, no crash
+
+### Setup required
+Add to `Web.config` before going live:
+```xml
+<add key="DiscordWebhookUrl" value="https://discord.com/api/webhooks/..." />
+```
+
+---
+
 ## Commits This Session
 
 | Hash | Message |
 |---|---|
 | `54fbe8e` | fix(cameras): return position_x/y in GET and lock PATCH validation at 0-100 |
 | `c61eaf8` | docs: add review session findings, fix plan, and updated REVIEW_BRIEF |
+| `d2ff8be` | docs: update README for review session and camera position fix |
+| `04592e5` | feat(ping): add Discord webhook alert when device goes offline |
 
 ---
 
