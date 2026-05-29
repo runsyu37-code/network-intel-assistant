@@ -168,6 +168,26 @@ export interface PingLogApi {
   pinged_at: string
 }
 
+export interface SiteApi {
+  Site_ID: string
+  name: string
+  code: string | null
+  location: string | null
+}
+
+export interface BuildingApi {
+  Building_ID: string
+  Site_ID: string
+  name: string
+  code: string | null
+  floor_count: number
+  alert_count: number
+  camera_count: number
+  nvr_count: number
+  lat: number | null
+  lng: number | null
+}
+
 export interface AlertLogApi {
   id: number
   device_type: string | null

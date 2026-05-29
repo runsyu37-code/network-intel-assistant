@@ -1,5 +1,5 @@
 import client from './client'
-import type { SiteTreeDto, DashboardSummaryDto, DeviceStatusDto, AlertLogApi } from './types'
+import type { SiteTreeDto, DashboardSummaryDto, DeviceStatusDto, AlertLogApi, SiteApi, BuildingApi } from './types'
 
 export async function getHierarchyTree(): Promise<SiteTreeDto[]> {
   const res = await client.get<SiteTreeDto[]>('/hierarchy/tree')
@@ -18,5 +18,15 @@ export async function getDeviceStatus(): Promise<DeviceStatusDto[]> {
 
 export async function getAlertLogs(params?: { limit?: number }): Promise<AlertLogApi[]> {
   const res = await client.get<AlertLogApi[]>('/alert-logs', { params })
+  return res.data
+}
+
+export async function getSites(): Promise<SiteApi[]> {
+  const res = await client.get<SiteApi[]>('/sites')
+  return res.data
+}
+
+export async function getBuildings(): Promise<BuildingApi[]> {
+  const res = await client.get<BuildingApi[]>('/buildings')
   return res.data
 }

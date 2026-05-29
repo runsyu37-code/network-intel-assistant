@@ -15,6 +15,7 @@ import NVRDetailPage from './NVRDetailPage'
 import SwitchesPage from './SwitchesPage'
 import SwitchDetailPage from './SwitchDetailPage'
 import UsersPage from './UsersPage'
+import BuildingMapPage from './BuildingMapPage'
 
 export default function DashboardPage() {
   return (
@@ -22,6 +23,7 @@ export default function DashboardPage() {
       <Route element={<AppLayout />}>
         <Route index                          element={<OverviewPage />} />
         <Route path="topology"                element={<TopologyPage />} />
+        <Route path="map"                     element={<BuildingMapPage />} />
         <Route path="sites"                   element={<SitesCrudPage />} />
         <Route path="sites/:siteId"           element={<SitesPage />} />
         <Route path="buildings/:buildingId"   element={<BuildingDetailPage />} />
