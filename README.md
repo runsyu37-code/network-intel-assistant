@@ -552,6 +552,7 @@ Frontend รันที่ `http://localhost:3000` — CORS allow แล้ว
 | [`docs/sessions/F9_SESSION_R4_2026-05-28.md`](docs/sessions/F9_SESSION_R4_2026-05-28.md) | Session log — R4 changes + review prep docs |
 | [`docs/sessions/F9_FRONTEND_R5.md`](docs/sessions/F9_FRONTEND_R5.md) | R5 spec to frontend — hover tooltip, warning status, building map |
 | [`docs/sessions/F9_FRONTEND_REPLY_R5.md`](docs/sessions/F9_FRONTEND_REPLY_R5.md) | Frontend reply — all fixes done, requesting lat/lng |
+| [`docs/sessions/F9_BACKEND_REPLY_R5.md`](docs/sessions/F9_BACKEND_REPLY_R5.md) | Backend reply to frontend R5 — lat/lng confirmed, route confirmed |
 | [`docs/sessions/F9_SESSION_R5_2026-05-29.md`](docs/sessions/F9_SESSION_R5_2026-05-29.md) | Session log — warning status + lat/lng in buildings |
 
 **CORS origins (dev):**
