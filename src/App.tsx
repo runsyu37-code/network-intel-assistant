@@ -5,6 +5,7 @@ import { useThemeStore } from './stores/themeStore'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import NotAuthorizedPage from './pages/NotAuthorizedPage'
+import { SessionWatcher } from './components/SessionWatcher'
 
 const antdTokens = {
   light: {
@@ -54,6 +55,7 @@ export default function App() {
       }}
     >
       <AntApp>
+        <SessionWatcher />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/403" element={<NotAuthorizedPage />} />
