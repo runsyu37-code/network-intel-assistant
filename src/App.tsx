@@ -2,8 +2,15 @@ import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme as antdTheme } from 'antd'
 import { useThemeStore } from './stores/themeStore'
+import { useAuthStore } from './stores/authStore'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore(s => s.user)
+  if (!user) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
 
 const antdTokens = {
   light: {
@@ -54,7 +61,7 @@ export default function App() {
     >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard/*" element={<DashboardPage />} />
+        <Route path="/dashboard/*" element={<RequireAuth><DashboardPage /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </ConfigProvider>

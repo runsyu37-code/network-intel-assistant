@@ -151,6 +151,31 @@ const RACK_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)'
 const CAM_STATUS_COLOR: Record<CamStatus, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const CAM_STATUS_LABEL: Record<CamStatus, string>  = { ok: 'Online',   warn: 'Warning',     alert: 'Offline'   }
 
+function CamTooltip({ cam }: { cam: Camera }) {
+  return (
+    <div className="cam-tooltip">
+      <div className="cam-tooltip-id">{cam.id}</div>
+      <div className="cam-tooltip-row">
+        <span className="cam-tooltip-label">Status</span>
+        <span className="cam-tooltip-status">
+          <span className="cam-tooltip-dot" style={{ background: CAM_STATUS_COLOR[cam.status] }} />
+          <span style={{ color: CAM_STATUS_COLOR[cam.status] }}>{CAM_STATUS_LABEL[cam.status]}</span>
+        </span>
+      </div>
+      <div className="cam-tooltip-row">
+        <span className="cam-tooltip-label">Room</span>
+        <span className="cam-tooltip-val">{cam.room}</span>
+      </div>
+      {cam.ip && cam.ip !== '—' && (
+        <div className="cam-tooltip-row">
+          <span className="cam-tooltip-label">IP</span>
+          <span className="cam-tooltip-val" style={{ fontFamily: 'monospace', fontSize: 10 }}>{cam.ip}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FloorPlanPage() {
   const { floorId }  = useParams<{ floorId: string }>()
   const navigate     = useNavigate()
@@ -239,7 +264,16 @@ export default function FloorPlanPage() {
     setPositions(p => ({ ...p, [dragging.current!.id]: { left: `${newLeft.toFixed(1)}%`, top: `${newTop.toFixed(1)}%` } }))
   }
 
-  function stopDrag() { dragging.current = null }
+  function stopDrag() {
+    if (dragging.current && wasDragged.current) {
+      const id  = dragging.current.id
+      const pos = positions[id]
+      if (pos) {
+        console.log('[FloorPlan] camera position saved:', id, pos)
+      }
+    }
+    dragging.current = null
+  }
 
   function onPlanClick(e: React.MouseEvent<HTMLDivElement>) {
     if (mode !== 'edit') return
@@ -343,11 +377,11 @@ export default function FloorPlanPage() {
                     e.stopPropagation()
                     setSelectedCam(cam)
                   } : undefined}
-                  title={`${cam.id} · ${cam.room}`}
                 >
                   <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
                   <div className="cam-icon" />
                   <span className="cam-name">{cam.id}</span>
+                  {mode === 'view' && <CamTooltip cam={cam} />}
                 </div>
               ))}
 

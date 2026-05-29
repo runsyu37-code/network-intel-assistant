@@ -10,15 +10,6 @@ interface FloorData {
   camerasOnline: number
 }
 
-interface BuildingData {
-  id: string
-  title: string
-  status: Status
-  floorList: FloorData[]
-  cameras: number
-  nvrs: number
-}
-
 const SITE_LABELS: Record<string, string> = {
   'hq':     'HQ Bangkok',
   'site-a': 'Site A — HQ Bangkok',
@@ -29,9 +20,19 @@ const SITE_LABELS: Record<string, string> = {
   'site-f': 'Site F — Udon Thani',
 }
 
+interface BuildingData {
+  id: string
+  siteIds: string[]
+  title: string
+  status: Status
+  floorList: FloorData[]
+  cameras: number
+  nvrs: number
+}
+
 const MOCK_BUILDINGS: BuildingData[] = [
   {
-    id: 'a', title: 'อาคาร A', status: 'warn', cameras: 48, nvrs: 2,
+    id: 'a', siteIds: ['hq', 'site-a'], title: 'อาคาร A', status: 'warn', cameras: 48, nvrs: 2,
     floorList: [
       { id: 'a-f6', label: 'F6', cameras: 8, camerasOnline: 8 },
       { id: 'a-f5', label: 'F5', cameras: 8, camerasOnline: 7 },
@@ -42,7 +43,7 @@ const MOCK_BUILDINGS: BuildingData[] = [
     ],
   },
   {
-    id: 'b', title: 'อาคาร B', status: 'ok', cameras: 24, nvrs: 1,
+    id: 'b', siteIds: ['hq', 'site-a'], title: 'อาคาร B', status: 'ok', cameras: 24, nvrs: 1,
     floorList: [
       { id: 'b-f4', label: 'F4', cameras: 6, camerasOnline: 6 },
       { id: 'b-f3', label: 'F3', cameras: 6, camerasOnline: 6 },
@@ -51,10 +52,47 @@ const MOCK_BUILDINGS: BuildingData[] = [
     ],
   },
   {
-    id: 'c', title: 'อาคาร C', status: 'ok', cameras: 16, nvrs: 1,
+    id: 'c', siteIds: ['hq', 'site-a'], title: 'อาคาร C', status: 'ok', cameras: 16, nvrs: 1,
     floorList: [
       { id: 'c-f2', label: 'F2', cameras: 8, camerasOnline: 8 },
       { id: 'c-f1', label: 'F1', cameras: 8, camerasOnline: 8 },
+    ],
+  },
+  {
+    id: 'd', siteIds: ['site-b'], title: 'อาคาร D', status: 'ok', cameras: 20, nvrs: 1,
+    floorList: [
+      { id: 'd-f3', label: 'F3', cameras: 7, camerasOnline: 7 },
+      { id: 'd-f2', label: 'F2', cameras: 7, camerasOnline: 7 },
+      { id: 'd-f1', label: 'F1', cameras: 6, camerasOnline: 6 },
+    ],
+  },
+  {
+    id: 'e', siteIds: ['site-c'], title: 'อาคาร E', status: 'warn', cameras: 12, nvrs: 1,
+    floorList: [
+      { id: 'e-f2', label: 'F2', cameras: 6, camerasOnline: 5 },
+      { id: 'e-f1', label: 'F1', cameras: 6, camerasOnline: 6 },
+    ],
+  },
+  {
+    id: 'f', siteIds: ['site-d'], title: 'อาคาร F', status: 'ok', cameras: 10, nvrs: 1,
+    floorList: [
+      { id: 'f-f2', label: 'F2', cameras: 5, camerasOnline: 5 },
+      { id: 'f-f1', label: 'F1', cameras: 5, camerasOnline: 5 },
+    ],
+  },
+  {
+    id: 'g', siteIds: ['site-e'], title: 'อาคาร G', status: 'alert', cameras: 8, nvrs: 1,
+    floorList: [
+      { id: 'g-f2', label: 'F2', cameras: 4, camerasOnline: 2 },
+      { id: 'g-f1', label: 'F1', cameras: 4, camerasOnline: 4 },
+    ],
+  },
+  {
+    id: 'h', siteIds: ['site-f'], title: 'อาคาร H', status: 'ok', cameras: 14, nvrs: 1,
+    floorList: [
+      { id: 'h-f3', label: 'F3', cameras: 5, camerasOnline: 5 },
+      { id: 'h-f2', label: 'F2', cameras: 5, camerasOnline: 5 },
+      { id: 'h-f1', label: 'F1', cameras: 4, camerasOnline: 4 },
     ],
   },
 ]
@@ -150,6 +188,7 @@ export default function SitesPage() {
   const navigate = useNavigate()
   const { siteId } = useParams<{ siteId: string }>()
   const siteLabel = SITE_LABELS[siteId ?? ''] ?? siteId ?? 'Unknown Site'
+  const buildings = MOCK_BUILDINGS.filter(b => !siteId || b.siteIds.includes(siteId))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -161,16 +200,22 @@ export default function SitesPage() {
       </div>
 
       <div style={{ padding: '0 24px 32px', overflowY: 'auto', flex: 1 }}>
-        <div className="bldg-grid-v2">
-          {MOCK_BUILDINGS.map(b => (
-            <BuildingCard
-              key={b.id}
-              building={b}
-              onViewBuilding={() => navigate(`/dashboard/buildings/${b.id}`)}
-              onViewPlan={floorId => navigate(`/dashboard/floors/${floorId}`)}
-            />
-          ))}
-        </div>
+        {buildings.length === 0 ? (
+          <div style={{ padding: 48, textAlign: 'center', color: 'var(--ink-3)' }}>
+            ไม่พบอาคารในสาขานี้
+          </div>
+        ) : (
+          <div className="bldg-grid-v2">
+            {buildings.map(b => (
+              <BuildingCard
+                key={b.id}
+                building={b}
+                onViewBuilding={() => navigate(`/dashboard/buildings/${b.id}`)}
+                onViewPlan={floorId => navigate(`/dashboard/floors/${floorId}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
