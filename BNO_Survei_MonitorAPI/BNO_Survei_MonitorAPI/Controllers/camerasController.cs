@@ -27,7 +27,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
-                string sql = "SELECT [id],[Site_ID],[Building_ID],[Floor_ID],[device_name],[brand],[model],[serial_no],[mac_address],[camera_type],[resolution],[firmware_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[NVR_CH],[SW_ID],[poe_port_number],[NVR_ID],[nvr_channel],[install_location],[status],[fail_count],[last_seen],[notes],[created_at],[updated_at] FROM [dbo].[cameras] WHERE 1=1";
+                string sql = "SELECT [id],[Site_ID],[Building_ID],[Floor_ID],[device_name],[brand],[model],[serial_no],[mac_address],[camera_type],[resolution],[firmware_version],[ip_address],[vlan_id],[subnet_mask],[gateway],[NVR_CH],[SW_ID],[poe_port_number],[NVR_ID],[nvr_channel],[install_location],[status],[fail_count],[last_seen],[notes],[created_at],[updated_at],[position_x],[position_y] FROM [dbo].[cameras] WHERE 1=1";
                 if (!string.IsNullOrWhiteSpace(Site_ID))  sql += " AND Site_ID = @Site_ID";
                 if (!string.IsNullOrWhiteSpace(Floor_ID)) sql += " AND Floor_ID = @Floor_ID";
                 if (!string.IsNullOrWhiteSpace(status))   sql += " AND status = @status";
@@ -71,6 +71,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
                             notes            = reader["notes"]            == DBNull.Value ? null : reader["notes"].ToString(),
                             created_at       = reader["created_at"].ToString(),
                             updated_at       = reader["updated_at"].ToString(),
+                            position_x       = reader["position_x"]  == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["position_x"]),
+                            position_y       = reader["position_y"]  == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["position_y"]),
                         });
                     }
                 }
