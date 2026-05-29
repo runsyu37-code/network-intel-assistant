@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { Tooltip } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { getRackById } from '../api/racks'
 import type { RackDeviceApi, RackAlertApi } from '../api/types'
@@ -15,6 +16,9 @@ interface Device {
   type?: DevType
   status?: DevStatus
   model?: string
+  ip?: string
+  brand?: string
+  poePort?: number | null
   subs?: SubDev[]
 }
 
@@ -84,7 +88,7 @@ function apiDevicesToDevices(apiDevices: RackDeviceApi[], totalU: number): Devic
     const size: number = dev.device_type === 'nvr' ? 2 : 1
     if (cursor < size) break
     const status: DevStatus = dev.status === 'online' ? 'ok' : dev.status === 'warning' ? 'warn' : 'alert'
-    result.push({ uTop: cursor, size, name: dev.device_name, type: dev.device_type, status, model: dev.model ?? undefined })
+    result.push({ uTop: cursor, size, name: dev.device_name, type: dev.device_type, status, model: dev.model ?? undefined, ip: dev.ip_address ?? undefined, brand: dev.brand ?? undefined, poePort: dev.poe_port_number ?? null })
     cursor -= size
   }
   return result
@@ -352,7 +356,22 @@ export default function RackDetailPage() {
                         : [(
                           <tr key={i}>
                             <td className="it-u">{uRange(d)}</td>
-                            <td><span className="it-name">{d.name}</span></td>
+                            <td>
+                              <Tooltip
+                                title={d.ip || d.brand || d.poePort != null ? (
+                                  <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                                    {d.ip && <div>IP: {d.ip}</div>}
+                                    {d.brand && <div>Brand: {d.brand}</div>}
+                                    {d.poePort != null && <div>PoE Port: {d.poePort}</div>}
+                                    <div>Status: {d.status ?? 'passive'}</div>
+                                  </div>
+                                ) : undefined}
+                                placement="right"
+                                mouseEnterDelay={0.4}
+                              >
+                                <span className="it-name">{d.name}</span>
+                              </Tooltip>
+                            </td>
                             <td className="it-type">{d.type ?? '—'}</td>
                             <td><StatusDot status={d.status ?? 'passive'} /><StatusLabel status={d.status ?? 'passive'} /></td>
                           </tr>

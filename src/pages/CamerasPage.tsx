@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App } from 'antd'
+import { App, Tooltip } from 'antd'
 import { getCameras, createCamera, updateCamera, deleteCamera } from '../api/cameras'
 import type { CameraApi } from '../api/types'
 
@@ -17,6 +17,9 @@ interface Camera {
   nvr: string
   site: string
   status: Status
+  serialNo: string
+  macAddress: string
+  nvrChannel: number | null
 }
 
 function mapCamera(a: CameraApi): Camera {
@@ -31,6 +34,9 @@ function mapCamera(a: CameraApi): Camera {
     nvr: a.NVR_ID ?? '—',
     site: a.Site_ID,
     status,
+    serialNo: a.serial_no ?? '—',
+    macAddress: a.mac_address ?? '—',
+    nvrChannel: a.nvr_channel ?? null,
   }
 }
 
@@ -101,7 +107,7 @@ export default function CamerasPage() {
   async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
     if (modalMode === 'create') {
-      const cam: Camera = { id: `cam-${Date.now()}`, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site, status: 'online' }
+      const cam: Camera = { id: `cam-${Date.now()}`, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site, status: 'online', serialNo: '—', macAddress: '—', nvrChannel: null }
       setCameras(prev => [...prev, cam])
       setModalMode(null)
       try { await createMut.mutateAsync(); message.success(`เพิ่ม ${cam.name} สำเร็จ`) }
@@ -191,7 +197,20 @@ export default function CamerasPage() {
               >
                 <td><span className={BADGE[c.status].cls}>{BADGE[c.status].label}</span></td>
                 <td>
-                  <div className="td-name">{c.name}</div>
+                  <Tooltip
+                    title={
+                      <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                        <div>S/N: {c.serialNo}</div>
+                        <div>MAC: {c.macAddress}</div>
+                        <div>Location: {c.location}</div>
+                        {c.nvrChannel != null && <div>NVR Ch: {c.nvrChannel}</div>}
+                      </div>
+                    }
+                    placement="right"
+                    mouseEnterDelay={0.4}
+                  >
+                    <div className="td-name">{c.name}</div>
+                  </Tooltip>
                   <div className="td-sub">{c.site}</div>
                 </td>
                 <td className="td-mono">{c.ip}</td>

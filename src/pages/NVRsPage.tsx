@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App } from 'antd'
+import { App, Tooltip } from 'antd'
 import { getNvrs, createNvr, updateNvr, deleteNvr } from '../api/nvrs'
 import type { NvrApi } from '../api/types'
 
@@ -12,7 +12,9 @@ interface NVR {
   id: string
   name: string
   ip: string
+  ipCctv: string
   model: string
+  brand: string
   chUsed: number
   chTotal: number
   hddPct: number
@@ -26,8 +28,10 @@ function mapNvr(a: NvrApi): NVR {
   return {
     id: a.NVR_ID,
     name: a.device_name,
-    ip: a.ip_internet ?? a.ip_cctv ?? '—',
+    ip: a.ip_internet ?? '—',
+    ipCctv: a.ip_cctv ?? '—',
     model: a.model ?? '',
+    brand: a.brand ?? '—',
     chUsed: a.active_channels ?? 0,
     chTotal: a.total_channels ?? 0,
     hddPct: Math.round(a.hdd_used_pct ?? 0),
@@ -101,7 +105,7 @@ export default function NVRsPage() {
     const chTotal = parseInt(form.chTotal) || 16
     if (modalMode === 'create') {
       if (!form.nvrId.trim()) return
-      const nvr: NVR = { id: form.nvrId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chUsed: 0, chTotal, hddPct: 0, site: form.site, status: 'online' }
+      const nvr: NVR = { id: form.nvrId.trim(), name: form.name.trim(), ip: form.ip.trim(), ipCctv: '—', model: form.model.trim(), brand: '—', chUsed: 0, chTotal, hddPct: 0, site: form.site, status: 'online' }
       setNvrs(prev => [...prev, nvr])
       setModalMode(null)
       try { await createMut.mutateAsync(); message.success(`เพิ่ม ${nvr.name} สำเร็จ`) }
@@ -184,7 +188,22 @@ export default function NVRsPage() {
                   style={{ cursor: 'pointer' }}
                 >
                   <td><span className={BADGE[n.status].cls}>{BADGE[n.status].label}</span></td>
-                  <td><div className="td-name">{n.name}</div></td>
+                  <td>
+                    <Tooltip
+                      title={
+                        <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                          <div>ETH1 (Internet): {n.ip}</div>
+                          <div>ETH2 (CCTV): {n.ipCctv}</div>
+                          <div>Brand: {n.brand}</div>
+                          <div>Status: {n.status}</div>
+                        </div>
+                      }
+                      placement="right"
+                      mouseEnterDelay={0.4}
+                    >
+                      <div className="td-name">{n.name}</div>
+                    </Tooltip>
+                  </td>
                   <td className="td-mono">{n.ip}</td>
                   <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{n.model || '—'}</td>
                   <td className="td-mono">{n.chUsed}/{n.chTotal}</td>

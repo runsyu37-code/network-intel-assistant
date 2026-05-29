@@ -6,7 +6,7 @@ import { getDashboardSummary, getAlertLogs, getDeviceStatus } from '../api/hiera
 import type { AlertLogApi, DashboardSummaryDto } from '../api/types'
 
 const MOCK_STATS = {
-  cameras:  { total: 128, offline: 3 },
+  cameras:  { total: 128, offline: 3, warning: 2 },
   nvrs:     { total: 8,   warning: 0 },
   switches: { total: 12,  warning: 1 },
   alerts:   { active: 4,  delta: 2 },
@@ -20,9 +20,9 @@ const MOCK_ALERTS = [
 ]
 
 const MOCK_OFFLINE = [
-  { id: 'nvr-05',   name: 'NVR-05',    site: 'สาขาบางนา',    dur: '5h 12m' },
-  { id: 'cam-a307', name: 'CAM-A3-07', site: 'สำนักงานใหญ่', dur: '2h 44m' },
-  { id: 'cam-b203', name: 'CAM-B2-03', site: 'สำนักงานใหญ่', dur: '1h 58m' },
+  { id: 'nvr-05',   name: 'NVR-05',    site: 'สาขาบางนา',    dur: '5h 12m', status: 'offline'  },
+  { id: 'cam-a307', name: 'CAM-A3-07', site: 'สำนักงานใหญ่', dur: '2h 44m', status: 'warning'  },
+  { id: 'cam-b203', name: 'CAM-B2-03', site: 'สำนักงานใหญ่', dur: '1h 58m', status: 'offline'  },
 ]
 
 const REFRESH_INTERVAL = 30
@@ -86,7 +86,7 @@ export default function OverviewPage() {
     if (!summaryData?.length) return MOCK_STATS
     const activeAlerts = alertData?.filter(a => !a.resolved_at).length ?? MOCK_STATS.alerts.active
     return {
-      cameras:  { total: sumField(summaryData, 'totalCameras'),  offline: sumField(summaryData, 'camerasOffline')  },
+      cameras:  { total: sumField(summaryData, 'totalCameras'),  offline: sumField(summaryData, 'camerasOffline'), warning: sumField(summaryData, 'camerasWarning') },
       nvrs:     { total: sumField(summaryData, 'totalNvrs'),     warning: sumField(summaryData, 'nvrsOffline')     },
       switches: { total: sumField(summaryData, 'totalSwitches'), warning: sumField(summaryData, 'switchesOffline') },
       alerts:   { active: activeAlerts, delta: 0 },
@@ -102,7 +102,7 @@ export default function OverviewPage() {
     return statusData
       .filter(d => d.status !== 'online')
       .slice(0, 5)
-      .map(d => ({ id: d.id, name: d.name, site: d.siteId, dur: timeAgo(d.lastSeen) }))
+      .map(d => ({ id: d.id, name: d.name, site: d.siteId, dur: timeAgo(d.lastSeen), status: d.status }))
   }, [statusData])
 
   const displaySites = useMemo(() => {
@@ -174,8 +174,10 @@ export default function OverviewPage() {
             <span className="db-stat-label">Cameras</span>
           </div>
           <div className="db-stat-val">{stats.cameras.total}</div>
-          <div className={`db-stat-trend ${stats.cameras.offline > 0 ? 'db-trend-alert' : 'db-trend-ok'}`}>
-            {stats.cameras.offline > 0 ? `${stats.cameras.offline} offline` : 'All online'}
+          <div className={`db-stat-trend ${stats.cameras.offline > 0 ? 'db-trend-alert' : stats.cameras.warning > 0 ? 'db-trend-warn' : 'db-trend-ok'}`}>
+            {stats.cameras.offline > 0
+              ? `${stats.cameras.offline} offline${stats.cameras.warning > 0 ? ` · ${stats.cameras.warning} warning` : ''}`
+              : stats.cameras.warning > 0 ? `${stats.cameras.warning} warning` : 'All online'}
           </div>
         </div>
 
@@ -243,7 +245,7 @@ export default function OverviewPage() {
         <div className="db-card">
           <div className="db-card-hd">
             <h2 className="db-card-title">
-              อุปกรณ์ที่ออฟไลน์
+              อุปกรณ์ที่มีปัญหา
               <span className="db-badge-count">{displayOffline.length}</span>
             </h2>
           </div>
@@ -252,7 +254,7 @@ export default function OverviewPage() {
               ? <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--ok)', fontSize: 13 }}>ทุกอุปกรณ์ออนไลน์</div>
               : displayOffline.map(d => (
                 <div key={d.id} className="db-dev-row">
-                  <span className="db-status-dot red" />
+                  <span className={`db-status-dot ${d.status === 'warning' ? 'yellow' : 'red'}`} />
                   <div className="db-dev-info">
                     <div className="db-dev-name">{d.name}</div>
                     <div className="db-dev-site">{d.site}</div>

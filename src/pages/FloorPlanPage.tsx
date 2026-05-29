@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { App } from 'antd'
+import { App, Tooltip } from 'antd'
 import { getCameras, patchCameraPosition } from '../api/cameras'
 import type { CameraApi } from '../api/types'
 import { useAuthStore } from '../stores/authStore'
@@ -13,7 +13,7 @@ type CamStatus = 'ok' | 'warn' | 'alert'
 
 interface Camera {
   id: string; status: CamStatus; left: string; top: string; rot: number; room: string
-  ip?: string; model?: string; lastSeen?: string
+  ip?: string; model?: string; lastSeen?: string; brand?: string; deviceName?: string
 }
 
 interface RackMarker {
@@ -109,6 +109,8 @@ function mapApiCamera(a: CameraApi, idx: number): Camera {
     ip: a.ip_address ?? '—',
     model: a.model ?? '—',
     lastSeen: a.last_seen ?? '—',
+    brand: a.brand ?? '—',
+    deviceName: a.device_name,
   }
 }
 
@@ -399,27 +401,40 @@ export default function FloorPlanPage() {
             {/* Camera + rack overlays */}
             <div style={{ position: 'absolute', inset: 0, transform: `scale(${zoom})`, transformOrigin: '0 0', cursor: mode === 'edit' ? 'crosshair' : 'default' }}>
               {cameras.map(cam => (
-                <div
+                <Tooltip
                   key={cam.id}
-                  className={`cam ${cam.status}`}
-                  style={{
-                    left: positions[cam.id]?.left ?? cam.left,
-                    top: positions[cam.id]?.top ?? cam.top,
-                    cursor: mode === 'view' ? 'pointer' : undefined,
-                    outline: panelCam?.id === cam.id ? `3px solid var(--accent)` : undefined,
-                    outlineOffset: 2,
-                  }}
-                  onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
-                  onClick={mode === 'view' ? (e) => {
-                    e.stopPropagation()
-                    setSelectedCam(cam)
-                  } : undefined}
-                  title={`${cam.id} · ${cam.room}`}
+                  title={
+                    <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+                      <div><b>{cam.deviceName ?? cam.id}</b></div>
+                      <div>IP: {cam.ip}</div>
+                      <div>Status: {CAM_STATUS_LABEL[cam.status]}</div>
+                      <div>Brand: {cam.brand}</div>
+                      <div>Last seen: {cam.lastSeen}</div>
+                    </div>
+                  }
+                  placement="top"
+                  mouseEnterDelay={0.4}
                 >
-                  <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
-                  <div className="cam-icon" />
-                  <span className="cam-name">{cam.id}</span>
-                </div>
+                  <div
+                    className={`cam ${cam.status}`}
+                    style={{
+                      left: positions[cam.id]?.left ?? cam.left,
+                      top: positions[cam.id]?.top ?? cam.top,
+                      cursor: mode === 'view' ? 'pointer' : undefined,
+                      outline: panelCam?.id === cam.id ? `3px solid var(--accent)` : undefined,
+                      outlineOffset: 2,
+                    }}
+                    onMouseDown={mode === 'edit' ? (e) => startDrag(cam.id, e) : undefined}
+                    onClick={mode === 'view' ? (e) => {
+                      e.stopPropagation()
+                      setSelectedCam(cam)
+                    } : undefined}
+                  >
+                    <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
+                    <div className="cam-icon" />
+                    <span className="cam-name">{cam.id}</span>
+                  </div>
+                </Tooltip>
               ))}
 
               {floorData.racks?.map(r => (

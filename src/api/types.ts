@@ -211,9 +211,11 @@ export interface RackDeviceApi {
   device_name: string
   device_type: 'nvr' | 'switch'
   model: string | null
+  brand: string | null
   status: string
   ip_address: string | null
   rack_unit: number | null
+  poe_port_number: number | null
 }
 
 export interface RackAlertApi {

@@ -123,6 +123,15 @@
   70%  { box-shadow: 0 0 0 6px rgba(220,38,38,0); }
   100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
 }
+.db-status-dot.yellow {
+  background: var(--warn);
+  animation: db-pulse-yellow 2s infinite;
+}
+@keyframes db-pulse-yellow {
+  0%   { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(217,119,6,0); }
+  100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+}
 
 .db-dev-row {
   display: flex; align-items: center; gap: 12px;
