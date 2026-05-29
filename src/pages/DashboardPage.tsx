@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
+import { RouteGuard } from '../components/RouteGuard'
 import OverviewPage from './OverviewPage'
 import TopologyPage from './TopologyPage'
 import SitesCrudPage from './SitesCrudPage'
@@ -16,25 +17,49 @@ import SwitchesPage from './SwitchesPage'
 import SwitchDetailPage from './SwitchDetailPage'
 import UsersPage from './UsersPage'
 
+const ADMIN       = ['admin'] as const
+const ADMIN_USER  = ['admin', 'user'] as const
+
 export default function DashboardPage() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index                          element={<OverviewPage />} />
-        <Route path="topology"                element={<TopologyPage />} />
-        <Route path="sites"                   element={<SitesCrudPage />} />
-        <Route path="sites/:siteId"           element={<SitesPage />} />
-        <Route path="buildings/:buildingId"   element={<BuildingDetailPage />} />
-        <Route path="floors/:floorId"         element={<FloorPlanPage />} />
-        <Route path="racks"                   element={<RacksListPage />} />
-        <Route path="racks/:rackId"           element={<RackDetailPage />} />
-        <Route path="cameras"                 element={<CamerasPage />} />
-        <Route path="cameras/:cameraId"       element={<CameraDetailPage />} />
-        <Route path="nvrs"                    element={<NVRsPage />} />
-        <Route path="nvrs/:nvrId"             element={<NVRDetailPage />} />
-        <Route path="switches"                element={<SwitchesPage />} />
-        <Route path="switches/:switchId"      element={<SwitchDetailPage />} />
-        <Route path="users"                   element={<UsersPage />} />
+        <Route index                        element={<OverviewPage />} />
+        <Route path="topology"              element={<TopologyPage />} />
+        <Route path="sites/:siteId"         element={<SitesPage />} />
+        <Route path="buildings/:buildingId" element={<BuildingDetailPage />} />
+        <Route path="floors/:floorId"       element={<FloorPlanPage />} />
+
+        <Route path="sites" element={
+          <RouteGuard allowed={ADMIN}><SitesCrudPage /></RouteGuard>
+        } />
+        <Route path="racks" element={
+          <RouteGuard allowed={ADMIN_USER}><RacksListPage /></RouteGuard>
+        } />
+        <Route path="racks/:rackId" element={
+          <RouteGuard allowed={ADMIN_USER}><RackDetailPage /></RouteGuard>
+        } />
+        <Route path="cameras" element={
+          <RouteGuard allowed={ADMIN}><CamerasPage /></RouteGuard>
+        } />
+        <Route path="cameras/:cameraId" element={
+          <RouteGuard allowed={ADMIN}><CameraDetailPage /></RouteGuard>
+        } />
+        <Route path="nvrs" element={
+          <RouteGuard allowed={ADMIN}><NVRsPage /></RouteGuard>
+        } />
+        <Route path="nvrs/:nvrId" element={
+          <RouteGuard allowed={ADMIN}><NVRDetailPage /></RouteGuard>
+        } />
+        <Route path="switches" element={
+          <RouteGuard allowed={ADMIN}><SwitchesPage /></RouteGuard>
+        } />
+        <Route path="switches/:switchId" element={
+          <RouteGuard allowed={ADMIN}><SwitchDetailPage /></RouteGuard>
+        } />
+        <Route path="users" element={
+          <RouteGuard allowed={ADMIN}><UsersPage /></RouteGuard>
+        } />
       </Route>
     </Routes>
   )

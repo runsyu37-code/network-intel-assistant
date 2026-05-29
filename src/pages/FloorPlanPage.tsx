@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { App } from 'antd'
 import { getCameras, patchCameraPosition } from '../api/cameras'
 import type { CameraApi } from '../api/types'
+import { useAuthStore } from '../stores/authStore'
 
 const PLAN_EXTS = ['jpg', 'jpeg', 'png', 'svg', 'webp']
 
@@ -201,6 +202,11 @@ export default function FloorPlanPage() {
   }, [apiCameras])
 
   const { message } = App.useApp()
+  const isAdmin = useAuthStore(s => s.user?.role === 'admin')
+
+  useEffect(() => {
+    if (!isAdmin) setMode('view')
+  }, [isAdmin])
 
   const canvasRef      = useRef<HTMLDivElement>(null)
   const dragging       = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number; origLeftPct: string; origTopPct: string } | null>(null)
@@ -339,30 +345,32 @@ export default function FloorPlanPage() {
             <span className="legend-swatch"><i style={{ background: 'var(--warn)'  }} />Warning</span>
             <span className="legend-swatch"><i style={{ background: 'var(--alert)' }} />Offline</span>
           </div>
-          {/* Mode toggle pill */}
-          <div style={{
-            display: 'flex', background: 'var(--surface-2)', borderRadius: 999,
-            padding: 3, border: '1px solid var(--border)',
-          }}>
-            {(['view', 'edit'] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                style={{
-                  padding: '5px 14px', fontSize: 12, fontWeight: 600,
-                  borderRadius: 999, border: 'none', cursor: 'pointer',
-                  background: mode === m ? 'var(--surface)' : 'transparent',
-                  color: mode === m ? 'var(--ink)' : 'var(--ink-3)',
-                  boxShadow: mode === m ? 'var(--shadow-1)' : 'none',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  transition: 'background .15s, color .15s',
-                }}
-              >
-                {m === 'view' ? <Eye size={12} /> : <Pencil size={12} />}
-                {m === 'view' ? 'View' : 'Edit'}
-              </button>
-            ))}
-          </div>
+          {/* Mode toggle pill — admin only */}
+          {isAdmin && (
+            <div style={{
+              display: 'flex', background: 'var(--surface-2)', borderRadius: 999,
+              padding: 3, border: '1px solid var(--border)',
+            }}>
+              {(['view', 'edit'] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  style={{
+                    padding: '5px 14px', fontSize: 12, fontWeight: 600,
+                    borderRadius: 999, border: 'none', cursor: 'pointer',
+                    background: mode === m ? 'var(--surface)' : 'transparent',
+                    color: mode === m ? 'var(--ink)' : 'var(--ink-3)',
+                    boxShadow: mode === m ? 'var(--shadow-1)' : 'none',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    transition: 'background .15s, color .15s',
+                  }}
+                >
+                  {m === 'view' ? <Eye size={12} /> : <Pencil size={12} />}
+                  {m === 'view' ? 'View' : 'Edit'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

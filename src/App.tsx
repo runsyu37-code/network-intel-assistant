@@ -4,6 +4,7 @@ import { App as AntApp, ConfigProvider, theme as antdTheme } from 'antd'
 import { useThemeStore } from './stores/themeStore'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
+import NotAuthorizedPage from './pages/NotAuthorizedPage'
 
 const antdTokens = {
   light: {
@@ -55,6 +56,7 @@ export default function App() {
       <AntApp>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/403" element={<NotAuthorizedPage />} />
           <Route path="/dashboard/*" element={<DashboardPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
