@@ -225,6 +225,18 @@ export interface RackAlertApi {
   alerted_at: string
 }
 
+export interface BuildingMapDto {
+  Building_ID: string
+  Site_ID: string
+  name: string
+  lat: number | null
+  lng: number | null
+  floor_count: number
+  alert_count: number
+  camera_count: number
+  nvr_count: number
+}
+
 export interface RackDetailApi {
   Rack_ID: string
   name: string

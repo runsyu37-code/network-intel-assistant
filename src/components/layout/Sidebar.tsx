@@ -2,7 +2,7 @@ import { type ElementType, useMemo } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Network, Building2, Camera, HardDrive,
-  PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin,
+  PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin, Map,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useThemeStore } from '../../stores/themeStore'
@@ -50,6 +50,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [
       { to: '/dashboard',          Icon: LayoutDashboard, label: 'Dashboard', exact: true },
       { to: '/dashboard/topology', Icon: Network,         label: 'Topology' },
+      { to: '/dashboard/map',      Icon: Map,             label: 'Building Map' },
       {
         to: '/dashboard/sites',
         Icon: Building2,

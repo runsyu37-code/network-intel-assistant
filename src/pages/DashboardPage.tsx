@@ -16,6 +16,7 @@ import NVRDetailPage from './NVRDetailPage'
 import SwitchesPage from './SwitchesPage'
 import SwitchDetailPage from './SwitchDetailPage'
 import UsersPage from './UsersPage'
+import BuildingMapPage from './BuildingMapPage'
 
 const ADMIN       = ['admin'] as const
 const ADMIN_USER  = ['admin', 'user'] as const
@@ -26,6 +27,7 @@ export default function DashboardPage() {
       <Route element={<AppLayout />}>
         <Route index                        element={<OverviewPage />} />
         <Route path="topology"              element={<TopologyPage />} />
+        <Route path="map"                   element={<BuildingMapPage />} />
         <Route path="sites/:siteId"         element={<SitesPage />} />
         <Route path="buildings/:buildingId" element={<BuildingDetailPage />} />
         <Route path="floors/:floorId"       element={<FloorPlanPage />} />
