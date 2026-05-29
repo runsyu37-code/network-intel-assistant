@@ -52,7 +52,7 @@ export default function NVRsPage() {
   const navigate    = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data, isPending, isError } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
+  const { data, isPending, isError, error } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
   const [nvrs, setNvrs]    = useState<NVR[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
@@ -168,7 +168,9 @@ export default function NVRsPage() {
               <tr><td colSpan={8} className="dl-empty">กำลังโหลด...</td></tr>
             )}
             {isError && (
-              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</td></tr>
+              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>
+                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
+              </td></tr>
             )}
             {!isPending && !isError && filtered.length === 0 && (
               <tr><td colSpan={8} className="dl-empty">ไม่พบ NVR</td></tr>

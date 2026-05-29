@@ -122,6 +122,9 @@ const DEFAULT_FLOOR: FloorData = {
   ],
 }
 
+// Floor plan images are static files in /public/floorplans/ — unauthenticated by design.
+// Accepted for intranet-only deployment. If internet-facing, fetch as blob via:
+// client.get(`/floors/${floorId}/floor-plan/image`, { responseType: 'blob' }) → URL.createObjectURL()
 function FloorPlanBackground({ floorId }: { floorId: string }) {
   const [imgOk, setImgOk] = useState(false)
   const [extIdx, setExtIdx] = useState(0)

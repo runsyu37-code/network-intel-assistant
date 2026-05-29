@@ -58,7 +58,7 @@ function siteStatus(racks: Rack[]): Status {
 
 export default function RacksListPage() {
   const navigate = useNavigate()
-  const { data, isPending, isError } = useQuery({ queryKey: ['racks'], queryFn: () => getRacks() })
+  const { data, isPending, isError, error } = useQuery({ queryKey: ['racks'], queryFn: () => getRacks() })
   const [racks, setRacks] = useState<Rack[]>([])
   useEffect(() => { if (data !== undefined) setRacks(data.map(mapRack)) }, [data])
   const groups = groupBySite(racks)
@@ -83,7 +83,9 @@ export default function RacksListPage() {
             <div className="dl-empty" style={{ padding: 40 }}>กำลังโหลด...</div>
           )}
           {isError && (
-            <div className="dl-empty" style={{ padding: 40, color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</div>
+            <div className="dl-empty" style={{ padding: 40, color: 'var(--alert)' }}>
+              {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
+            </div>
           )}
           {!isPending && !isError && racks.length === 0 && (
             <div className="dl-empty" style={{ padding: 40 }}>ไม่พบ Rack</div>

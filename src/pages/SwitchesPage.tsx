@@ -52,7 +52,7 @@ export default function SwitchesPage() {
   const navigate    = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data, isPending, isError } = useQuery({ queryKey: ['switches'], queryFn: () => getSwitches() })
+  const { data, isPending, isError, error } = useQuery({ queryKey: ['switches'], queryFn: () => getSwitches() })
   const [switches, setSwitches] = useState<Switch[]>([])
   useEffect(() => { if (data !== undefined) setSwitches(data.map(mapSwitch)) }, [data])
   const filterSites = useMemo(() => [...new Set(switches.map(s => s.site))].sort(), [switches])
@@ -168,7 +168,9 @@ export default function SwitchesPage() {
               <tr><td colSpan={8} className="dl-empty">กำลังโหลด...</td></tr>
             )}
             {isError && (
-              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</td></tr>
+              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>
+                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
+              </td></tr>
             )}
             {!isPending && !isError && filtered.length === 0 && (
               <tr><td colSpan={8} className="dl-empty">ไม่พบ Switch</td></tr>

@@ -50,7 +50,7 @@ export default function CamerasPage() {
   const navigate     = useNavigate()
   const { message }  = App.useApp()
   const queryClient  = useQueryClient()
-  const { data, isPending, isError } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
+  const { data, isPending, isError, error } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
   const [cameras, setCameras] = useState<Camera[]>([])
   useEffect(() => { if (data !== undefined) setCameras(data.map(mapCamera)) }, [data])
   const filterSites = useMemo(() => [...new Set(cameras.map(c => c.site))].sort(), [cameras])
@@ -176,7 +176,9 @@ export default function CamerasPage() {
               <tr><td colSpan={7} className="dl-empty">กำลังโหลด...</td></tr>
             )}
             {isError && (
-              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</td></tr>
+              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>
+                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
+              </td></tr>
             )}
             {!isPending && !isError && filtered.length === 0 && (
               <tr><td colSpan={7} className="dl-empty">ไม่พบกล้อง</td></tr>

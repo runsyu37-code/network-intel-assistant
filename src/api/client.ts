@@ -20,6 +20,9 @@ client.interceptors.response.use(
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
+    if (error.response?.status === 403) {
+      error.isForbidden = true
+    }
     return Promise.reject(error)
   },
 )
