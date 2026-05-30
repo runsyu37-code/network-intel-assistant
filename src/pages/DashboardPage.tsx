@@ -20,6 +20,7 @@ import BuildingMapPage from './BuildingMapPage'
 
 const ADMIN      = ['admin'] as const
 const ADMIN_USER = ['admin', 'user'] as const
+const STAFF      = ['admin', 'user', 'viewer'] as const
 
 export default function DashboardPage() {
   return (
@@ -31,7 +32,7 @@ export default function DashboardPage() {
         <Route path="sites/:siteId"         element={<SitesPage />} />
         <Route path="buildings/:buildingId" element={<BuildingDetailPage />} />
         <Route path="floors/:floorId" element={
-          <RouteGuard allowed={ADMIN_USER}><FloorPlanPage /></RouteGuard>
+          <RouteGuard allowed={STAFF}><FloorPlanPage /></RouteGuard>
         } />
 
         <Route path="sites" element={

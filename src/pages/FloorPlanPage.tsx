@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Video, Eye, Pencil, Plus, X } from 'lucide-react'
+import { Video, Eye, EyeOff, Pencil, Plus, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { App, Tooltip } from 'antd'
 import { getCameras, patchCameraPosition } from '../api/cameras'
@@ -127,11 +127,22 @@ export default function FloorPlanPage() {
   }, [apiCameras])
 
   const { message } = App.useApp()
-  const isAdmin = useAuthStore(s => s.user?.role === 'admin')
+  const role = useAuthStore(s => s.user?.role)
+  const isAdmin = role === 'admin'
+  const canToggleCameras = role === 'admin' || role === 'user'
+  const [showCameras, setShowCameras] = useState(role !== 'viewer')
 
   useEffect(() => {
     if (!isAdmin) setMode('view')
   }, [isAdmin])
+
+  useEffect(() => {
+    if (!canToggleCameras) setShowCameras(false)
+  }, [canToggleCameras])
+
+  useEffect(() => {
+    if (!showCameras) setSelectedCam(null)
+  }, [showCameras])
 
   const canvasRef      = useRef<HTMLDivElement>(null)
   const dragging       = useRef<{ id: string; startX: number; startY: number; origLeft: number; origTop: number; origLeftPct: string; origTopPct: string } | null>(null)
@@ -269,6 +280,18 @@ export default function FloorPlanPage() {
             <span className="legend-swatch"><i style={{ background: 'var(--warn)'  }} />Warning</span>
             <span className="legend-swatch"><i style={{ background: 'var(--alert)' }} />Offline</span>
           </div>
+          {/* Camera visibility toggle — admin + user only */}
+          {canToggleCameras && (
+            <button
+              className="icon-btn"
+              title={showCameras ? 'Hide cameras' : 'Show cameras'}
+              onClick={() => setShowCameras(s => !s)}
+              style={{ color: showCameras ? 'var(--accent)' : 'var(--ink-3)' }}
+            >
+              {showCameras ? <Eye size={15} /> : <EyeOff size={15} />}
+            </button>
+          )}
+
           {/* Mode toggle pill — admin only */}
           {isAdmin && (
             <div style={{
@@ -319,7 +342,7 @@ export default function FloorPlanPage() {
 
             {/* Camera + rack overlays */}
             <div style={{ position: 'absolute', inset: 0, transform: `scale(${zoom})`, transformOrigin: '0 0', cursor: mode === 'edit' ? 'crosshair' : 'default' }}>
-              {cameras.map(cam => (
+              {showCameras && cameras.map(cam => (
                 <Tooltip
                   key={cam.id}
                   title={
@@ -502,9 +525,9 @@ export default function FloorPlanPage() {
               alignItems: 'center', justifyContent: 'center',
               color: 'var(--ink-3)', gap: 10, padding: 24,
             }}>
-              <Video size={36} style={{ opacity: .3 }} />
+              {showCameras ? <Eye size={36} style={{ opacity: .3 }} /> : <EyeOff size={36} style={{ opacity: .3 }} />}
               <span style={{ fontSize: 12, textAlign: 'center' }}>
-                Click a camera on the floor plan to see details
+                {showCameras ? 'Click a camera on the floor plan to see details' : 'Camera layer hidden'}
               </span>
             </div>
           )}
