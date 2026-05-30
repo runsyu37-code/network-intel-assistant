@@ -45,3 +45,13 @@ export async function getRackById(id: string): Promise<RackApi | null> {
   const res = await client.get<RackApi[]>('/racks', { params: { Rack_ID: id } })
   return res.data[0] ?? null
 }
+
+export async function getBuildingById(id: string): Promise<BuildingApi> {
+  const res = await client.get<BuildingApi>(`/buildings/${id}`)
+  return res.data
+}
+
+export async function getFloorById(id: string): Promise<FloorApi> {
+  const res = await client.get<FloorApi>(`/floors/${id}`)
+  return res.data
+}

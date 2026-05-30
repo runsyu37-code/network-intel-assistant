@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Video, Eye, Pencil, Plus, Server, X } from 'lucide-react'
+import { Video, Eye, Pencil, Plus, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { App, Tooltip } from 'antd'
 import { getCameras, patchCameraPosition } from '../api/cameras'
+import { getFloorById } from '../api/hierarchy'
 import type { CameraApi } from '../api/types'
 import { useAuthStore } from '../stores/authStore'
 
@@ -16,83 +17,7 @@ interface Camera {
   ip?: string; model?: string; lastSeen?: string; brand?: string; deviceName?: string
 }
 
-interface RackMarker {
-  id: string; label: string; left: string; top: string; status: 'ok' | 'warn' | 'alert'
-}
 
-interface FloorData {
-  title: string; sub: string; cameras: Camera[]; racks?: RackMarker[]
-}
-
-const FLOORS: Record<string, FloorData> = {
-  'a-f6': {
-    title: 'Floor 6 — Executive Office',
-    sub: 'Executive workspace · 4 cameras · all online',
-    cameras: [
-      { id: 'CAM-01', status: 'ok', left: '11%', top: '13%', rot: 135, room: 'Executive Suite', ip: '192.168.1.161', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '50%', top: '12%', rot: 180, room: 'Board Room',      ip: '192.168.1.162', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '89%', top: '13%', rot: 225, room: 'Director Room',   ip: '192.168.1.163', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:31' },
-      { id: 'CAM-04', status: 'ok', left: '24%', top: '88%', rot: 0,   room: 'Lounge',          ip: '192.168.1.164', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
-    ],
-  },
-  'a-f5': {
-    title: 'Floor 5 — Meeting Rooms',
-    sub: 'Conference floors · 5 cameras · 1 warning',
-    cameras: [
-      { id: 'CAM-01', status: 'ok',   left: '10%', top: '22%', rot: 90,  room: 'Conf A',     ip: '192.168.1.151', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok',   left: '50%', top: '12%', rot: 180, room: 'Conf B',     ip: '192.168.1.152', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'warn', left: '90%', top: '22%', rot: 270, room: 'Conf C',     ip: '192.168.1.153', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 11:00' },
-      { id: 'CAM-04', status: 'ok',   left: '10%', top: '73%', rot: 90,  room: 'Break Area', ip: '192.168.1.154', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
-      { id: 'CAM-05', status: 'ok',   left: '72%', top: '88%', rot: 0,   room: 'Corridor',   ip: '192.168.1.155', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:28' },
-    ],
-  },
-  'a-f4': {
-    title: 'Floor 4 — Office',
-    sub: 'Open-plan workspace · 5 cameras · all online',
-    cameras: [
-      { id: 'CAM-01', status: 'ok', left: '10%', top: '13%', rot: 135, room: 'Reception',    ip: '192.168.1.141', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '50%', top: '12%', rot: 180, room: 'Open Office',  ip: '192.168.1.142', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '90%', top: '28%', rot: 270, room: 'Manager',      ip: '192.168.1.143', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-04', status: 'ok', left: '10%', top: '71%', rot: 90,  room: 'Meeting Room', ip: '192.168.1.144', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
-      { id: 'CAM-05', status: 'ok', left: '90%', top: '71%', rot: 270, room: 'Break Room',   ip: '192.168.1.145', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
-    ],
-  },
-  'a-f3': {
-    title: 'Floor 3 — Office',
-    sub: 'Open-plan workspace · 5 cameras · 1 offline',
-    cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '22%', top: '13%', rot: 180, room: 'Reception',    ip: '192.168.1.131', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok',    left: '55%', top: '12%', rot: 180, room: 'Open Office',  ip: '192.168.1.132', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok',    left: '89%', top: '13%', rot: 225, room: 'Manager',      ip: '192.168.1.133', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-04', status: 'ok',    left: '20%', top: '59%', rot: 180, room: 'Meeting Room', ip: '192.168.1.134', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:28' },
-      { id: 'CAM-05', status: 'alert', left: '70%', top: '59%', rot: 180, room: 'Break Room',   ip: '192.168.1.135', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 10:14' },
-    ],
-  },
-  'a-f2': {
-    title: 'Floor 2 — Server Room',
-    sub: 'IT infrastructure · 9 devices · 2 cams offline',
-    cameras: [
-      { id: 'CAM-01', status: 'ok',    left: '11%', top: '13%', rot: 135, room: 'Server Hall',    ip: '192.168.1.121', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'alert', left: '55%', top: '12%', rot: 180, room: 'Rack A',         ip: '192.168.1.122', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 09:00' },
-      { id: 'CAM-03', status: 'ok',    left: '90%', top: '22%', rot: 270, room: 'UPS Room',       ip: '192.168.1.123', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-04', status: 'alert', left: '10%', top: '72%', rot: 90,  room: 'Access Control', ip: '192.168.1.124', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 08:45' },
-      { id: 'CAM-05', status: 'ok',    left: '88%', top: '88%', rot: 315, room: 'Exit',           ip: '192.168.1.125', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
-    ],
-    racks: [
-      { id: 'rack-a1', label: 'Rack A1', left: '32%', top: '73%', status: 'alert' },
-      { id: 'rack-a2', label: 'Rack A2', left: '68%', top: '73%', status: 'ok'    },
-    ],
-  },
-  'a-f1': {
-    title: 'Floor 1 — Lobby · Reception',
-    sub: 'Ground floor · 3 cameras · all online',
-    cameras: [
-      { id: 'CAM-01', status: 'ok', left: '10%', top: '32%', rot: 90,  room: 'Main Entrance',  ip: '192.168.1.111', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:30' },
-      { id: 'CAM-02', status: 'ok', left: '48%', top: '12%', rot: 180, room: 'Reception Desk', ip: '192.168.1.112', model: 'HIK-Bullet-5MP', lastSeen: '2026-05-27 14:29' },
-      { id: 'CAM-03', status: 'ok', left: '90%', top: '65%', rot: 270, room: 'Elevator Hall',  ip: '192.168.1.113', model: 'HIK-Dome-4MP',   lastSeen: '2026-05-27 14:31' },
-    ],
-  },
-}
 
 function mapApiCamera(a: CameraApi, idx: number): Camera {
   const s = (a.status ?? '').toLowerCase()
@@ -114,15 +39,6 @@ function mapApiCamera(a: CameraApi, idx: number): Camera {
   }
 }
 
-const DEFAULT_FLOOR: FloorData = {
-  title: 'Floor Plan',
-  sub: '— view mode',
-  cameras: [
-    { id: 'CAM-01', status: 'ok', left: '11%', top: '13%', rot: 135, room: 'Area A', ip: '192.168.1.101', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:30' },
-    { id: 'CAM-02', status: 'ok', left: '89%', top: '13%', rot: 225, room: 'Area B', ip: '192.168.1.102', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:29' },
-    { id: 'CAM-03', status: 'ok', left: '89%', top: '88%', rot: 315, room: 'Area C', ip: '192.168.1.103', model: 'HIK-Dome-4MP', lastSeen: '2026-05-27 14:28' },
-  ],
-}
 
 // Floor plan images are static files in /public/floorplans/ — unauthenticated by design.
 // Accepted for intranet-only deployment. If internet-facing, fetch as blob via:
@@ -175,7 +91,6 @@ function FloorPlanBackground({ floorId }: { floorId: string }) {
   )
 }
 
-const RACK_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const CAM_STATUS_COLOR: Record<CamStatus, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const CAM_STATUS_LABEL: Record<CamStatus, string>  = { ok: 'Online',   warn: 'Warning',     alert: 'Offline'   }
 
@@ -188,11 +103,15 @@ export default function FloorPlanPage() {
   const [zoom, setZoom]           = useState(1.0)
   const [selectedCam, setSelectedCam] = useState<Camera | null>(null)
 
-  const floorData = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
-  const [cameras, setCameras] = useState<Camera[]>(floorData.cameras)
-  const [positions, setPositions] = useState<Record<string, { left: string; top: string }>>(() =>
-    Object.fromEntries(floorData.cameras.map(c => [c.id, { left: c.left, top: c.top }]))
-  )
+  const { data: apiFloor } = useQuery({
+    queryKey: ['floor', floorId],
+    queryFn: () => getFloorById(floorId!),
+    enabled: !!floorId,
+    staleTime: 60_000,
+  })
+
+  const [cameras, setCameras] = useState<Camera[]>([])
+  const [positions, setPositions] = useState<Record<string, { left: string; top: string }>>({})
 
   const { data: apiCameras } = useQuery({
     queryKey: ['cameras', 'floor', floorId],
@@ -223,9 +142,8 @@ export default function FloorPlanPage() {
   useEffect(() => { positionsRef.current = positions }, [positions])
 
   useEffect(() => {
-    const f = FLOORS[floorId ?? ''] ?? DEFAULT_FLOOR
-    setCameras(f.cameras)
-    setPositions(Object.fromEntries(f.cameras.map(c => [c.id, { left: c.left, top: c.top }])))
+    setCameras([])
+    setPositions({})
     setZoom(1.0)
     setMode('view')
     setSelectedCam(null)
@@ -342,8 +260,8 @@ export default function FloorPlanPage() {
       {/* Page header */}
       <div className="page-head">
         <div>
-          <h1>{floorData.title}</h1>
-          <p className="page-sub">{floorData.sub}</p>
+          <h1>{apiFloor?.name ?? `Floor ${floorId}`}</h1>
+          <p className="page-sub">{apiFloor?.function ?? '—'}</p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div className="topo-legend">
@@ -438,37 +356,6 @@ export default function FloorPlanPage() {
                 </Tooltip>
               ))}
 
-              {floorData.racks?.map(r => (
-                <div
-                  key={r.id}
-                  data-rack={r.id}
-                  onClick={() => navigate(`/dashboard/racks/${r.id}`, { state: { from: location.pathname } })}
-                  title={`Open ${r.label}`}
-                  style={{
-                    position: 'absolute', left: r.left, top: r.top,
-                    transform: 'translate(-50%,-50%)', zIndex: 3, cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                    transition: 'transform .12s ease',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.transform = 'translate(-50%,-50%) scale(1.08)')}
-                  onMouseLeave={e => (e.currentTarget.style.transform = 'translate(-50%,-50%)')}
-                >
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 7,
-                    background: 'var(--surface)', border: `2px solid ${RACK_COLOR[r.status]}`,
-                    display: 'grid', placeItems: 'center', color: RACK_COLOR[r.status],
-                    boxShadow: '0 2px 8px rgba(0,0,0,.18)',
-                  }}>
-                    <Server size={16} />
-                  </div>
-                  <span style={{
-                    background: 'var(--surface)', border: '1px solid var(--border)',
-                    borderRadius: 5, padding: '2px 7px',
-                    fontFamily: 'monospace', fontSize: 10, color: 'var(--ink-2)', fontWeight: 600,
-                    whiteSpace: 'nowrap', boxShadow: '0 1px 2px rgba(0,0,0,.06)',
-                  }}>{r.label}</span>
-                </div>
-              ))}
             </div>
 
             {/* Edit banner */}

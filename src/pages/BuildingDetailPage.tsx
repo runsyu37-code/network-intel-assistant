@@ -4,7 +4,7 @@ import { Form, Input, Modal, Select, Popconfirm } from 'antd'
 import { LayoutList, Layers, Plus, Pencil, Trash2 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { getHierarchyTree } from '../api/hierarchy'
+import { getBuildingById, getFloors } from '../api/hierarchy'
 
 type Status = 'ok' | 'warn' | 'alert'
 type ViewMode = 'list' | 'cross'
@@ -21,36 +21,6 @@ const STATUS_COLOR: Record<Status, string> = {
   ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)',
 }
 
-const BUILDING_META: Record<string, { title: string; sub: string }> = {
-  a: { title: 'Building A — Main Tower',    sub: '6 floors · 2 cams offline' },
-  b: { title: 'Building B — Annex',         sub: '4 floors' },
-  c: { title: 'Building C — Warehouse',     sub: '1 floor' },
-  d: { title: 'Building D — Security Gate', sub: '2 floors' },
-}
-
-const FLOORS_BY_BUILDING: Record<string, Floor[]> = {
-  a: [
-    { id: 'a-f6', num: 'F6', status: 'ok',    label: 'Executive Office',             count: '4 dev' },
-    { id: 'a-f5', num: 'F5', status: 'warn',  label: 'Meeting Rooms',                count: '5 dev' },
-    { id: 'a-f4', num: 'F4', status: 'ok',    label: 'Office',                       count: '8 dev' },
-    { id: 'a-f3', num: 'F3', status: 'ok',    label: 'Office',                       count: '7 dev' },
-    { id: 'a-f2', num: 'F2', status: 'alert', label: 'Server Room · 2 cams offline', count: '9 dev' },
-    { id: 'a-f1', num: 'F1', status: 'ok',    label: 'Lobby · Reception',            count: '3 dev' },
-  ],
-  b: [
-    { id: 'b-f4', num: 'F4', status: 'ok', label: 'Management Floor', count: '5 dev' },
-    { id: 'b-f3', num: 'F3', status: 'ok', label: 'Office',           count: '4 dev' },
-    { id: 'b-f2', num: 'F2', status: 'ok', label: 'Office',           count: '6 dev' },
-    { id: 'b-f1', num: 'F1', status: 'ok', label: 'Lobby',            count: '3 dev' },
-  ],
-  c: [
-    { id: 'c-f1', num: 'F1', status: 'ok', label: 'Warehouse Floor', count: '6 dev' },
-  ],
-  d: [
-    { id: 'd-f2', num: 'F2', status: 'warn', label: 'Security Control Room', count: '3 dev' },
-    { id: 'd-f1', num: 'F1', status: 'ok',   label: 'Gate · Entrance',       count: '2 dev' },
-  ],
-}
 
 /* ── Building cross-section SVG ─────────────────────────────── */
 const FX = 60; const FW = 420; const FH = 64
@@ -115,31 +85,38 @@ export default function BuildingDetailPage() {
   const { buildingId } = useParams<{ buildingId: string }>()
   const canEdit        = useAuthStore(s => s.canEdit())
   const [view, setView]         = useState<ViewMode>('list')
-  const [floors, setFloors]     = useState<Floor[]>(FLOORS_BY_BUILDING[buildingId ?? ''] ?? [])
+  const [floors, setFloors]     = useState<Floor[]>([])
   const [modalOpen, setModalOpen]   = useState(false)
   const [editFloor, setEditFloor]   = useState<Floor | null>(null)
   const [form] = Form.useForm()
 
-  const { data: hierarchy } = useQuery({ queryKey: ['hierarchy'], queryFn: getHierarchyTree, staleTime: 60_000 })
-
-  const apiBuilding = hierarchy?.flatMap(s => s.buildings).find(b =>
-    b.buildingId === buildingId || b.buildingCode === buildingId
-  )
+  const { data: apiBuilding } = useQuery({
+    queryKey: ['buildings', buildingId],
+    queryFn: () => getBuildingById(buildingId!),
+    enabled: !!buildingId,
+    staleTime: 60_000,
+  })
+  const { data: floorsData } = useQuery({
+    queryKey: ['floors', 'building', buildingId],
+    queryFn: () => getFloors({ Building_ID: buildingId! }),
+    enabled: !!buildingId,
+    staleTime: 60_000,
+  })
 
   useEffect(() => {
-    if (!apiBuilding?.floors.length) return
-    setFloors(apiBuilding.floors.map(f => ({
-      id: f.floorId,
-      num: `F${f.floorNumber}`,
-      status: (f.alertCount > 0 ? 'alert' : 'ok') as Status,
-      label: f.floorName ?? `Floor ${f.floorNumber}`,
-      count: `${f.cameraCount} dev`,
+    if (!floorsData?.length) return
+    setFloors(floorsData.map(f => ({
+      id: f.Floor_ID,
+      num: `F${f.floor_number ?? '?'}`,
+      status: 'ok' as Status,
+      label: f.name ?? f.function ?? `Floor ${f.floor_number}`,
+      count: '',
     })))
-  }, [apiBuilding])
+  }, [floorsData])
 
   const meta = apiBuilding
-    ? { title: apiBuilding.buildingName, sub: `${apiBuilding.floorCount} floors` }
-    : BUILDING_META[buildingId ?? ''] ?? { title: `Building ${buildingId?.toUpperCase()}`, sub: '' }
+    ? { title: apiBuilding.name, sub: `${apiBuilding.floor_count} floors` }
+    : { title: `Building ${buildingId?.toUpperCase()}`, sub: '' }
 
   const openAdd = () => {
     setEditFloor(null)

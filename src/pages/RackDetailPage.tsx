@@ -33,42 +33,6 @@ interface RackData {
   alerts: { status: 'alert' | 'warn'; dev: string; what: string; ago: string }[]
 }
 
-const TOTAL_U = 42
-
-const RACKS: Record<string, RackData> = {
-  'rack-a1': {
-    title: 'Rack A1 — Server Room',
-    sub: '42U · up to 3 slots per U · 12 devices installed',
-    usedU: 14, totalU: TOTAL_U,
-    powerKw: 1.24, powerBudgetKw: 2.5,
-    alerts: [
-      { status: 'alert', dev: 'SW-HQ-FLOOR3', what: '· offline',           ago: '8m ago'  },
-      { status: 'warn',  dev: 'SW-HQ-FLOOR2', what: '· chassis temp 62°C', ago: '22m ago' },
-    ],
-    devices: [
-      { uTop: 42, size: 2, name: 'CABLE MGR',      type: 'cable',  status: 'passive' },
-      { uTop: 39, size: 2, name: 'PDU-A · 12-out', type: 'pdu',    status: 'passive' },
-      { uTop: 37, size: 2, name: 'NVR-HQ-01',      type: 'nvr',    status: 'ok',    model: 'Hikvision DS-7732NI' },
-      { uTop: 34, size: 1, name: 'SW-HQ-CORE',     type: 'switch', status: 'ok',    model: 'Cisco SG350X 24P' },
-      { uTop: 33, size: 1, name: 'SW-HQ-FLOOR3',   type: 'switch', status: 'alert', model: 'Cisco CBS350 24P' },
-      { uTop: 32, size: 1, name: 'SW-HQ-FLOOR2',   type: 'switch', status: 'warn',  model: 'Cisco CBS350 24P' },
-      { uTop: 31, size: 2, name: 'NVR-HQ-02',      type: 'nvr',    status: 'ok',    model: 'Hikvision DS-7732NI' },
-      { uTop: 28, size: 1, name: 'PATCH-A · 48p',  type: 'patch',  status: 'passive' },
-      { uTop: 27, size: 1, subs: [
-        { name: 'AP-301', type: 'ap', status: 'ok' },
-        { name: 'AP-302', type: 'ap', status: 'ok' },
-        { name: 'AP-303', type: 'ap', status: 'ok' },
-      ]},
-      { uTop: 26, size: 1, subs: [
-        { name: 'SW-MINI-01', type: 'switch', status: 'ok'   },
-        { name: 'SW-MINI-02', type: 'switch', status: 'warn' },
-      ]},
-      { uTop: 5, size: 4, name: 'UPS · 3 kVA', type: 'ups', status: 'ok', model: 'APC SRT3000RMXLI' },
-    ],
-  },
-}
-
-const DEFAULT_RACK: RackData = RACKS['rack-a1']
 
 function timeAgo(ts: string): string {
   const diff = Date.now() - new Date(ts).getTime()
@@ -183,25 +147,28 @@ export default function RackDetailPage() {
   const location     = useLocation()
   const backTo       = (location.state as { from?: string } | null)?.from ?? '/dashboard/racks'
 
-  const { data: apiRack } = useQuery({
+  const { data: apiRack, isPending } = useQuery({
     queryKey: ['rack-detail', rackId],
     queryFn: () => getRackById(rackId!),
     enabled: !!rackId,
   })
 
-  const mockData = RACKS[rackId ?? ''] ?? DEFAULT_RACK
-  const rack: RackData = !apiRack ? mockData : {
+  const rack: RackData | undefined = apiRack ? {
     title: `${apiRack.name} — ${apiRack.room_name}`,
     sub: `${apiRack.total_units}U · ${apiRack.devices.length} devices installed`,
     usedU: apiRack.used_units,
     totalU: apiRack.total_units,
     powerKw: apiRack.power_kw,
-    powerBudgetKw: apiRack.power_budget_kw ?? mockData.powerBudgetKw,
-    devices: apiRack.devices.length > 0
-      ? apiDevicesToDevices(apiRack.devices, apiRack.total_units)
-      : mockData.devices,
+    powerBudgetKw: apiRack.power_budget_kw ?? 3.0,
+    devices: apiDevicesToDevices(apiRack.devices, apiRack.total_units),
     alerts: mapApiAlerts(apiRack.alerts),
-  }
+  } : undefined
+
+  if (isPending || !rack) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ink-3)' }}>
+      Loading rack data…
+    </div>
+  )
 
   const totalU       = rack.totalU
   const capacityPct  = (rack.usedU / totalU * 100).toFixed(0)

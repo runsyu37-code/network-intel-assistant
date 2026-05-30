@@ -5,15 +5,16 @@
 
 ---
 
-## สถานะ ณ 2026-05-28 (ล่าสุด)
+## สถานะ ณ 2026-05-30 (ล่าสุด)
+
+**ทุก page wire ถึง real API ครบ 100% แล้ว — ไม่มีงาน wiring ค้าง**
 
 | งาน | สถานะ |
 |---|---|
-| F1–F9 ทุกหน้า | ✅ เสร็จ + wired real API |
-| README.md | ✅ เขียนแล้ว |
-| Builder/FRONTEND_BUILDER_BRIEF.md | ✅ เขียนแล้ว (แก้ discrepancy กับ code แล้ว) |
-| Builder/BACKEND_BUILDER_BRIEF.md | ✅ เขียนแล้ว (role matrix แก้แล้ว) |
-| Review brief | ✅ อยู่ที่ `C:\ai-playground\API\docs\sessions\REVIEW_BRIEF.md` |
+| ทุก page (13 routes) | ✅ wire real API ครบ |
+| F9 round | ✅ ปิด R10 แล้ว — ไม่มี backend งานค้าง |
+| Review fixes (FINDINGS.md) | ✅ ครบทุก critical blocker |
+| DEV.md / README | ✅ อัปเดตแล้ว |
 
 ---
 
@@ -33,13 +34,34 @@ Login: `admin_test / Test@1234`
 
 ---
 
+## API Wiring Summary
+
+| Page | Endpoint(s) |
+|---|---|
+| Dashboard Overview | `/dashboard/summary`, `/status/devices`, `/alert-logs` |
+| Topology | `/hierarchy/tree` |
+| Map | `/buildings` (lat/lng) |
+| Sites (CRUD) | `/sites` |
+| Sites/:id | `/hierarchy/tree` |
+| Buildings/:id | `/buildings/{id}`, `/floors?Building_ID=` |
+| Floors/:id | `/floors/{id}`, `/cameras?Floor_ID=` |
+| Racks | `/racks`, `/sites` |
+| Racks/:id | `/racks/{id}` (devices + alerts รวม) |
+| Cameras + detail | `/cameras`, `/cameras/{id}`, ping logs |
+| NVRs + detail | `/nvrs`, `/nvrs/{id}` |
+| Switches + detail | `/switches`, `/switches/{id}` |
+| Users (CRUD) | `/users` |
+
+---
+
 ## Open Items (ยังค้างอยู่)
 
 | Issue | รายละเอียด |
 |---|---|
-| Floor plan position ไม่ restore หลัง reload | GET /api/cameras ยัง return position_x/y ไม่ได้ — รอ backend |
+| Floor plan position ไม่ restore หลัง reload | `GET /api/cameras` ยัง return `position_x/y` ไม่ได้ — รอ backend |
 | Topology: REVIEW_BRIEF บอก "collapsible tree" | UI จริงคือ React Flow diagram — ต้อง align ก่อน review |
-| Role matrix: `user` เห็น cameras/NVRs ได้มั้ย | REVIEW_BRIEF บอก NO แต่ code canEdit() = admin OR user — ต้องตกลง |
+| Role matrix: `user` เห็น cameras/NVRs ได้มั้ย | REVIEW_BRIEF บอก NO แต่ `canEdit()` = admin OR user — ต้องตกลง |
+| Building Map markers | ต้องทดสอบกับ real lat/lng จาก backend (migration ส่งแล้ว) |
 
 ---
 
@@ -58,10 +80,10 @@ Login: `admin_test / Test@1234`
 ```
 src/pages/                        ← 1 route = 1 file
 src/api/types.ts                  ← TypeScript interfaces ทุก type
+src/api/hierarchy.ts              ← getBuildingById, getFloorById, getFloors, ...
 src/api/client.ts                 ← axios instance + JWT interceptor
 src/stores/authStore.ts           ← { id, username, displayName, role }
 src/styles/tokens.css             ← CSS custom properties (light/dark)
-Builder/FRONTEND_BUILDER_BRIEF.md ← prep doc สำหรับ review (frontend)
-Builder/BACKEND_BUILDER_BRIEF.md  ← prep doc สำหรับ review (backend)
+F9/                               ← log การสื่อสาร frontend↔backend (R1–R10)
 vite.config.ts                    ← proxy /api/* → localhost:50680
 ```
