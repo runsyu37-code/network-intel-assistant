@@ -18,8 +18,7 @@ import SwitchDetailPage from './SwitchDetailPage'
 import UsersPage from './UsersPage'
 import BuildingMapPage from './BuildingMapPage'
 
-const ADMIN       = ['admin'] as const
-const ADMIN_USER  = ['admin', 'user'] as const
+const ADMIN = ['admin'] as const
 
 export default function DashboardPage() {
   return (
@@ -36,10 +35,10 @@ export default function DashboardPage() {
           <RouteGuard allowed={ADMIN}><SitesCrudPage /></RouteGuard>
         } />
         <Route path="racks" element={
-          <RouteGuard allowed={ADMIN_USER}><RacksListPage /></RouteGuard>
+          <RouteGuard allowed={ADMIN}><RacksListPage /></RouteGuard>
         } />
         <Route path="racks/:rackId" element={
-          <RouteGuard allowed={ADMIN_USER}><RackDetailPage /></RouteGuard>
+          <RouteGuard allowed={ADMIN}><RackDetailPage /></RouteGuard>
         } />
         <Route path="cameras" element={
           <RouteGuard allowed={ADMIN}><CamerasPage /></RouteGuard>

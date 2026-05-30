@@ -83,7 +83,7 @@ function BuildingCrossSection({ floors, onFloorClick }: { floors: Floor[]; onFlo
 export default function BuildingDetailPage() {
   const navigate       = useNavigate()
   const { buildingId } = useParams<{ buildingId: string }>()
-  const canEdit        = useAuthStore(s => s.canEdit())
+  const canEdit        = useAuthStore(s => s.user?.role === 'admin')
   const [view, setView]         = useState<ViewMode>('list')
   const [floors, setFloors]     = useState<Floor[]>([])
   const [modalOpen, setModalOpen]   = useState(false)
