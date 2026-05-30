@@ -121,10 +121,18 @@ export default function FloorPlanPage() {
 
   useEffect(() => {
     if (!apiCameras?.length) return
-    const mapped = apiCameras.map(mapApiCamera)
+    const storageKey = `ssm.floorplan.positions.${floorId}`
+    const stored: Record<string, { left: string; top: string }> | null = (() => {
+      try { return JSON.parse(localStorage.getItem(storageKey) ?? 'null') } catch { return null }
+    })()
+    const mapped = apiCameras.map((a, idx) => {
+      const cam = mapApiCamera(a, idx)
+      if (a.position_x == null && stored?.[cam.id]) return { ...cam, left: stored[cam.id].left, top: stored[cam.id].top }
+      return cam
+    })
     setCameras(mapped)
     setPositions(Object.fromEntries(mapped.map(c => [c.id, { left: c.left, top: c.top }])))
-  }, [apiCameras])
+  }, [apiCameras, floorId])
 
   const { message } = App.useApp()
   const role = useAuthStore(s => s.user?.role)
@@ -230,6 +238,7 @@ export default function FloorPlanPage() {
       if (pos) {
         const camId = parseInt(id)
         if (!isNaN(camId)) {
+          localStorage.setItem(`ssm.floorplan.positions.${floorId}`, JSON.stringify(positionsRef.current))
           patchCameraPosition(camId, parseFloat(pos.left), parseFloat(pos.top))
             .catch(() => {
               setPositions(prev => ({ ...prev, [id]: { left: origLeftPct, top: origTopPct } }))

@@ -5,7 +5,7 @@
 
 ## Project
 Surveillance Smart-Monitor (SSM) — React SPA for CCTV device management.
-Presentation deadline: **2026-05-29 (Thursday)**.
+Presentation deadline: **2026-05-29 (Thursday)** — passed. System is demo-ready as of 2026-05-30.
 
 ## Stack
 - React 18 + Vite 6 + TypeScript (port 3000)
