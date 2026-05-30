@@ -20,7 +20,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
         #region GET : cameras
         [Route("api/cameras")]
         [HttpGet]
-        [RequireRole("admin")]
+        [RequireRole("admin", "user")]
         public IHttpActionResult GetCameras(string Site_ID = null, string Floor_ID = null, string status = null, int? id = null)
         {
             List<camerasModel> ListRP = new List<camerasModel>();

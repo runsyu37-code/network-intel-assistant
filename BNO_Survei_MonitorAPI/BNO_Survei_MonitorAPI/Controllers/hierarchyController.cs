@@ -74,7 +74,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
 
                 // 3. All floors with camera count and alert count
                 using (var cmd = new SqlCommand(@"
-                    SELECT f.Floor_ID, f.Building_ID, f.floor_number, f.name, f.main_function,
+                    SELECT f.Floor_ID, f.Building_ID, f.floor_number, f.name, f.[function] AS main_function,
                            (SELECT COUNT(*) FROM cameras WHERE Floor_ID = f.Floor_ID) AS camera_count,
                            (SELECT COUNT(*) FROM cameras WHERE Floor_ID = f.Floor_ID AND status IN ('offline','warning')) AS alert_count
                     FROM floors f ORDER BY f.floor_number", con))
