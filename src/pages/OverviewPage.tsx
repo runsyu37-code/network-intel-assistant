@@ -37,7 +37,9 @@ function alertSev(type: string | null): 'critical' | 'warning' | 'info' {
 
 function timeAgo(ts: string | null): string {
   if (!ts) return '—'
-  const diff = Date.now() - new Date(ts + 'Z').getTime()
+  const d = new Date(ts)
+  if (isNaN(d.getTime())) return '—'
+  const diff = Date.now() - d.getTime()
   const m = Math.floor(diff / 60_000)
   if (m < 1) return 'เมื่อสักครู่'
   if (m < 60) return `${m} นาทีที่แล้ว`
