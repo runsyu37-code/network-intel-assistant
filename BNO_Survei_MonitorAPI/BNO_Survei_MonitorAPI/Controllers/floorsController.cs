@@ -57,6 +57,40 @@ namespace BNO_Survei_MonitorAPI.Controllers
         }
         #endregion
 
+        #region GET single : floors
+        [Route("api/floors/{Floor_ID}")]
+        [HttpGet]
+        public IHttpActionResult GetFloorById(string Floor_ID)
+        {
+            using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+            {
+                con.Open();
+                string sql = "SELECT [Floor_ID],[Site_ID],[Building_ID],[floor_number],[name],[function],[has_cctv],[image_data],[image_type],[note],[created_at],[updated_at] FROM [dbo].[floors] WHERE Floor_ID = @Floor_ID";
+                SqlCommand cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@Floor_ID", Floor_ID);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read()) return NotFound();
+                    return Json(new floorsModel
+                    {
+                        Floor_ID     = reader["Floor_ID"].ToString(),
+                        Site_ID      = reader["Site_ID"].ToString(),
+                        Building_ID  = reader["Building_ID"].ToString(),
+                        floor_number = reader["floor_number"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["floor_number"]),
+                        name         = reader["name"] == DBNull.Value ? null : reader["name"].ToString(),
+                        function     = reader["function"] == DBNull.Value ? null : reader["function"].ToString(),
+                        has_cctv     = reader["has_cctv"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(reader["has_cctv"]),
+                        image_data   = reader["image_data"] == DBNull.Value ? null : reader["image_data"].ToString(),
+                        image_type   = reader["image_type"] == DBNull.Value ? null : reader["image_type"].ToString(),
+                        note         = reader["note"] == DBNull.Value ? null : reader["note"].ToString(),
+                        created_at   = reader["created_at"].ToString(),
+                        updated_at   = reader["updated_at"].ToString(),
+                    });
+                }
+            }
+        }
+        #endregion
+
         #region Save : floors
         [Route("api/floors")]
         [HttpPost]

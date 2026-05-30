@@ -58,6 +58,41 @@ namespace BNO_Survei_MonitorAPI.Controllers
         }
         #endregion
 
+        #region GET single : buildings
+        [Route("api/buildings/{Building_ID}")]
+        [HttpGet]
+        public IHttpActionResult GetBuildingById(string Building_ID)
+        {
+            using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+            {
+                con.Open();
+                string sql = "SELECT [Building_ID],[Site_ID],[name],[code],[floor_count],[description],[image_data],[image_type],[note],[created_at],[updated_at],[lat],[lng] FROM [dbo].[buildings] WHERE Building_ID = @Building_ID";
+                SqlCommand cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@Building_ID", Building_ID);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read()) return NotFound();
+                    return Json(new buildingsModel
+                    {
+                        Building_ID = reader["Building_ID"].ToString(),
+                        Site_ID     = reader["Site_ID"].ToString(),
+                        name        = reader["name"].ToString(),
+                        code        = reader["code"] == DBNull.Value ? null : reader["code"].ToString(),
+                        floor_count = reader["floor_count"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["floor_count"]),
+                        description = reader["description"] == DBNull.Value ? null : reader["description"].ToString(),
+                        image_data  = reader["image_data"] == DBNull.Value ? null : reader["image_data"].ToString(),
+                        image_type  = reader["image_type"] == DBNull.Value ? null : reader["image_type"].ToString(),
+                        note        = reader["note"] == DBNull.Value ? null : reader["note"].ToString(),
+                        created_at  = reader["created_at"].ToString(),
+                        updated_at  = reader["updated_at"].ToString(),
+                        lat         = reader["lat"]  == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["lat"]),
+                        lng         = reader["lng"]  == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["lng"]),
+                    });
+                }
+            }
+        }
+        #endregion
+
         #region Save : buildings
         [Route("api/buildings")]
         [HttpPost]
