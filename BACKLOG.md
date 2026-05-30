@@ -19,17 +19,20 @@ npm run dev   # → http://localhost:3001
 
 ---
 
-## สถานะ ณ ตอนนี้ — ทำเสร็จแล้วทั้งหมด ✅
+## สถานะ ณ ตอนนี้ — UI เสร็จทั้งหมด, API wiring 7/12 หน้า
 
 | งาน | สถานะ |
 |---|---|
-| ทุก HTML mockup จาก open design/output/ | ✅ implement หมดแล้ว |
-| Users CRUD (Edit / Deactivate / Delete) + mock data | ✅ |
-| NVR Detail — HDD per-drive + channels table + event log | ✅ |
-| Switch Detail — info-grid + port status table | ✅ |
-| Floor Plan — side panel + mode toggle ใน header | ✅ |
-| Topology — left legend panel + hide offline toggle | ✅ |
-| Back navigation ทุก detail page | ✅ |
+| ทุก HTML mockup จาก open design/output/ | ✅ |
+| Users CRUD (Edit / Deactivate / Delete) | ✅ |
+| NVR Detail — HDD per-drive + channels table | ✅ |
+| Switch Detail — port map + port status table | ✅ |
+| Floor Plan — hover tooltip + warning pulse + drag save | ✅ |
+| Topology — legend panel + hide offline toggle | ✅ |
+| RouteGuard — `/dashboard/*` ต้อง login | ✅ |
+| **API: CamerasPage / NVRsPage / SwitchesPage** | ✅ `2026-05-29` |
+| **API: SitesPage (hierarchy tree)** | ✅ `2026-05-29` |
+| **API: NVRDetailPage / SwitchDetailPage / UsersPage** | ✅ `2026-05-29` |
 
 ---
 

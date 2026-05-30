@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Tooltip } from 'antd'
 import { getCameras, createCamera, updateCamera, deleteCamera } from '../api/cameras'
-import type { CameraApi } from '../api/types'
+import { getSites } from '../api/hierarchy'
+import type { CameraApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -22,65 +23,89 @@ interface Camera {
   nvrChannel: number | null
 }
 
-function mapCamera(a: CameraApi): Camera {
-  const s = a.status ?? ''
-  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
-  return {
-    id: String(a.id),
-    name: a.device_name,
-    ip: a.ip_address ?? '—',
-    model: a.model ?? '',
-    location: a.install_location ?? '—',
-    nvr: a.NVR_ID ?? '—',
-    site: a.Site_ID,
-    status,
-    serialNo: a.serial_no ?? '—',
-    macAddress: a.mac_address ?? '—',
-    nvrChannel: a.nvr_channel ?? null,
-  }
-}
-
-const SITES   = ['สำนักงานใหญ่', 'สาขาสีลม', 'สาขาลาดพร้าว', 'สาขาบางนา', 'คลังสินค้า']
-const NVR_LIST = ['NVR-01', 'NVR-02', 'NVR-03', 'NVR-04', 'NVR-05']
-
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
   warning: { cls: 'dl-badge warn',  label: 'Warning' },
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapCamera(a: CameraApi, siteMap: Record<string, string>): Camera {
+  return {
+    id: String(a.id),
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    location: a.install_location ?? '',
+    nvr: a.NVR_ID ?? '—',
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
+    serialNo: a.serial_no ?? '—',
+    macAddress: a.mac_address ?? '—',
+    nvrChannel: a.nvr_channel ?? null,
+  }
+}
+
 interface FormState { name: string; ip: string; model: string; location: string; nvr: string; site: string }
-const EMPTY_FORM: FormState = { name: '', ip: '', model: '', location: '', nvr: NVR_LIST[0], site: SITES[0] }
 
 export default function CamerasPage() {
   const navigate     = useNavigate()
   const { message }  = App.useApp()
   const queryClient  = useQueryClient()
-  const { data, isPending, isError, error } = useQuery({ queryKey: ['cameras'], queryFn: () => getCameras() })
-  const [cameras, setCameras] = useState<Camera[]>([])
-  useEffect(() => { if (data !== undefined) setCameras(data.map(mapCamera)) }, [data])
-  const filterSites = useMemo(() => [...new Set(cameras.map(c => c.site))].sort(), [cameras])
 
+  const { data: apiCameras = [], isLoading: camLoading } = useQuery({
+    queryKey: ['cameras'],
+    queryFn: () => getCameras(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [cameras, setCameras]       = useState<Camera[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Camera>(null)
   const [deleteTarget, setDel]      = useState<Camera | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [form, setForm]             = useState<FormState>({ name: '', ip: '', model: '', location: '', nvr: '', site: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (camLoading || siteLoading) return
+    initialized.current = true
+    setCameras(apiCameras.map(a => mapCamera(a, siteMap)))
+  }, [apiCameras, camLoading, siteLoading, siteMap])
 
   const createMut = useMutation({
     mutationFn: () => createCamera({ device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr, Site_ID: form.site }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError:   () => {},
+    onError: () => {},
   })
   const updateMut = useMutation({
     mutationFn: (id: number) => updateCamera(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError:   () => {},
+    onError: () => {},
   })
   const deleteMut = useMutation({
     mutationFn: (id: number) => deleteCamera(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError:   () => {},
+    onError: () => {},
   })
 
   const filtered = cameras.filter(c => {
@@ -95,7 +120,7 @@ export default function CamerasPage() {
   const warning = cameras.filter(c => c.status === 'warning').length
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ name: '', ip: '', model: '', location: '', nvr: '', site: siteNames[0] ?? '' })
     setModalMode('create')
   }
 
@@ -137,6 +162,12 @@ export default function CamerasPage() {
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
 
+  if (camLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading cameras...
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
@@ -156,7 +187,7 @@ export default function CamerasPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {filterSites.map(s => <option key={s} value={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--ok)' }} />{online} online</span>
         {warning > 0 && <span className="dl-stat"><span className="ds-dot" style={{ background: 'var(--warn)' }} />{warning} warning</span>}
@@ -178,18 +209,10 @@ export default function CamerasPage() {
             </tr>
           </thead>
           <tbody>
-            {isPending && (
-              <tr><td colSpan={7} className="dl-empty">กำลังโหลด...</td></tr>
-            )}
-            {isError && (
-              <tr><td colSpan={7} className="dl-empty" style={{ color: 'var(--alert)' }}>
-                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
-              </td></tr>
-            )}
-            {!isPending && !isError && filtered.length === 0 && (
+            {filtered.length === 0 && (
               <tr><td colSpan={7} className="dl-empty">ไม่พบกล้อง</td></tr>
             )}
-            {!isPending && !isError && filtered.map(c => (
+            {filtered.map(c => (
               <tr
                 key={c.id}
                 onClick={() => navigate(`/dashboard/cameras/${c.id}`)}
@@ -265,15 +288,14 @@ export default function CamerasPage() {
                   value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
               </div>
               <div className="form-group">
-                <label className="form-label">NVR</label>
-                <select className="form-ctrl" value={form.nvr} onChange={e => setForm(f => ({ ...f, nvr: e.target.value }))}>
-                  {NVR_LIST.map(n => <option key={n}>{n}</option>)}
-                </select>
+                <label className="form-label">NVR ID</label>
+                <input className="form-ctrl mono" placeholder="e.g. NVR-HQ-01"
+                  value={form.nvr} onChange={e => setForm(f => ({ ...f, nvr: e.target.value }))} />
               </div>
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>

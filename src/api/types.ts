@@ -170,6 +170,60 @@ export interface PingLogApi {
   pinged_at: string
 }
 
+export interface SiteApi {
+  Site_ID: string
+  name: string
+  code: string | null
+  location: string | null
+}
+
+export interface BuildingApi {
+  Building_ID: string
+  Site_ID: string
+  name: string
+  code: string | null
+  floor_count: number
+  alert_count: number
+  camera_count: number
+  nvr_count: number
+  lat: number | null
+  lng: number | null
+}
+
+export interface FloorApi {
+  Floor_ID: string
+  Site_ID: string
+  Building_ID: string
+  floor_number: number | null
+  name: string | null
+  function: string | null
+  has_cctv: boolean | null
+  image_data: string | null
+  image_type: string | null
+  note: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RackApi {
+  Rack_ID: string
+  Site_ID: string
+  Building_ID: string
+  Floor_ID: string
+  Room_ID: string
+  name: string
+  total_units: number
+  units_per_u: number
+  brand: string | null
+  model: string | null
+  max_power_w: number | null
+  image_data: string | null
+  image_type: string | null
+  note: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface AlertLogApi {
   id: number
   device_type: string | null

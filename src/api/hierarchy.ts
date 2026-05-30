@@ -1,5 +1,5 @@
 import client from './client'
-import type { SiteTreeDto, DashboardSummaryDto, DeviceStatusDto, AlertLogApi, BuildingMapDto } from './types'
+import type { SiteTreeDto, DashboardSummaryDto, DeviceStatusDto, AlertLogApi, SiteApi, BuildingApi, FloorApi, RackApi } from './types'
 
 export async function getHierarchyTree(): Promise<SiteTreeDto[]> {
   const res = await client.get<SiteTreeDto[]>('/hierarchy/tree')
@@ -21,7 +21,27 @@ export async function getAlertLogs(params?: { limit?: number }): Promise<AlertLo
   return res.data
 }
 
-export async function getBuildings(): Promise<BuildingMapDto[]> {
-  const res = await client.get<BuildingMapDto[]>('/buildings')
+export async function getSites(): Promise<SiteApi[]> {
+  const res = await client.get<SiteApi[]>('/sites')
   return res.data
+}
+
+export async function getBuildings(params?: { Site_ID?: string; Building_ID?: string }): Promise<BuildingApi[]> {
+  const res = await client.get<BuildingApi[]>('/buildings', { params })
+  return res.data
+}
+
+export async function getFloors(params?: { Building_ID?: string; Site_ID?: string }): Promise<FloorApi[]> {
+  const res = await client.get<FloorApi[]>('/floors', { params })
+  return res.data
+}
+
+export async function getRacks(params?: { Site_ID?: string; Building_ID?: string; Floor_ID?: string }): Promise<RackApi[]> {
+  const res = await client.get<RackApi[]>('/racks', { params })
+  return res.data
+}
+
+export async function getRackById(id: string): Promise<RackApi | null> {
+  const res = await client.get<RackApi[]>('/racks', { params: { Rack_ID: id } })
+  return res.data[0] ?? null
 }

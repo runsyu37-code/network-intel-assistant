@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App } from 'antd'
 import { getSwitches, createSwitch, updateSwitch, deleteSwitch } from '../api/switches'
-import type { PoeSwitchApi } from '../api/types'
+import { getSites } from '../api/hierarchy'
+import type { PoeSwitchApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -14,30 +15,10 @@ interface Switch {
   ip: string
   model: string
   ports: number
-  uptime: string
   site: string
   status: Status
   note: string
 }
-
-function mapSwitch(a: PoeSwitchApi): Switch {
-  const s = a.status ?? ''
-  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
-  return {
-    id: a.SW_ID,
-    name: a.device_name,
-    ip: a.ip_address ?? '—',
-    model: a.model ?? '',
-    ports: a.total_ports ?? 0,
-    uptime: '—',
-    site: a.Site_ID,
-    status,
-    note: a.notes ?? '',
-  }
-}
-
-
-const SITES = ['สำนักงานใหญ่', 'สาขาเชียงใหม่', 'สาขาภูเก็ต', 'สาขาขอนแก่น', 'สาขาหาดใหญ่']
 
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
@@ -45,17 +26,65 @@ const BADGE: Record<Status, { cls: string; label: string }> = {
   offline: { cls: 'dl-badge alert', label: 'Offline' },
 }
 
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapSwitch(a: PoeSwitchApi, siteMap: Record<string, string>): Switch {
+  return {
+    id: a.SW_ID,
+    name: a.device_name,
+    ip: a.ip_address ?? '—',
+    model: a.model ?? '',
+    ports: a.total_ports ?? 0,
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
+    note: a.notes ?? '',
+  }
+}
+
 interface FormState { swId: string; name: string; ip: string; model: string; ports: string; site: string; note: string }
-const EMPTY_FORM: FormState = { swId: '', name: '', ip: '', model: '', ports: '24', site: SITES[0], note: '' }
 
 export default function SwitchesPage() {
   const navigate    = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data, isPending, isError, error } = useQuery({ queryKey: ['switches'], queryFn: () => getSwitches() })
-  const [switches, setSwitches] = useState<Switch[]>([])
-  useEffect(() => { if (data !== undefined) setSwitches(data.map(mapSwitch)) }, [data])
-  const filterSites = useMemo(() => [...new Set(switches.map(s => s.site))].sort(), [switches])
+
+  const { data: apiSwitches = [], isLoading: swLoading } = useQuery({
+    queryKey: ['switches'],
+    queryFn: () => getSwitches(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [switches, setSwitches]     = useState<Switch[]>([])
+  const [q, setQ]                   = useState('')
+  const [siteFilter, setSiteFilter] = useState('all')
+  const [modalMode, setModalMode]   = useState<null | 'create' | Switch>(null)
+  const [deleteTarget, setDel]      = useState<Switch | null>(null)
+  const [form, setForm]             = useState<FormState>({ swId: '', name: '', ip: '', model: '', ports: '24', site: '', note: '' })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (swLoading || siteLoading) return
+    initialized.current = true
+    setSwitches(apiSwitches.map(a => mapSwitch(a, siteMap)))
+  }, [apiSwitches, swLoading, siteLoading, siteMap])
 
   const createMut = useMutation({
     mutationFn: () => createSwitch({ SW_ID: form.swId.trim(), device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), total_ports: parseInt(form.ports) || 24, Site_ID: form.site }),
@@ -73,12 +102,6 @@ export default function SwitchesPage() {
     onError: () => {},
   })
 
-  const [q, setQ]                   = useState('')
-  const [siteFilter, setSiteFilter] = useState('all')
-  const [modalMode, setModalMode]   = useState<null | 'create' | Switch>(null)
-  const [deleteTarget, setDel]      = useState<Switch | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
-
   const filtered = switches.filter(s => {
     if (siteFilter !== 'all' && s.site !== siteFilter) return false
     if (!q) return true
@@ -87,7 +110,7 @@ export default function SwitchesPage() {
   })
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ swId: '', name: '', ip: '', model: '', ports: '24', site: siteNames[0] ?? '', note: '' })
     setModalMode('create')
   }
 
@@ -101,7 +124,7 @@ export default function SwitchesPage() {
     const ports = parseInt(form.ports) || 24
     if (modalMode === 'create') {
       if (!form.swId.trim()) return
-      const sw: Switch = { id: form.swId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, uptime: '0d 0h', site: form.site, note: form.note.trim(), status: 'online' }
+      const sw: Switch = { id: form.swId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, site: form.site, note: form.note.trim(), status: 'online' }
       setSwitches(prev => [...prev, sw])
       setModalMode(null)
       try { await createMut.mutateAsync(); message.success(`เพิ่ม ${sw.name} สำเร็จ`) }
@@ -125,6 +148,12 @@ export default function SwitchesPage() {
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
 
+  if (swLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading switches...
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
@@ -144,7 +173,7 @@ export default function SwitchesPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {filterSites.map(s => <option key={s} value={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{switches.length} total</span>
       </div>
@@ -158,24 +187,15 @@ export default function SwitchesPage() {
               <th>IP Address</th>
               <th>รุ่น</th>
               <th>Ports</th>
-              <th>Uptime</th>
               <th>สาขา</th>
               <th style={{ width: 80 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {isPending && (
-              <tr><td colSpan={8} className="dl-empty">กำลังโหลด...</td></tr>
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} className="dl-empty">ไม่พบ Switch</td></tr>
             )}
-            {isError && (
-              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>
-                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
-              </td></tr>
-            )}
-            {!isPending && !isError && filtered.length === 0 && (
-              <tr><td colSpan={8} className="dl-empty">ไม่พบ Switch</td></tr>
-            )}
-            {!isPending && !isError && filtered.map(s => (
+            {filtered.map(s => (
               <tr
                 key={s.id}
                 onClick={() => navigate(`/dashboard/switches/${s.id}`)}
@@ -189,7 +209,6 @@ export default function SwitchesPage() {
                 <td className="td-mono">{s.ip}</td>
                 <td style={{ fontSize: 12, color: 'var(--ink-2)' }}>{s.model || '—'}</td>
                 <td className="td-mono">{s.ports}</td>
-                <td className="td-mono" style={{ color: 'var(--ink-3)' }}>{s.uptime}</td>
                 <td style={{ fontSize: 12.5 }}>{s.site}</td>
                 <td onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -248,7 +267,7 @@ export default function SwitchesPage() {
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
               <div className="form-group">

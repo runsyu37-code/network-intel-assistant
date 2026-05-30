@@ -179,6 +179,7 @@ const RACK_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)'
 const CAM_STATUS_COLOR: Record<CamStatus, string> = { ok: 'var(--ok)', warn: 'var(--warn)', alert: 'var(--alert)' }
 const CAM_STATUS_LABEL: Record<CamStatus, string>  = { ok: 'Online',   warn: 'Warning',     alert: 'Offline'   }
 
+
 export default function FloorPlanPage() {
   const { floorId }  = useParams<{ floorId: string }>()
   const navigate     = useNavigate()

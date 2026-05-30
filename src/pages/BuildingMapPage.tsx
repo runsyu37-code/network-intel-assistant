@@ -37,7 +37,7 @@ export default function BuildingMapPage() {
 
   const { data, isPending, isError } = useQuery({
     queryKey: ['buildings-map'],
-    queryFn: getBuildings,
+    queryFn: () => getBuildings(),
   })
 
   const sites = useMemo(

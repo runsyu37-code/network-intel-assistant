@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Tooltip } from 'antd'
 import { getNvrs, createNvr, updateNvr, deleteNvr } from '../api/nvrs'
-import type { NvrApi } from '../api/types'
+import { getSites } from '../api/hierarchy'
+import type { NvrApi, SiteApi } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -22,9 +23,18 @@ interface NVR {
   status: Status
 }
 
-function mapNvr(a: NvrApi): NVR {
-  const s = a.status ?? ''
-  const status: Status = s === 'online' ? 'online' : s === 'warning' ? 'warning' : 'offline'
+const BADGE: Record<Status, { cls: string; label: string }> = {
+  online:  { cls: 'dl-badge ok',    label: 'Online' },
+  warning: { cls: 'dl-badge warn',  label: 'Warning' },
+  offline: { cls: 'dl-badge alert', label: 'Offline' },
+}
+
+function toStatus(s: string | null): Status {
+  if (s === 'online' || s === 'warning' || s === 'offline') return s
+  return 'offline'
+}
+
+function mapNvr(a: NvrApi, siteMap: Record<string, string>): NVR {
   return {
     id: a.NVR_ID,
     name: a.device_name,
@@ -35,37 +45,52 @@ function mapNvr(a: NvrApi): NVR {
     chUsed: a.active_channels ?? 0,
     chTotal: a.total_channels ?? 0,
     hddPct: Math.round(a.hdd_used_pct ?? 0),
-    site: a.Site_ID,
-    status,
+    site: siteMap[a.Site_ID] ?? a.Site_ID,
+    status: toStatus(a.status),
   }
 }
 
-
-const SITES = ['สำนักงานใหญ่', 'สาขาเชียงใหม่', 'สาขาภูเก็ต', 'สาขาขอนแก่น', 'สาขาหาดใหญ่']
-
-const BADGE: Record<Status, { cls: string; label: string }> = {
-  online:  { cls: 'dl-badge ok',    label: 'Online' },
-  warning: { cls: 'dl-badge warn',  label: 'Warning' },
-  offline: { cls: 'dl-badge alert', label: 'Offline' },
-}
-
 interface FormState { nvrId: string; name: string; ip: string; model: string; chTotal: string; site: string }
-const EMPTY_FORM: FormState = { nvrId: '', name: '', ip: '', model: '', chTotal: '16', site: SITES[0] }
 
 export default function NVRsPage() {
   const navigate    = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
-  const { data, isPending, isError, error } = useQuery({ queryKey: ['nvrs'], queryFn: () => getNvrs() })
-  const [nvrs, setNvrs]    = useState<NVR[]>([])
+
+  const { data: apiNvrs = [], isLoading: nvrLoading } = useQuery({
+    queryKey: ['nvrs'],
+    queryFn: () => getNvrs(),
+    refetchOnWindowFocus: false,
+  })
+
+  const { data: apiSites = [], isLoading: siteLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => getSites(),
+    refetchOnWindowFocus: false,
+  })
+
+  const siteMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    apiSites.forEach((s: SiteApi) => { m[s.Site_ID] = s.name })
+    return m
+  }, [apiSites])
+
+  const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
+
+  const [nvrs, setNvrs]             = useState<NVR[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
   const [deleteTarget, setDel]      = useState<NVR | null>(null)
-  const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [form, setForm]             = useState<FormState>({ nvrId: '', name: '', ip: '', model: '', chTotal: '16', site: '' })
 
-  useEffect(() => { if (data !== undefined) setNvrs(data.map(mapNvr)) }, [data])
-  const filterSites = useMemo(() => [...new Set(nvrs.map(n => n.site))].sort(), [nvrs])
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current) return
+    if (nvrLoading || siteLoading) return
+    initialized.current = true
+    setNvrs(apiNvrs.map(a => mapNvr(a, siteMap)))
+  }, [apiNvrs, nvrLoading, siteLoading, siteMap])
 
   const createMut = useMutation({
     mutationFn: () => createNvr({ NVR_ID: form.nvrId.trim(), device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16, Site_ID: form.site }),
@@ -91,7 +116,7 @@ export default function NVRsPage() {
   })
 
   function openCreate() {
-    setForm(EMPTY_FORM)
+    setForm({ nvrId: '', name: '', ip: '', model: '', chTotal: '16', site: siteNames[0] ?? '' })
     setModalMode('create')
   }
 
@@ -129,6 +154,12 @@ export default function NVRsPage() {
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
 
+  if (nvrLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading NVRs...
+    </div>
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
       <div className="page-head">
@@ -148,7 +179,7 @@ export default function NVRsPage() {
         </div>
         <select className="dl-filter-select" value={siteFilter} onChange={e => setSiteFilter(e.target.value)}>
           <option value="all">ทุกสาขา</option>
-          {filterSites.map(s => <option key={s} value={s}>{s}</option>)}
+          {siteNames.map(s => <option key={s}>{s}</option>)}
         </select>
         <span className="dl-stat" style={{ marginLeft: 'auto' }}>{nvrs.length} total</span>
       </div>
@@ -168,18 +199,10 @@ export default function NVRsPage() {
             </tr>
           </thead>
           <tbody>
-            {isPending && (
-              <tr><td colSpan={8} className="dl-empty">กำลังโหลด...</td></tr>
-            )}
-            {isError && (
-              <tr><td colSpan={8} className="dl-empty" style={{ color: 'var(--alert)' }}>
-                {(error as any)?.isForbidden ? 'ไม่มีสิทธิ์เข้าถึงข้อมูลนี้' : 'โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช'}
-              </td></tr>
-            )}
-            {!isPending && !isError && filtered.length === 0 && (
+            {filtered.length === 0 && (
               <tr><td colSpan={8} className="dl-empty">ไม่พบ NVR</td></tr>
             )}
-            {!isPending && !isError && filtered.map(n => {
+            {filtered.map(n => {
               const hddAlert = n.hddPct >= 85
               return (
                 <tr
@@ -286,7 +309,7 @@ export default function NVRsPage() {
               <div className="form-group">
                 <label className="form-label">สาขา</label>
                 <select className="form-ctrl" value={form.site} onChange={e => setForm(f => ({ ...f, site: e.target.value }))}>
-                  {SITES.map(s => <option key={s}>{s}</option>)}
+                  {siteNames.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>
