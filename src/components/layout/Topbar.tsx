@@ -3,49 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Settings, AlertCircle, AlertTriangle, X, LogOut } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/authStore'
-import { getAlertLogs } from '../../api/hierarchy'
+import { getAlertLogs, getSites, getBuildingById, getFloorById } from '../../api/hierarchy'
 import type { AlertLogApi } from '../../api/types'
 
 interface Crumb { label: string; to?: string }
-
-const SITE_LABEL: Record<string, string> = {
-  'hq':     'HQ Bangkok',
-  'site-a': 'Site A — HQ Bangkok',
-  'site-b': 'Site B — Chiang Mai DC',
-  'site-c': 'Site C — Phuket Branch',
-  'site-d': 'Site D — Khon Kaen',
-  'site-e': 'Site E — Hat Yai',
-  'site-f': 'Site F — Udon Thani',
-}
-
-const BUILDING_LABEL: Record<string, string> = {
-  a: 'Building A', b: 'Building B', c: 'Building C', d: 'Building D',
-}
-
-const BUILDING_SITE: Record<string, string> = {
-  a: 'hq', b: 'hq', c: 'hq', d: 'hq',
-}
-
-const FLOOR_LABEL: Record<string, string> = {
-  'a-f6': 'F6 — Executive Office',
-  'a-f5': 'F5 — Meeting Rooms',
-  'a-f4': 'F4 — Office',
-  'a-f3': 'F3 — Office',
-  'a-f2': 'F2 — Server Room',
-  'a-f1': 'F1 — Lobby',
-  'b-f4': 'F4 — Management',
-  'b-f3': 'F3 — Office',
-  'b-f2': 'F2 — Office',
-  'b-f1': 'F1 — Lobby',
-  'c-f1': 'F1 — Warehouse',
-  'd-f2': 'F2 — Security Control',
-  'd-f1': 'F1 — Gate',
-}
-
-const RACK_LABEL: Record<string, string> = {
-  'rack-a1': 'Rack A1', 'rack-a2': 'Rack A2', 'rack-b1': 'Rack B1',
-  'rack-c1': 'Rack C1', 'rack-p1': 'Rack P1', 'rack-k1': 'Rack K1',
-}
 
 const SIMPLE_PAGE: Record<string, string> = {
   users: 'Users',
@@ -60,7 +21,9 @@ function alertLevel(type: string | null): 'alert' | 'warn' {
 
 function timeAgo(ts: string | null): string {
   if (!ts) return '—'
-  const diff = Date.now() - new Date(ts + 'Z').getTime()
+  const d = new Date(ts)
+  if (isNaN(d.getTime())) return '—'
+  const diff = Date.now() - d.getTime()
   const m = Math.floor(diff / 60_000)
   if (m < 1) return 'just now'
   if (m < 60) return `${m}m ago`
@@ -106,34 +69,54 @@ function useBreadcrumbs(): Crumb[] {
   const id    = parts[2]
   const home: Crumb = { label: 'Home', to: '/dashboard/topology' }
 
+  const { data: apiFloor } = useQuery({
+    queryKey: ['floor', id],
+    queryFn: () => getFloorById(id!),
+    enabled: page === 'floors' && !!id,
+    staleTime: 60_000,
+  })
+  const buildingId = page === 'floors' ? apiFloor?.Building_ID : page === 'buildings' ? id : undefined
+  const { data: apiBuilding } = useQuery({
+    queryKey: ['buildings', buildingId],
+    queryFn: () => getBuildingById(buildingId!),
+    enabled: !!buildingId,
+    staleTime: 60_000,
+  })
+  const { data: sites } = useQuery({
+    queryKey: ['sites'],
+    queryFn: getSites,
+    enabled: page === 'floors' || page === 'buildings',
+    staleTime: 300_000,
+  })
+
+  const siteLabel = (siteId?: string) =>
+    sites?.find(s => s.Site_ID === siteId)?.name ?? siteId ?? '—'
+
   if (!page || page === 'topology') return [home]
 
   if (page === 'sites' && id) {
-    return [home, { label: SITE_LABEL[id] ?? id }]
+    return [home, { label: id }]
   }
 
   if (page === 'buildings' && id) {
-    const siteId = BUILDING_SITE[id] ?? 'hq'
     return [
       home,
-      { label: SITE_LABEL[siteId], to: `/dashboard/sites/${siteId}` },
-      { label: BUILDING_LABEL[id] ?? `Building ${id.toUpperCase()}` },
+      { label: siteLabel(apiBuilding?.Site_ID) },
+      { label: apiBuilding?.name ?? `Building ${id.toUpperCase()}` },
     ]
   }
 
   if (page === 'floors' && id) {
-    const bId    = id.split('-')[0]
-    const siteId = BUILDING_SITE[bId] ?? 'hq'
     return [
       home,
-      { label: SITE_LABEL[siteId], to: `/dashboard/sites/${siteId}` },
-      { label: BUILDING_LABEL[bId] ?? `Building ${bId.toUpperCase()}`, to: `/dashboard/buildings/${bId}` },
-      { label: FLOOR_LABEL[id] ?? id },
+      { label: siteLabel(apiBuilding?.Site_ID) },
+      { label: apiBuilding?.name ?? '…', to: apiFloor ? `/dashboard/buildings/${apiFloor.Building_ID}` : undefined },
+      { label: apiFloor?.name ?? id },
     ]
   }
 
   if (page === 'racks') {
-    if (id) return [home, { label: 'Racks', to: '/dashboard/racks' }, { label: RACK_LABEL[id] ?? id }]
+    if (id) return [home, { label: 'Racks', to: '/dashboard/racks' }, { label: id }]
     return [home, { label: 'Racks' }]
   }
 
