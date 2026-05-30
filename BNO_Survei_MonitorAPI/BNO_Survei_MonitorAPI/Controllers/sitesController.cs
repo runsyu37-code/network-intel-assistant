@@ -25,7 +25,7 @@ namespace BNO_Survei_MonitorAPI.Controllers
             using (SqlConnection con = new SqlConnection(ConnectionDB.ConnectionStringCN))
             {
                 con.Open();
-                string sql = "SELECT [Site_ID],[name],[code],[location],[description],[created_at],[updated_at] FROM [dbo].[sites] WHERE 1=1";
+                string sql = "SELECT [Site_ID],[name],[code],[location],[description],[topology_x],[topology_y],[created_at],[updated_at] FROM [dbo].[sites] WHERE 1=1";
                 if (!string.IsNullOrWhiteSpace(Site_ID)) sql += " AND Site_ID = @Site_ID";
                 SqlCommand cmd = new SqlCommand(sql, con);
                 if (!string.IsNullOrWhiteSpace(Site_ID)) cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
@@ -40,6 +40,8 @@ namespace BNO_Survei_MonitorAPI.Controllers
                             code        = reader["code"]        == DBNull.Value ? null : reader["code"].ToString(),
                             location    = reader["location"]    == DBNull.Value ? null : reader["location"].ToString(),
                             description = reader["description"] == DBNull.Value ? null : reader["description"].ToString(),
+                            topology_x  = reader["topology_x"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["topology_x"]),
+                            topology_y  = reader["topology_y"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["topology_y"]),
                             created_at  = reader["created_at"].ToString(),
                             updated_at  = reader["updated_at"].ToString(),
                         });
@@ -138,6 +140,44 @@ namespace BNO_Survei_MonitorAPI.Controllers
                     }
                 }
                 return Ok(new { success = true, Site_ID });
+            }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
+        }
+        #endregion
+
+        #region PATCH : sites/{Site_ID}/position
+        public class SitePositionRequest
+        {
+            public double? x { get; set; }
+            public double? y { get; set; }
+        }
+
+        [HttpPatch]
+        [Route("api/sites/{Site_ID}/position")]
+        [RequireRole("admin")]
+        public IHttpActionResult PatchSitePosition(string Site_ID, [FromBody] SitePositionRequest req)
+        {
+            if (req == null || !req.x.HasValue || !req.y.HasValue)
+                return BadRequest("x and y are required");
+
+            try
+            {
+                using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+                {
+                    con.Open();
+                    using (var cmd = new SqlCommand(@"
+                        UPDATE [dbo].[sites]
+                        SET topology_x = @x, topology_y = @y, updated_at = SYSUTCDATETIME()
+                        WHERE Site_ID = @Site_ID", con))
+                    {
+                        cmd.Parameters.AddWithValue("@x", req.x.Value);
+                        cmd.Parameters.AddWithValue("@y", req.y.Value);
+                        cmd.Parameters.AddWithValue("@Site_ID", Site_ID);
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows == 0) return NotFound();
+                    }
+                }
+                return Ok(new { success = true, Site_ID, x = req.x, y = req.y });
             }
             catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
         }

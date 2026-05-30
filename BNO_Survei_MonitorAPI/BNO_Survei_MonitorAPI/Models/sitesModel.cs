@@ -29,6 +29,11 @@ namespace TestAPBNO_Survei_MonitorAPI.Models
         [JsonProperty(PropertyName = "updated_at")]
         public string updated_at { get; set; }
 
+        [JsonProperty(PropertyName = "topology_x")]
+        public double? topology_x { get; set; }
+
+        [JsonProperty(PropertyName = "topology_y")]
+        public double? topology_y { get; set; }
 
     }
 }
