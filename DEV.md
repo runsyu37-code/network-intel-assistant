@@ -7,14 +7,16 @@
 
 ## สถานะ ณ 2026-05-30 (ล่าสุด)
 
-**ทุก page wire ถึง real API ครบ 100% แล้ว — ไม่มีงาน wiring ค้าง**
+**ทุก page wire ถึง real API ครบ — พร้อม demo ยกเว้นรอ backend แก้ login hash**
 
 | งาน | สถานะ |
 |---|---|
 | ทุก page (13 routes) | ✅ wire real API ครบ |
-| F9 round | ✅ ปิด R10 แล้ว — ไม่มี backend งานค้าง |
-| Review fixes (FINDINGS.md) | ✅ ครบทุก critical blocker |
-| DEV.md / README | ✅ อัปเดตแล้ว |
+| F9 round | ✅ ปิด R15 — รอ backend แก้ bcrypt hash |
+| Breadcrumb (Building / Floor) | ✅ แสดงชื่อจริงจาก API แล้ว |
+| Bug: `NaN วันที่แล้ว` ใน Dashboard | ✅ แก้แล้ว — timeAgo parse .NET date format |
+| Bug: BuildingMapPage ว่างเปล่า | ✅ แก้แล้ว — ลบ @react-leaflet/core duplicate |
+| Login real credentials | ❌ รอ backend reset bcrypt hash (F9 R15) |
 
 ---
 
@@ -30,7 +32,7 @@ cd C:\ai-playground\Frontend
 npm run dev   # → http://localhost:3001
 ```
 
-Login: `admin_test / Test@1234`
+Login: ยังใช้ real credentials ไม่ได้ (รอ backend แก้ hash) — ใช้ **"Continue as Guest"** เพื่อเข้าในฐานะ viewer ชั่วคราว
 
 ---
 
