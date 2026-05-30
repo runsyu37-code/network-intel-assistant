@@ -5,19 +5,30 @@
 
 ---
 
-## สถานะ ณ 2026-05-30 (ล่าสุด)
+## สถานะ ณ 2026-05-31 (ล่าสุด)
 
 **พร้อม demo เต็มรูปแบบ — Login + ทุกหน้าใช้งานได้กับ real backend**
 
 | งาน | สถานะ |
 |---|---|
 | ทุก page (13 routes) | ✅ wire real API ครบ |
-| F9 round | ✅ ปิด R17 — รอ backend กรอก lat/lng |
-| Breadcrumb (Building / Floor) | ✅ แสดงชื่อจริงจาก API แล้ว |
-| Bug: `NaN วันที่แล้ว` ใน Dashboard | ✅ แก้แล้ว — timeAgo parse .NET date format |
-| Bug: BuildingMapPage ว่างเปล่า | ✅ แก้แล้ว — ลบ @react-leaflet/core duplicate |
-| Login real credentials | ✅ ใช้งานได้แล้ว (backend fix bcrypt hash R15) |
-| Building Map markers | ❌ รอ backend กรอก lat/lng ใน DB (F9 R17) |
+| Login real credentials | ✅ ใช้งานได้ |
+| Breadcrumb (Building / Floor) | ✅ แสดงชื่อจริงจาก API |
+| Floor plan camera positions | ✅ localStorage fallback (รอ backend return position_x/y) |
+| Building floor reorder | ✅ drag-to-sort + localStorage |
+| Topology positions | ✅ persist ลง API (`PATCH /api/sites/{id}/position`) |
+| Building Map markers | ❌ รอ backend กรอก lat/lng ใน DB (F9 R18) |
+
+---
+
+## ⚠️ SQL migration ที่ต้องรันก่อน Topology ใช้งานได้
+
+```sql
+-- รันบน SSMS → SSM_DB
+ALTER TABLE [dbo].[sites] ADD [topology_x] FLOAT NULL, [topology_y] FLOAT NULL;
+```
+
+ไฟล์: `db/migration_add_site_topology_position.sql` (อยู่ใน branch backend)
 
 ---
 
@@ -30,7 +41,7 @@
 
 # Frontend
 cd C:\ai-playground\Frontend
-npm run dev   # → http://localhost:3001
+npm run dev   # → http://localhost:3000
 ```
 
 Login: `admin` / `Admin@SSM1` หรือ `ssm_user` / `User@SSM1`
@@ -42,7 +53,7 @@ Login: `admin` / `Admin@SSM1` หรือ `ssm_user` / `User@SSM1`
 | Page | Endpoint(s) |
 |---|---|
 | Dashboard Overview | `/dashboard/summary`, `/status/devices`, `/alert-logs` |
-| Topology | `/hierarchy/tree` |
+| Topology | `/sites` (real nodes + positions), `/dashboard/summary` (stats) |
 | Map | `/buildings` (lat/lng) |
 | Sites (CRUD) | `/sites` |
 | Sites/:id | `/hierarchy/tree` |
@@ -61,9 +72,9 @@ Login: `admin` / `Admin@SSM1` หรือ `ssm_user` / `User@SSM1`
 
 | Issue | รายละเอียด |
 |---|---|
-| Floor plan position ไม่ restore หลัง reload | `GET /api/cameras` ยัง return `position_x/y` ไม่ได้ — รอ backend |
-| Building Map markers | lat/lng = null ทุก building — รอ backend กรอกพิกัด (F9 R17) |
-| Role matrix | ✅ ตรวจแล้ว — cameras/NVRs/Switches lock ไว้ที่ ADMIN only ถูกต้องแล้ว |
+| Floor plan position | `GET /api/cameras` ยัง return `position_x/y` ไม่ได้ — รอ backend (F9 R18) |
+| Building Map markers | lat/lng = null ทุก building — รอ backend กรอกพิกัด (F9 R18) |
+| Topology SQL migration | ต้องรัน ALTER TABLE ก่อน (ดูด้านบน) |
 
 ---
 
@@ -82,10 +93,10 @@ Login: `admin` / `Admin@SSM1` หรือ `ssm_user` / `User@SSM1`
 ```
 src/pages/                        ← 1 route = 1 file
 src/api/types.ts                  ← TypeScript interfaces ทุก type
-src/api/hierarchy.ts              ← getBuildingById, getFloorById, getFloors, ...
+src/api/hierarchy.ts              ← getSites, getBuildingById, patchSitePosition, ...
 src/api/client.ts                 ← axios instance + JWT interceptor
 src/stores/authStore.ts           ← { id, username, displayName, role }
 src/styles/tokens.css             ← CSS custom properties (light/dark)
-F9/                               ← log การสื่อสาร frontend↔backend (R1–R10)
+F9/                               ← log การสื่อสาร frontend↔backend
 vite.config.ts                    ← proxy /api/* → localhost:50680
 ```
