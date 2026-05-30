@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Input, Modal, Select, Popconfirm } from 'antd'
-import { LayoutList, Layers, Plus, Pencil, Trash2 } from 'lucide-react'
+import { LayoutList, Layers, Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useQuery } from '@tanstack/react-query'
 import { getBuildingById, getFloors } from '../api/hierarchy'
@@ -105,18 +105,51 @@ export default function BuildingDetailPage() {
 
   useEffect(() => {
     if (!floorsData?.length) return
-    setFloors(floorsData.map(f => ({
+    const mapped: Floor[] = floorsData.map(f => ({
       id: f.Floor_ID,
       num: `F${f.floor_number ?? '?'}`,
       status: 'ok' as Status,
       label: f.name ?? f.function ?? `Floor ${f.floor_number}`,
       count: '',
-    })))
-  }, [floorsData])
+    }))
+    const saved: string[] | null = (() => {
+      try { return JSON.parse(localStorage.getItem(`ssm.building.floororder.${buildingId}`) ?? 'null') } catch { return null }
+    })()
+    if (saved?.length) {
+      const ordered = [
+        ...saved.map(id => mapped.find(f => f.id === id)).filter(Boolean) as Floor[],
+        ...mapped.filter(f => !saved.includes(f.id)),
+      ]
+      setFloors(ordered)
+    } else {
+      setFloors(mapped)
+    }
+  }, [floorsData, buildingId])
 
   const meta = apiBuilding
     ? { title: apiBuilding.name, sub: `${apiBuilding.floor_count} floors` }
     : { title: `Building ${buildingId?.toUpperCase()}`, sub: '' }
+
+  const dragId     = useRef<string | null>(null)
+  const [dragOver, setDragOver] = useState<string | null>(null)
+
+  function onDragStart(id: string) { dragId.current = id }
+  function onDragOver(e: React.DragEvent, id: string) { e.preventDefault(); setDragOver(id) }
+  function onDrop(targetId: string) {
+    if (!dragId.current || dragId.current === targetId) { dragId.current = null; setDragOver(null); return }
+    setFloors(prev => {
+      const from = prev.findIndex(f => f.id === dragId.current)
+      const to   = prev.findIndex(f => f.id === targetId)
+      if (from < 0 || to < 0) return prev
+      const next = [...prev]
+      next.splice(to, 0, next.splice(from, 1)[0])
+      localStorage.setItem(`ssm.building.floororder.${buildingId}`, JSON.stringify(next.map(f => f.id)))
+      return next
+    })
+    dragId.current = null
+    setDragOver(null)
+  }
+  function onDragEnd() { dragId.current = null; setDragOver(null) }
 
   const openAdd = () => {
     setEditFloor(null)
@@ -178,7 +211,19 @@ export default function BuildingDetailPage() {
           {view === 'list' ? (
             <div className="floor-stack">
               {floors.map(f => (
-                <div key={f.id} className={`floor-card ${f.status}`} style={{ display: 'flex', alignItems: 'center' }}>
+                <div
+                  key={f.id}
+                  className={`floor-card ${f.status}${dragOver === f.id ? ' drag-over' : ''}`}
+                  style={{ display: 'flex', alignItems: 'center', opacity: dragId.current === f.id ? 0.45 : 1 }}
+                  draggable={canEdit}
+                  onDragStart={canEdit ? () => onDragStart(f.id) : undefined}
+                  onDragOver={canEdit ? e => onDragOver(e, f.id) : undefined}
+                  onDrop={canEdit ? () => onDrop(f.id) : undefined}
+                  onDragEnd={canEdit ? onDragEnd : undefined}
+                >
+                  {canEdit && (
+                    <GripVertical size={14} style={{ color: 'var(--ink-4)', cursor: 'grab', flexShrink: 0, marginLeft: 10 }} />
+                  )}
                   <div
                     style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 0, cursor: 'pointer' }}
                     onClick={() => navigate(`/dashboard/floors/${f.id}`)}
