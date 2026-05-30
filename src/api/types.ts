@@ -175,6 +175,8 @@ export interface SiteApi {
   name: string
   code: string | null
   location: string | null
+  topology_x: number | null
+  topology_y: number | null
 }
 
 export interface BuildingApi {

@@ -55,3 +55,7 @@ export async function getFloorById(id: string): Promise<FloorApi> {
   const res = await client.get<FloorApi>(`/floors/${id}`)
   return res.data
 }
+
+export async function patchSitePosition(siteId: string, x: number, y: number): Promise<void> {
+  await client.patch(`/sites/${siteId}/position`, { x, y })
+}

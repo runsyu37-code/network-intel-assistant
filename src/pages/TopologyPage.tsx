@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import ReactFlow, {
   Background, BackgroundVariant, Controls,
   useNodesState, useEdgesState, type NodeTypes, type Node, type Edge,
@@ -6,17 +6,16 @@ import ReactFlow, {
 import { Form, Input, InputNumber, Modal, Select, Popconfirm } from 'antd'
 import { Plus, Pencil, Trash2, RotateCcw, Eye, Lock } from 'lucide-react'
 import 'reactflow/dist/style.css'
-import { initialNodes, initialEdges, HQ_CENTER, handleFromAngle, OPPOSITE_HANDLE } from '../components/topology/mockData'
+import { HQ_CENTER, handleFromAngle, OPPOSITE_HANDLE, radialPos } from '../components/topology/mockData'
 import HQNode from '../components/topology/HQNode'
 import SiteNode from '../components/topology/SiteNode'
 import { useAuthStore } from '../stores/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { getDashboardSummary } from '../api/hierarchy'
+import { getDashboardSummary, getSites, patchSitePosition } from '../api/hierarchy'
+import type { DashboardSummaryDto } from '../api/types'
 
 const nodeTypes: NodeTypes = { hqNode: HQNode, siteNode: SiteNode }
-
-const TOPO_POS_KEY = 'ssm.topo.positions'
-const RADIUS = 360
+const HQ_POS_KEY = 'ssm.topo.hq'
 
 const LINK_OPTIONS = [
   { value: '1 Gbps · MPLS', label: '1 Gbps · MPLS' },
@@ -24,16 +23,15 @@ const LINK_OPTIONS = [
   { value: 'VPN',           label: 'VPN (dashed)'   },
 ]
 
-const MOCK_STATS = {
-  cameras: 57, camerasOnline: 56, nvrs: 5, switches: 8, alerts: 1,
+function deriveStatus(s: DashboardSummaryDto | undefined): 'ok' | 'warn' | 'alert' {
+  if (!s) return 'ok'
+  if (s.nvrsOffline > 0 || s.switchesOffline > 0) return 'alert'
+  if (s.camerasOffline > 0 || s.camerasWarning > 0) return 'warn'
+  return 'ok'
 }
 
-function sumF(data: { totalCameras: number; camerasOnline: number; totalNvrs: number; totalSwitches: number }[], key: keyof typeof data[0]): number {
-  return data.reduce((s, d) => s + (Number(d[key]) || 0), 0)
-}
-
-function loadSavedPositions(): Record<string, { x: number; y: number }> {
-  try { return JSON.parse(localStorage.getItem(TOPO_POS_KEY) ?? '{}') } catch { return {} }
+function sumF(data: DashboardSummaryDto[], key: keyof DashboardSummaryDto): number {
+  return data.reduce((acc, d) => acc + (Number(d[key]) || 0), 0)
 }
 
 function makeEdge(siteId: string, pos: { x: number; y: number }, label: string, dash = false): Edge {
@@ -57,84 +55,129 @@ function makeEdge(siteId: string, pos: { x: number; y: number }, label: string, 
   }
 }
 
+function buildSiteNode(site: { Site_ID: string; name: string; code: string | null; location: string | null; topology_x: number | null; topology_y: number | null }, idx: number, total: number, summary: DashboardSummaryDto | undefined): Node {
+  const pos = site.topology_x != null && site.topology_y != null
+    ? { x: site.topology_x, y: site.topology_y }
+    : radialPos(idx, total)
+  const count = summary ? summary.totalCameras + summary.totalNvrs + summary.totalSwitches : 0
+  return {
+    id: site.Site_ID, type: 'siteNode', position: pos,
+    data: { label: site.name, sub: site.location ?? site.code ?? '', count, status: deriveStatus(summary) },
+  }
+}
+
 export default function TopologyPage() {
   const canEdit = useAuthStore(s => s.canEdit())
 
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites'],
+    queryFn: getSites,
+    staleTime: 60_000,
+  })
   const { data: summaryData } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: getDashboardSummary,
     refetchInterval: 30_000,
     staleTime: 15_000,
+    retry: false,
   })
-  const liveStats = useMemo(() => {
-    if (!summaryData?.length) return MOCK_STATS
-    const cameras      = sumF(summaryData, 'totalCameras')
-    const camerasOnline = sumF(summaryData, 'camerasOnline')
-    return { cameras, camerasOnline, nvrs: sumF(summaryData, 'totalNvrs'), switches: sumF(summaryData, 'totalSwitches'), alerts: MOCK_STATS.alerts }
+
+  const summaryMap = useMemo(
+    () => new Map((summaryData ?? []).map(s => [s.siteId, s])),
+    [summaryData],
+  )
+
+  const totalStats = useMemo(() => {
+    if (!summaryData?.length) return { cameras: 0, camerasOnline: 0, alerts: 0 }
+    return {
+      cameras:       sumF(summaryData, 'totalCameras'),
+      camerasOnline: sumF(summaryData, 'camerasOnline'),
+      alerts: summaryData.filter(s => deriveStatus(s) !== 'ok').length,
+    }
   }, [summaryData])
 
-  const initNodes = useMemo(() => {
-    const saved = loadSavedPositions()
-    return initialNodes.map(n => ({ ...n, position: saved[n.id] ?? n.position }))
-  }, [])
+  const [nodes, setNodes, onNodesChange] = useNodesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [initialized, setInitialized]   = useState(false)
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [hideOffline, setHideOffline]   = useState(false)
-  const [editMode, setEditMode]         = useState(false)
-  const [siteModal, setSiteModal]       = useState(false)
-  const [editSite, setEditSite]         = useState<Node | null>(null)
+  // First load: build nodes from API
+  useEffect(() => {
+    if (!sitesData?.length || initialized) return
+    const hqPos = (() => { try { return JSON.parse(localStorage.getItem(HQ_POS_KEY) ?? 'null') } catch { return null } })()
+    const hq: Node = {
+      id: 'hq', type: 'hqNode',
+      position: hqPos ?? HQ_CENTER,
+      data: { label: 'HQ — Core', ip: '10.0.0.1 · core router', siteCount: sitesData.length },
+    }
+    const siteNodes = sitesData.map((s, i) => buildSiteNode(s, i, sitesData.length, summaryMap.get(s.Site_ID)))
+    const siteEdges = sitesData.map((s, i) => {
+      const pos = s.topology_x != null && s.topology_y != null ? { x: s.topology_x, y: s.topology_y } : radialPos(i, sitesData.length)
+      return makeEdge(s.Site_ID, pos, '—')
+    })
+    setNodes([hq, ...siteNodes])
+    setEdges(siteEdges)
+    setInitialized(true)
+  }, [sitesData, summaryMap, initialized])
+
+  // Live status/count refresh without resetting positions
+  useEffect(() => {
+    if (!summaryData?.length || !initialized) return
+    setNodes(prev => prev.map(n => {
+      if (n.type !== 'siteNode') return n
+      const s = summaryMap.get(n.id)
+      if (!s) return n
+      return { ...n, data: { ...n.data, count: s.totalCameras + s.totalNvrs + s.totalSwitches, status: deriveStatus(s) } }
+    }))
+  }, [summaryData, summaryMap, initialized])
+
+  const [hideOffline, setHideOffline] = useState(false)
+  const [editMode, setEditMode]       = useState(false)
+  const [siteModal, setSiteModal]     = useState(false)
+  const [editSite, setEditSite]       = useState<Node | null>(null)
   const [form] = Form.useForm()
 
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-    const saved = loadSavedPositions()
-    saved[node.id] = node.position
-    localStorage.setItem(TOPO_POS_KEY, JSON.stringify(saved))
+    if (node.id === 'hq') {
+      localStorage.setItem(HQ_POS_KEY, JSON.stringify(node.position))
+      return
+    }
+    patchSitePosition(node.id, node.position.x, node.position.y).catch(() => {})
   }, [])
 
   const resetLayout = useCallback(() => {
-    localStorage.removeItem(TOPO_POS_KEY)
-    setNodes(initialNodes)
-  }, [setNodes])
+    localStorage.removeItem(HQ_POS_KEY)
+    if (!sitesData?.length) return
+    const hq: Node = { id: 'hq', type: 'hqNode', position: HQ_CENTER,
+      data: { label: 'HQ — Core', ip: '10.0.0.1 · core router', siteCount: sitesData.length } }
+    const siteNodes = sitesData.map((s, i) => buildSiteNode({ ...s, topology_x: null, topology_y: null }, i, sitesData.length, summaryMap.get(s.Site_ID)))
+    const siteEdges = sitesData.map((s, i) => makeEdge(s.Site_ID, radialPos(i, sitesData.length), '—'))
+    setNodes([hq, ...siteNodes])
+    setEdges(siteEdges)
+    sitesData.forEach((s, i) => {
+      const pos = radialPos(i, sitesData.length)
+      patchSitePosition(s.Site_ID, pos.x, pos.y).catch(() => {})
+    })
+  }, [sitesData, summaryMap, setNodes, setEdges])
 
-  const openAdd = () => {
-    setEditSite(null)
-    form.resetFields()
-    setSiteModal(true)
-  }
-
+  const openAdd = () => { setEditSite(null); form.resetFields(); setSiteModal(true) }
   const openEdit = (node: Node) => {
     setEditSite(node)
-    form.setFieldsValue({
-      label: node.data.label, sub: node.data.sub,
-      count: node.data.count, status: node.data.status,
-    })
+    form.setFieldsValue({ label: node.data.label, sub: node.data.sub, count: node.data.count, status: node.data.status })
     setSiteModal(true)
   }
 
   const handleOk = () => {
     form.validateFields().then(vals => {
       if (editSite) {
-        setNodes(prev => prev.map(n =>
-          n.id === editSite.id ? { ...n, data: { ...n.data, ...vals } } : n
-        ))
+        setNodes(prev => prev.map(n => n.id === editSite.id ? { ...n, data: { ...n.data, ...vals } } : n))
       } else {
-        const id  = `site-${Date.now()}`
-        const idx = nodes.filter(n => n.type === 'siteNode').length
-        const angle = (2 * Math.PI * idx) / (idx + 1) - Math.PI / 2
-        const pos = {
-          x: Math.round(HQ_CENTER.x + RADIUS * Math.cos(angle)),
-          y: Math.round(HQ_CENTER.y + RADIUS * Math.sin(angle)),
-        }
-        setNodes(prev => [...prev, {
-          id, type: 'siteNode', position: pos,
-          data: { label: vals.label, sub: vals.sub, count: vals.count ?? 0, status: vals.status ?? 'ok' },
-        }])
-        const dash = vals.link === 'VPN'
-        setEdges(prev => [...prev, makeEdge(id, pos, vals.link ?? '—', dash)])
-        const saved = loadSavedPositions()
-        saved[id] = pos
-        localStorage.setItem(TOPO_POS_KEY, JSON.stringify(saved))
+        const id    = `site-local-${Date.now()}`
+        const idx   = nodes.filter(n => n.type === 'siteNode').length
+        const total = idx + 1
+        const pos   = radialPos(idx, total)
+        setNodes(prev => [...prev, { id, type: 'siteNode', position: pos,
+          data: { label: vals.label, sub: vals.sub, count: vals.count ?? 0, status: vals.status ?? 'ok' } }])
+        setEdges(prev => [...prev, makeEdge(id, pos, vals.link ?? '—', vals.link === 'VPN')])
       }
       setSiteModal(false)
     })
@@ -143,19 +186,11 @@ export default function TopologyPage() {
   const deleteSite = useCallback((id: string) => {
     setNodes(prev => prev.filter(n => n.id !== id))
     setEdges(prev => prev.filter(e => e.source !== id && e.target !== id))
-    const saved = loadSavedPositions()
-    delete saved[id]
-    localStorage.setItem(TOPO_POS_KEY, JSON.stringify(saved))
   }, [setNodes, setEdges])
 
-  const siteNodes = nodes.filter(n => n.type === 'siteNode')
-
-  const visibleNodes = hideOffline
-    ? nodes.filter(n => (n.data as { status?: string }).status !== 'alert')
-    : nodes
-  const visibleEdges = hideOffline
-    ? edges.filter(e => visibleNodes.find(n => n.id === e.target))
-    : edges
+  const siteNodes    = nodes.filter(n => n.type === 'siteNode')
+  const visibleNodes = hideOffline ? nodes.filter(n => (n.data as { status?: string }).status !== 'alert') : nodes
+  const visibleEdges = hideOffline ? edges.filter(e => visibleNodes.find(n => n.id === e.target)) : edges
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -168,11 +203,11 @@ export default function TopologyPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span className="dl-stat">
             <span className="ds-dot" style={{ background: 'var(--ok)' }} />
-            {liveStats.camerasOnline} Online
+            {totalStats.camerasOnline} Online
           </span>
           <span className="dl-stat">
             <span className="ds-dot" style={{ background: 'var(--alert)' }} />
-            {liveStats.cameras - liveStats.camerasOnline} Offline
+            {totalStats.cameras - totalStats.camerasOnline} Offline
           </span>
           {canEdit && (
             <div style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 999, padding: 3, border: '1px solid var(--border)' }}>
@@ -219,9 +254,9 @@ export default function TopologyPage() {
               Status Legend
             </div>
             {[
-              { color: 'var(--ok)',     label: 'Online (Normal)'    },
-              { color: 'var(--warn)',   label: 'Warning (Issue)'    },
-              { color: 'var(--alert)',  label: 'Offline (Critical)' },
+              { color: 'var(--ok)',    label: 'Online (Normal)'    },
+              { color: 'var(--warn)',  label: 'Warning (Issue)'    },
+              { color: 'var(--alert)', label: 'Offline (Critical)' },
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: l.color, boxShadow: `0 0 6px ${l.color}` }} />
@@ -245,7 +280,6 @@ export default function TopologyPage() {
             </label>
           </div>
 
-          {/* Sites management */}
           <div className="cam-card" style={{ padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.07em' }}>
@@ -287,12 +321,11 @@ export default function TopologyPage() {
             ))}
           </div>
 
-          {/* Summary */}
           <div className="cam-card" style={{ padding: 16, marginTop: 'auto' }}>
             {[
-              { label: 'Total Sites',   val: siteNodes.length,   warn: false },
-              { label: 'Total Cameras', val: liveStats.cameras, warn: false },
-              { label: 'Active Alerts', val: liveStats.alerts,  warn: liveStats.alerts > 0 },
+              { label: 'Total Sites',   val: siteNodes.length,       warn: false },
+              { label: 'Total Cameras', val: totalStats.cameras,     warn: false },
+              { label: 'Active Alerts', val: totalStats.alerts,      warn: totalStats.alerts > 0 },
             ].map(s => (
               <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 12 }}>
                 <span style={{ color: 'var(--ink-3)' }}>{s.label}</span>
@@ -347,7 +380,6 @@ export default function TopologyPage() {
         </div>
       </div>
 
-      {/* Add / Edit Site modal */}
       <Modal
         title={editSite ? 'Edit Site' : 'Add Site'}
         open={siteModal}
