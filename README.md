@@ -4,8 +4,35 @@
 Manages sites, buildings, floors, rooms, racks, cameras, NVRs, PoE switches, and users
 with JWT authentication and full role-based access control (RBAC).
 
+---
+
+## ⚡ RESUME FROM HERE (last session: 2026-05-30)
+
+> **Status: DEMO READY — no open items on either side.**
+
+```
+git checkout backend
+git pull origin backend
+```
+
+Open solution → Ctrl+F5 → server runs at http://localhost:50680
+
+**Working credentials (SSM_DB):**
+
+| Username   | Password    | Role   |
+|------------|-------------|--------|
+| `admin`    | `Admin@SSM1`| admin  |
+| `ssm_user` | `User@SSM1` | user   |
+| Guest button| —          | viewer |
+
+**Last session log:** [`docs/sessions/F9_SESSION_2026-05-30.md`](docs/sessions/F9_SESSION_2026-05-30.md)
+
+**Nothing left to build** — backend and frontend are both done. If continuing: check with frontend team for any new requests.
+
+---
+
 > **Backend team (new machine):** Read [Quick Start](#quick-start), then
-> [`docs/sessions/PHASE13_SESSION.md`](docs/sessions/PHASE13_SESSION.md) for latest context.
+> [`docs/sessions/F9_SESSION_2026-05-30.md`](docs/sessions/F9_SESSION_2026-05-30.md) for latest context.
 >
 > **Frontend team:** Jump to [For Frontend Team](#for-frontend-team) below.
 > Full API contract: [`docs/FRONTEND_HANDOFF.md`](docs/FRONTEND_HANDOFF.md)
@@ -167,9 +194,10 @@ Invoke-RestMethod `
 |---|---|---|---|
 | GET sites / buildings / floors / floor-plans / hierarchy | YES | YES | YES |
 | GET rooms / racks | YES | YES | NO (403) |
-| GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO (403) | NO (403) |
+| GET cameras / NVRs / PoE switches | YES | YES | NO (403) |
+| GET logs / dashboard | YES | NO (403) | NO (403) |
 | POST/UPDATE/DELETE any resource | YES | NO (403) | NO (403) |
-| PATCH camera position | YES | NO (403) | NO (403) |
+| PATCH camera position | YES | YES | NO (403) |
 | Floor plan upload/register | YES | NO (403) | NO (403) |
 
 **All write operations are admin only without exception.**
@@ -391,18 +419,21 @@ Tokens in committed files are placeholders (`FILL_IN_TOKEN`) — fill from a fre
 |---|---|---|---|
 | GET sites / buildings / floors / floor-plans / hierarchy | YES | YES | YES |
 | GET rooms / racks | YES | YES | NO — 403 |
-| GET cameras / NVRs / PoE switches / logs / dashboard | YES | NO — 403 | NO — 403 |
-| Any POST / UPDATE / DELETE / PATCH | YES | NO — 403 | NO — 403 |
+| GET cameras / NVRs / PoE switches | YES | YES | NO — 403 |
+| GET logs / dashboard | YES | NO — 403 | NO — 403 |
+| Any POST / UPDATE / DELETE / PATCH (except camera position) | YES | NO — 403 | NO — 403 |
+| PATCH camera position | YES | YES | NO — 403 |
 
 ```js
-const isAdmin   = user?.role === 'admin';
-const canSeeRooms   = isAdmin || user?.role === 'user';   // rooms, racks
-const canSeeDevices = isAdmin;                            // cameras, NVRs, logs
+const isAdmin      = user?.role === 'admin';
+const isUser       = user?.role === 'user';
+const canSeeRooms   = isAdmin || isUser;   // rooms, racks, cameras, NVRs, switches
+const canSeeLogs    = isAdmin;             // audit logs, ping logs, dashboard summary
 
-// All write/edit actions — admin only
+// All write/edit actions — admin only (except camera position drag)
 {isAdmin && <EditButton />}
 {isAdmin && <DeleteButton />}
-{isAdmin && <DragPin />}
+{(isAdmin || isUser) && <DragPin />}  {/* PATCH /cameras/{id}/position */}
 ```
 
 ### Must-Know Gotchas
@@ -503,6 +534,10 @@ On 401:                   redirect to /login
 | Review fix | Frontend Phase 1–3 (RouteGuard, fallback data, site filter, 403) | Done ✅ |
 | Discord webhook | PingService sends embed alert when device goes offline | Done |
 | F9 R5 | Warning status (2 fails=warning, 3 fails=offline), lat/lng in buildings | Done |
+| F9 R8 | GET /api/buildings/{id} + GET /api/floors/{id} single-record endpoints | Done |
+| F9 R12 | Fix hierarchy main_function column; cameras GET now allows user role | Done |
+| F9 R15 | Fix bcrypt hash mismatch — admin + ssm_user login now works | Done |
+| F9 R16 | Frontend confirmed demo-ready — all 12 pages wired + login verified | **DONE ✅** |
 
 ---
 
@@ -554,6 +589,12 @@ Frontend รันที่ `http://localhost:3000` — CORS allow แล้ว
 | [`docs/sessions/F9_FRONTEND_REPLY_R5.md`](docs/sessions/F9_FRONTEND_REPLY_R5.md) | Frontend reply — all fixes done, requesting lat/lng |
 | [`docs/sessions/F9_BACKEND_REPLY_R5.md`](docs/sessions/F9_BACKEND_REPLY_R5.md) | Backend reply to frontend R5 — lat/lng confirmed, route confirmed |
 | [`docs/sessions/F9_SESSION_R5_2026-05-29.md`](docs/sessions/F9_SESSION_R5_2026-05-29.md) | Session log — warning status + lat/lng in buildings |
+| [`docs/sessions/F9_BACKEND_REPLY_R8.md`](docs/sessions/F9_BACKEND_REPLY_R8.md) | R8 — GET /api/buildings/{id} + GET /api/floors/{id} added |
+| [`docs/sessions/F9_BACKEND_REPLY_R12.md`](docs/sessions/F9_BACKEND_REPLY_R12.md) | R12 — hierarchy column fix + cameras user role fix |
+| [`docs/sessions/F9_BACKEND_REPLY_R13.md`](docs/sessions/F9_BACKEND_REPLY_R13.md) | R13 — confirmed camera Floor_ID + position columns exist |
+| [`docs/sessions/F9_BACKEND_REPLY_R14.md`](docs/sessions/F9_BACKEND_REPLY_R14.md) | R14 — confirmed PATCH /cameras/{id}/position is live |
+| [`docs/sessions/F9_BACKEND_REPLY_R15.md`](docs/sessions/F9_BACKEND_REPLY_R15.md) | R15 — bcrypt hash fix, login restored |
+| [`docs/sessions/F9_SESSION_2026-05-30.md`](docs/sessions/F9_SESSION_2026-05-30.md) | ⭐ Session log R8–R16 — all wiring done, demo ready |
 
 **CORS origins (dev):**
 ```
