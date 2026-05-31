@@ -1,187 +1,173 @@
-# SSM Frontend — Surveillance Smart-Monitor
+# SSM — Surveillance Smart-Monitor
 
-React SPA สำหรับจัดการระบบกล้อง CCTV, NVR, PoE Switch และ Rack ภายในองค์กร
+React SPA สำหรับจัดการและติดตามระบบกล้องวงจรปิด (CCTV) แบบ real-time
+เชื่อมต่อกับ backend ASP.NET Core ผ่าน REST API
 
 ---
 
 ## Stack
 
-| Layer | Technology | Notes |
-|---|---|---|
-| Framework | React 18 + Vite 6 + TypeScript | Dev port 3000 |
-| UI Components | Ant Design 5 | Form / Modal / Tooltip / Notification only |
-| State | Zustand | `authStore` (JWT + role), `themeStore` (persisted) |
-| Data Fetching | TanStack React Query v5 + Axios | `/api` proxied to backend |
-| Routing | React Router v6 | Role-guarded via `RouteGuard` HOC |
-| Topology | React Flow v11 | Drag-to-reposition nodes |
-| Map | react-leaflet + Leaflet | OpenStreetMap + ESRI satellite |
-| Charts | Recharts | Ping history, HDD usage |
-| Icons | lucide-react | |
+| ส่วน | Technology |
+|---|---|
+| Frontend | React 18 + Vite 6 + TypeScript |
+| UI Components | Ant Design 5 (Form / Modal / Table เท่านั้น) |
+| State | Zustand (`authStore`, `themeStore`) |
+| Data fetching | TanStack React Query + Axios |
+| Topology | React Flow v11 |
+| Map | Leaflet + react-leaflet (satellite: Esri World Imagery) |
+| Icons | lucide-react |
+| CSS | Custom tokens — `src/styles/tokens.css` |
+| Backend | ASP.NET Core .NET 10 → `http://localhost:50680` |
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- Backend API running at `http://localhost:50680` (BNO_Survei_MonitorAPI — ASP.NET 4.8, IIS Express)
-
-### Run
+## เริ่มใช้งาน
 
 ```bash
+# 1. Backend — เปิดใน Visual Studio
+#    C:\1_Work_Local\backend-latest\BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx
+#    Ctrl+F5 → http://localhost:50680
+
+# 2. Frontend
 npm install
-npm run dev
+npm run dev        # → http://localhost:3000
 ```
 
-App starts at **http://localhost:3000** — API calls proxy to `localhost:50680` automatically via `vite.config.ts`.
-
-### Build
-
-```bash
-npm run build
-```
-
----
-
-## Login
-
-Real login via `POST /api/auth/login` — backend returns JWT (8-hour expiry).  
-**SessionWatcher** shows an Ant Design notification 5 minutes before the token expires.
-
-Fallback (offline demo): type any username/password when backend is down → logs in as `admin` with `demo-token`.
-
----
-
-## Role Access Matrix
-
-| Route | admin | user | viewer |
-|---|---|---|---|
-| Dashboard, Topology, Building Map | ✅ | ✅ | ✅ |
-| Sites (browse), Buildings, Floors | ✅ | ✅ | ✅ |
-| Racks (browse + detail) | ✅ | ✅ | ❌ |
-| Sites (CRUD) | ✅ | ❌ | ❌ |
-| Cameras, NVRs, Switches (CRUD) | ✅ | ❌ | ❌ |
-| Users (CRUD) | ✅ | ❌ | ❌ |
-| Floor plan Edit mode (drag pins) | ✅ | ❌ | ❌ |
-
-Unauthorized access → redirects to `/403` page.  
-Backend enforces the same matrix independently via `[RequireRole]`.
-
----
-
-## Pages
-
-| Route | Page | Access |
+**Login:**
+| Username | Password | Role |
 |---|---|---|
-| `/` | Login | Public |
-| `/403` | Not Authorized | Public |
-| `/dashboard` | Overview / Dashboard | All |
-| `/dashboard/topology` | Network Topology | All |
-| `/dashboard/map` | Building Map (Leaflet GPS) | All |
-| `/dashboard/sites` | Sites CRUD | Admin |
-| `/dashboard/sites/:siteId` | Site Detail | All |
-| `/dashboard/buildings/:buildingId` | Building Detail | All |
-| `/dashboard/floors/:floorId` | Floor Plan + Camera Drag | All (edit: Admin) |
-| `/dashboard/racks` | Racks List (grouped by site) | Admin, User |
-| `/dashboard/racks/:rackId` | Rack Detail + Inventory | Admin, User |
-| `/dashboard/cameras` | Cameras CRUD | Admin |
-| `/dashboard/cameras/:id` | Camera Detail + Ping Chart | Admin |
-| `/dashboard/nvrs` | NVRs CRUD | Admin |
-| `/dashboard/nvrs/:id` | NVR Detail | Admin |
-| `/dashboard/switches` | PoE Switches CRUD | Admin |
-| `/dashboard/switches/:id` | Switch Detail | Admin |
-| `/dashboard/users` | Users CRUD | Admin |
+| `admin` | `Admin@SSM1` | Admin (ทุกหน้า + CRUD) |
+| `ssm_user` | `User@SSM1` | User (ดูได้, แก้ไขจำกัด) |
 
 ---
 
-## Key Features
+## โครงสร้างหน้า
 
-### Device Status
-Three states returned by API: `"online"` (green) · `"warning"` (yellow) · `"offline"` (red)  
-Warning = 1–2 consecutive ping failures. Offline = 3+ failures + Discord alert sent.
-
-### Hover Tooltips
-Ant Design `<Tooltip>` (400ms delay) on:
-- Floor plan camera pins → name, IP, status, brand, last seen
-- Camera / NVR list rows → serial no, MAC, install location, NVR channel / IPs, brand
-- Rack inventory rows → IP, brand, PoE port number
-
-### Optimistic CRUD
-Create / Edit / Delete updates local state immediately, fires API in background.  
-On failure: reverts state + shows warning toast. No full-page reload.
-
-### Floor Plan
-Drop real floor plan images at `public/floorplans/<floorId>.<ext>` (jpg/png/svg/webp).  
-Auto-detected and used as background. Falls back to inline SVG vector plan.  
-Camera pin positions saved as percentages via `PATCH /api/cameras/{id}/position`.
+| Route | Component | หมายเหตุ |
+|---|---|---|
+| `/` | `LoginPage` | JWT → `authStore` |
+| `/dashboard` | `OverviewPage` | Summary + alerts |
+| `/dashboard/sites` | `SitesOverviewPage` | Topology / List / Grid |
+| `/dashboard/sites/:siteId` | `SitesPage` | อาคารใน site (Map / Grid) |
+| `/dashboard/map` | `BuildingMapPage` | Satellite map + Create mode |
+| `/dashboard/buildings/:id` | `BuildingDetailPage` | Cross-section + floors |
+| `/dashboard/floors/:id` | `FloorPlanPage` | Camera overlay + drag |
+| `/dashboard/cameras` | `CamerasPage` | รายการกล้องทั้งหมด |
+| `/dashboard/cameras/:id` | `CameraDetailPage` | Ping history chart |
+| `/dashboard/nvrs` | `NVRsPage` | — |
+| `/dashboard/nvrs/:id` | `NVRDetailPage` | — |
+| `/dashboard/switches` | `SwitchesPage` | — |
+| `/dashboard/switches/:id` | `SwitchDetailPage` | — |
+| `/dashboard/racks` | `RacksListPage` | จัดกลุ่มตาม site |
+| `/dashboard/racks/:id` | `RackDetailPage` | U-position layout |
+| `/dashboard/audit` | `AuditPage` | Flat camera audit + CSV export |
+| `/dashboard/users` | `UsersPage` | Admin only |
 
 ---
 
-## API
+## ฟีเจอร์หลัก
 
-Base URL: `http://localhost:50680/api`  
-Configured in `vite.config.ts` (proxy `/api` → backend) and `src/api/client.ts`.
+### Sites Overview (`/dashboard/sites`)
+- **Topology** — React Flow mindmap, HQ node เชื่อมทุก site, drag-to-reposition พร้อม persist ไป API
+- **List** — ตารางค้นหา + filter status + CRUD
+- **Grid** — cards พร้อม status dot
+- คลิก site → ไปยัง Building Map ซูมตรง site นั้น
+- **Save View** — บันทึก ReactFlow viewport ลง localStorage, restore อัตโนมัติครั้งถัดไป
 
-**Auth:** Bearer JWT in `Authorization` header, injected by Axios request interceptor.  
-**401** → clears token, redirects to `/login`.  
-**403** → sets `error.isForbidden = true` — pages show "ไม่มีสิทธิ์เข้าถึงข้อมูลนี้".
+### Building Map (`/dashboard/map`)
+- Satellite / Street Map toggle
+- **Map / List** toggle
+- Coordinate input — paste lat,lng → flyTo
+- **Save View** per site (admin) — บันทึก center + zoom
+- **Reset** — กลับมุมมองที่บันทึกไว้
+- **Create mode** (admin) — คลิกแผนที่ → กรอกชื่อตึก + Site → บันทึก (auto-generate Building ID)
+- Pin mode — วางพิกัดอาคารที่ยังไม่มีพิกัด
 
-API functions grouped by resource in `src/api/`:
+### Floor Plan (`/dashboard/floors/:id`)
+- รองรับรูปพื้นที่จริง (`public/floorplans/<floorId>.<ext>`)
+- Overlay กล้องบนแผน, drag-to-reposition (admin)
+
+### Audit View (`/dashboard/audit`)
+- Flat table กล้องทุกตัว + นับ online/offline/warning
+- Export CSV
+
+---
+
+## โครงสร้าง CSS
 
 ```
-client.ts       ← Axios instance + interceptors
-cameras.ts      ← GET / POST / PATCH / DELETE cameras
-nvrs.ts         ← GET / POST / PATCH / DELETE NVRs
-switches.ts     ← GET / POST / PATCH / DELETE switches
-racks.ts        ← GET racks / GET rack detail
-hierarchy.ts    ← tree, dashboard summary, device status, alert logs, buildings
-sites.ts        ← GET / POST / PATCH / DELETE sites
-users.ts        ← GET / POST / PATCH / DELETE users
-types.ts        ← all TypeScript interfaces matching backend response shapes
+src/styles/
+├── tokens.css      ← CSS custom properties (light/dark via data-theme)
+├── global.css      ← reset + base
+├── layout.css      ← sidebar, topbar, page-content, nav-sub
+├── topology.css    ← HQ/site nodes, React Flow overrides
+├── sites.css       ← building cards, floor cards, view toggles
+├── floor.css       ← floor plan, camera overlays
+├── rack.css        ← rack, device, U-position
+└── devicelist.css  ← dl-table, dl-toolbar, dl-badge (shared)
 ```
+
+กฎ: **ห้ามใช้ Tailwind** — CSS ทั้งหมดอยู่ใน `src/styles/` เท่านั้น
 
 ---
 
-## Theme
+## localStorage Keys
 
-Light / Dark toggle in the Sidebar footer.  
-Accent: Buono purple `#8B44AF` (light) / `#b06fd4` (dark).  
-Tokens in `src/styles/tokens.css` — never override with inline styles.
-
----
-
-## Project Structure
-
-```
-src/
-├── api/              ← Axios functions + TypeScript types
-├── components/
-│   ├── layout/       ← AppLayout, Topbar, Sidebar
-│   ├── RouteGuard.tsx ← role-based route protection
-│   └── SessionWatcher.tsx ← JWT expiry warning timer
-├── pages/            ← one file per route
-├── stores/
-│   ├── authStore.ts  ← user, token, role (Zustand)
-│   └── themeStore.ts ← light/dark (persisted to localStorage)
-└── styles/
-    ├── tokens.css    ← CSS custom properties (light/dark via data-theme)
-    ├── global.css    ← reset + base
-    ├── layout.css    ← sidebar, topbar, page-content
-    ├── topology.css  ← React Flow overrides
-    ├── sites.css     ← building/floor cards
-    ├── floor.css     ← floor plan SVG + camera overlays
-    ├── rack.css      ← rack diagram + inventory table
-    ├── devicelist.css ← shared list page styles (tables, toolbar, badges)
-    └── dashboard.css ← overview page widgets
-```
+| Key | Value | ใช้สำหรับ |
+|---|---|---|
+| `ssm.theme` | `'light'｜'dark'` | Zustand persist |
+| `ssm.topo.hq` | `{x, y}` | ตำแหน่ง HQ node |
+| `ssm.topo.viewport` | `{x, y, zoom}` | มุมมอง topology ที่บันทึก |
+| `ssm.map.viewports` | `Record<siteId, {lat, lng, zoom}>` | มุมมอง map ต่อ site |
 
 ---
 
-## Review History
+## API Endpoints หลัก
 
-A formal code review was conducted on 2026-05-29. All 6 critical blockers resolved.  
-See `review/` directory:
-- `FINDINGS (1).md` — original review report (No-Go → Go)
-- `FIX_PLAN.md` — fix plan with backend Q&A
-- `SESSION_LOG_2026-05-29.md` — full session log with commit references
+| หน้า | Endpoint |
+|---|---|
+| Dashboard | `GET /api/dashboard/summary`, `GET /api/status/devices` |
+| Sites | `GET /api/sites`, `POST`, `PATCH`, `DELETE /api/sites/{id}` |
+| Topology position | `PATCH /api/sites/{id}/position` |
+| Buildings | `GET /api/buildings`, `POST`, `PATCH`, `DELETE /api/buildings/{id}` |
+| Building coordinates | `PATCH /api/buildings/{id}/coordinates` |
+| Floors | `GET /api/floors?Building_ID=` |
+| Cameras | `GET /api/cameras?Floor_ID=`, `GET /api/cameras/{id}` |
+| NVRs | `GET /api/nvrs`, `GET /api/nvrs/{id}` |
+| Switches | `GET /api/switches`, `GET /api/switches/{id}` |
+| Racks | `GET /api/racks`, `GET /api/racks/{id}` |
+| Auth | `POST /api/auth/login` → JWT |
+| Users | `GET /api/users` (admin only) |
+
+Vite proxy: `/api/*` → `http://localhost:50680`
+
+---
+
+## Phase Gates (ก่อนเริ่ม feature ใหม่)
+
+| Phase | Gate | สถานะ |
+|---|---|---|
+| 1 — Audit | BE: `last_seen` ใน `GET /api/cameras` | ❌ รอ BE |
+| 2.1 — Device CRUD | API contract signed ก่อนเขียน code | ❌ |
+| 2.2 — Rack U-Position | BE: `u_height/u_size`, `max_u`, overlap 409, U convention | ❌ ทั้ง 4 gate |
+| 2.3 — Building Coordinates | BE: `lat/lng` writable ผ่าน PATCH | ❌ รอ BE |
+| 3 — Alert Hardware | Baseline test + controlled fail test | ❌ ต้องอยู่หน้าเครื่อง |
+
+---
+
+## Session Logs
+
+| วันที่ | ไฟล์ | สรุป |
+|---|---|---|
+| 2026-05-29 | `docs/sessions/SESSION_2026-05-29.md` | Setup, Login, OverviewPage |
+| 2026-05-30 | `docs/sessions/SESSION_2026-05-30.md` | Topology, Sites, Buildings |
+| 2026-05-31 | `docs/sessions/SESSION_2026-05-31_FE.md` | CRUD wired real API ครบ, Building pins |
+| 2026-06-01 | `docs/sessions/SESSION_2026-06-01_FE.md` | Sites merge, Building Map upgrade |
+
+---
+
+## ทีม
+
+- **Frontend:** Claude Sonnet 4.6 + Ran
+- **Backend:** ทีม BE (ASP.NET Core, SQL Server Express)
+- **Deadline:** 1 กรกฎาคม 2026

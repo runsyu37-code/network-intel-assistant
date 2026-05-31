@@ -3,15 +3,17 @@
 > โหลดไฟล์นี้เมื่อ: resume session / แค่จะโค้ด / รัน dev
 > โหลด `CLAUDE.md` เมื่อ: ต้องการ context เต็ม / ออกแบบ feature ใหม่
 
+> 📅 **แผนช่วงไปญี่ปุ่น 7–17 มิ.ย. (เดดไลน์ส่งมอบ 1 ก.ค.):** [`JAPAN_TRIP_PLAN_2026-06.md`](JAPAN_TRIP_PLAN_2026-06.md)
+
 ---
 
-## Active This Week (อัปเดต 2026-05-31)
+## Active This Week (อัปเดต 2026-06-01)
 
 **Frontend (ทำได้เลย)**
 - [x] AuditPage — flat table ทุกกล้อง + counts + export CSV
-- [x] Wire SitesCrudPage GET ไป real API
-- [x] P1 — fix camera icon + status light alignment (`FloorPlanPage.tsx` + `floor.css`)
-- [ ] CRUD mutations — blocked รอ BE endpoints
+- [x] Sites pages รวมเป็น SitesOverviewPage (Topology/List/Grid)
+- [x] Building Map — coord input, Save View, Reset, Create mode, List view
+- [ ] Racks CRUD mutations — ยัง wire ไม่ครบ
 
 **Backend (รอทีม BE — ห้ามเริ่ม FE feature ที่ขึ้นต่อ)**
 - [ ] `last_seen` → เพิ่มใน SELECT ของ `GET /api/cameras` **[CRITICAL — audit]**

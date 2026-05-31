@@ -1,7 +1,7 @@
-import { type ElementType, useMemo } from 'react'
+import { type ElementType, useMemo, useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Network, Building2, Camera, HardDrive,
+  LayoutDashboard, Building2, Camera, HardDrive,
   PlugZap, Server, Users, Sun, Moon, ChevronRight, MapPin, Map, ClipboardList,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -44,20 +44,20 @@ interface NavItem {
   exact?: boolean
 }
 
+const SITES_SUB_PATHS = ['/dashboard/sites', '/dashboard/buildings', '/dashboard/floors', '/dashboard/map']
+
 const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Monitor',
     items: [
-      { to: '/dashboard',          Icon: LayoutDashboard, label: 'Dashboard', exact: true },
-      { to: '/dashboard/topology', Icon: Network,         label: 'Topology' },
-      { to: '/dashboard/map',      Icon: Map,             label: 'Building Map' },
-      { to: '/dashboard/audit',    Icon: ClipboardList,   label: 'Audit View' },
+      { to: '/dashboard',       Icon: LayoutDashboard, label: 'Dashboard', exact: true },
+      { to: '/dashboard/audit', Icon: ClipboardList,   label: 'Audit View' },
       {
         to: '/dashboard/sites',
         Icon: Building2,
         label: 'Sites',
         count: 5,
-        matchPrefixes: ['/dashboard/sites', '/dashboard/buildings', '/dashboard/floors'],
+        matchPrefixes: SITES_SUB_PATHS,
       },
     ],
   },
@@ -82,6 +82,15 @@ export default function Sidebar() {
   const user        = useAuthStore((s) => s.user)
   const locationCtx = useLocationCtx()
 
+  const onSitesPath = SITES_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+  const [sitesOpen, setSitesOpen] = useState(onSitesPath)
+
+  useEffect(() => {
+    if (onSitesPath) setSitesOpen(true)
+  }, [onSitesPath])
+
+  const mapActive = pathname === '/dashboard/map' || pathname.startsWith('/dashboard/map/')
+
   const { data: summaryData } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => getDashboardSummary(),
@@ -92,8 +101,8 @@ export default function Sidebar() {
   const dynCounts = useMemo(() => {
     if (!summaryData?.length) return {} as Record<string, number>
     return {
-      Cameras:      summaryData.reduce((s, d) => s + d.totalCameras, 0),
-      NVRs:         summaryData.reduce((s, d) => s + d.totalNvrs, 0),
+      Cameras:        summaryData.reduce((s, d) => s + d.totalCameras, 0),
+      NVRs:           summaryData.reduce((s, d) => s + d.totalNvrs, 0),
       'PoE Switches': summaryData.reduce((s, d) => s + d.totalSwitches, 0),
     }
   }, [summaryData])
@@ -110,6 +119,43 @@ export default function Sidebar() {
   function renderItem(item: NavItem) {
     const { to, Icon, label, count } = item
     const displayCount = dynCounts[label] ?? count
+
+    if (label === 'Sites') {
+      const isActive = SITES_SUB_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
+      return (
+        <div key="sites">
+          <div className="nav-item-row">
+            <Link to={to} className={`nav-item${isActive ? ' active' : ''}`}>
+              <Icon className="nav-ico" size={18} />
+              Sites
+              {displayCount !== undefined && <span className="nav-count">{displayCount}</span>}
+            </Link>
+            <button
+              className={`nav-expand${isActive ? ' active' : ''}`}
+              onClick={() => setSitesOpen(o => !o)}
+              title={sitesOpen ? 'ซ่อนเมนูย่อย' : 'แสดงเมนูย่อย'}
+            >
+              <ChevronRight size={12} style={{ transform: sitesOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }} />
+            </button>
+          </div>
+
+          {sitesOpen && (
+            <Link to="/dashboard/map" className={`nav-sub${mapActive ? ' active' : ''}`}>
+              <Map size={14} style={{ flex: 'none' }} />
+              Building Map
+            </Link>
+          )}
+
+          {locationCtx && (
+            <div className="nav-ctx">
+              <MapPin size={11} style={{ flex: 'none' }} />
+              <span>{locationCtx}</span>
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <Link key={label} to={to} className={navClass(item)}>
         <Icon className="nav-ico" size={18} />
@@ -132,24 +178,14 @@ export default function Sidebar() {
       {NAV.map(({ section, items }) => (
         <nav key={section} className="nav-section">
           <div className="nav-label">{section}</div>
-          {items.map(item => (
-            <div key={item.label}>
-              {renderItem(item)}
-              {item.label === 'Sites' && locationCtx && (
-                <div className="nav-ctx">
-                  <MapPin size={11} style={{ flex: 'none' }} />
-                  <span>{locationCtx}</span>
-                </div>
-              )}
-            </div>
-          ))}
+          {items.map(item => renderItem(item))}
         </nav>
       ))}
 
       {user?.role === 'admin' && (
         <nav className="nav-section">
           <div className="nav-label">Admin</div>
-          {ADMIN_NAV.map(renderItem)}
+          {ADMIN_NAV.map(item => renderItem(item))}
         </nav>
       )}
 

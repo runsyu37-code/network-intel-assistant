@@ -20,8 +20,8 @@ function SiteNode({ id, data }: NodeProps<SiteData>) {
       <Handle type="target" position={Position.Right}  id="r" isConnectable={false} style={{ opacity: 0 }} />
       <div
         className={`topo-site topo-site-${data.status}`}
-        onClick={() => navigate(`/dashboard/sites/${id}`)}
-        title={`ดูตึกของ ${data.label}`}
+        onClick={() => navigate(`/dashboard/map?site=${id}`)}
+        title={`ดูแผนที่ ${data.label}`}
       >
         <span className="topo-dot" style={{ background: STATUS_COLOR[data.status] }} />
         <div className="topo-site-meta">

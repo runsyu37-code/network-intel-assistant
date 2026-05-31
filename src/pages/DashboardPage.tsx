@@ -2,8 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 import { RouteGuard } from '../components/RouteGuard'
 import OverviewPage from './OverviewPage'
-import TopologyPage from './TopologyPage'
-import SitesCrudPage from './SitesCrudPage'
+import SitesOverviewPage from './SitesOverviewPage'
 import SitesPage from './SitesPage'
 import BuildingDetailPage from './BuildingDetailPage'
 import FloorPlanPage from './FloorPlanPage'
@@ -28,7 +27,6 @@ export default function DashboardPage() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index                        element={<OverviewPage />} />
-        <Route path="topology"              element={<TopologyPage />} />
         <Route path="map"                   element={<BuildingMapPage />} />
         <Route path="audit"                 element={<AuditPage />} />
         <Route path="sites/:siteId"         element={<SitesPage />} />
@@ -37,9 +35,7 @@ export default function DashboardPage() {
           <RouteGuard allowed={STAFF}><FloorPlanPage /></RouteGuard>
         } />
 
-        <Route path="sites" element={
-          <RouteGuard allowed={ADMIN}><SitesCrudPage /></RouteGuard>
-        } />
+        <Route path="sites"                 element={<SitesOverviewPage />} />
         <Route path="racks" element={
           <RouteGuard allowed={ADMIN_USER}><RacksListPage /></RouteGuard>
         } />
