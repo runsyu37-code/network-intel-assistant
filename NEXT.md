@@ -1,6 +1,6 @@
 # NEXT — สิ่งที่จะทำต่อ (เขียนก่อน /clear)
 
-> เขียน: 2026-05-31 (session 4) | branch: frontend (FE) + backend (BE)
+> เขียน: 2026-05-31 (session 5) | branch: frontend (FE) + backend (BE)
 
 ---
 
@@ -8,49 +8,49 @@
 
 | งาน | สถานะ |
 |---|---|
-| Commit frontend session 3 (AuditPage, SitesCrudPage, P1 fix) | ✅ `52fb05d` |
-| PATCH /api/buildings/{id}/coordinates — BE endpoint ใหม่ | ✅ `106580a` |
-| mock_data.sql — rewrite 4 buildings + 12 cameras + position_x/y | ✅ seed สำเร็จ |
-| MOCK_DATA_GUIDE.md — คู่มือ clean + seed | ✅ |
-| migration_add_camera_position.sql | ✅ รันบน SSMS แล้ว |
-| Web.config fixes (home PC) | ✅ ดูรายละเอียดใน SESSION_2026-05-31.md |
-| Reset admin / ssm_user password ด้วย bcrypt hash ใหม่ | ✅ |
-| Login เข้าได้แล้ว | ✅ |
+| ทดสอบทุก page (10 routes + 4 detail pages) — ไม่มี JS error | ✅ |
+| ตรวจ `last_seen` ใน `GET /api/cameras` BE | ✅ มีอยู่แล้วตั้งแต่ F9 |
+| ตรวจ PingService — code ครบ, Start() ถูก call ใน Global.asax | ✅ |
+| Discord webhook URL → ใส่ใน Web.config + ทดสอบยิงได้ | ✅ `791c908` (BE gitignored) |
+| Fix LoginPage: error message หายเร็ว | ✅ `791c908` |
+| &emsp;root cause: 401 interceptor redirect แม้แต่ login endpoint เอง | fixed `client.ts` |
+| &emsp;root cause: dev fallback auto-login เมื่อ backend ไม่ตอบ | removed `LoginPage.tsx` |
 
 ---
 
-## งานที่ต้องทำต่อ (ทำได้เลย)
+## งานที่ต้องทำต่อ (ทำได้แค่หน้าเครื่อง/VLAN — ก่อน 7 มิ.ย.)
 
-### 1. ทดสอบทุก page (ทำก่อนอื่น)
+> ตาม `JAPAN_TRIP_PLAN_2026-06.md` — deadline demo 1 ก.ค. 2026
 
-รัน frontend: `npm run dev` → `http://localhost:3000`
-รัน backend: เปิด `C:\1_Work_Local\backend-latest\BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx` → Ctrl+F5
+### 1. Import ข้อมูลจริงเข้า DB (work NB)
 
-| หน้า | สิ่งที่ต้องเห็น |
+```
+C:\ai-playground\network-intel-assistant\FOR_WORK_NB\
+- template_v4.xlsx  ← กรอกข้อมูลจริง
+- ssm_import.py     ← รัน import
+- START_HERE.md     ← คู่มือ
+```
+
+### 2. Hardware test Phase 3 (ต้องมีฮาร์ดแวร์ + VLAN)
+
+- baseline: เสียบกล้อง → FE แสดงเขียว, Discord เงียบ
+- failure: ถอดสาย → FE แดง → Discord ยิง 1 ครั้ง ไม่ซ้ำ
+
+### 3. PingService บน VM/เครื่อง always-on
+
+- ต้องรันบนเครื่องที่อยู่ใน VLAN ตลอด (ไม่ใช่ laptop)
+- ดู `C:\1_Work_Local\backend-latest\docs\PING_SERVICE_NOTES.md`
+
+---
+
+## ที่พบระหว่างทดสอบ (ไม่ใช่ bug critical)
+
+| หน้า | สิ่งที่พบ |
 |---|---|
-| Dashboard | device counts ครบ |
-| Topology | S001 node แสดง |
-| Building Map | markers 4 จุดบน map |
-| Sites → B001 | 4 floors |
-| Floor a-f1 | กล้อง 2 ตัวบน floor plan |
-| Audit | กล้อง 12 ตัว online 9 / warning 1 / offline 2 |
-
-### 2. Fix — error message หายเร็วใน LoginPage
-
-ข้อความแจ้งเตือนแดงหายเร็วเกินไป — ดูใน `src/pages/LoginPage.tsx`
-น่าจะเป็น notification duration หรือ setTimeout สั้นเกิน
-
-### 3. Backend ที่ยังค้าง (รอทีม BE)
-
-| งาน | Priority |
-|---|---|
-| `last_seen` ใน GET /api/cameras | ✅ มีแล้ว |
-| `lat/lng` ใน GET /api/buildings | ✅ มีแล้ว |
-| `PATCH /api/buildings/{id}/coordinates` | ✅ เพิ่งทำ |
-| `position_x/y` ใน GET /api/cameras | ✅ มีแล้ว |
-| CRUD mutations ทุกหน้า | 🟠 รอ API contract ก่อน |
-| EF Core migrations | ❌ ไม่ทำ — .NET Framework 4.8 ไม่รองรับ |
-| PingService | 🟡 |
+| Racks sidebar badge = 6 | แต่ list แสดง 4 rack ใน site — มี rack ที่ไม่มี site ใน DB |
+| Building Map | ไม่มี markers — expected เพราะ lat/lng = null ใน DB |
+| กล้องทุกตัว Offline | expected — PingService ยัง ping ไม่ถึง VLAN กล้อง |
+| Rack Detail loading | ID format อาจไม่ตรง — ลอง click จาก Racks list แทน |
 
 ---
 
@@ -58,30 +58,23 @@
 
 ### Backend (home PC)
 - Project: `C:\1_Work_Local\backend-latest\BNO_Survei_MonitorAPI\BNO_Survei_MonitorAPI.slnx`
-- Port: **50680**
-- DB: `DESKTOP-OAVDR88\SQLEXPRESS` → `SSM_DB`
+- Port: **50680** | DB: `DESKTOP-OAVDR88\SQLEXPRESS` → `SSM_DB`
 - Login: `admin` / `Admin@SSM1` | `ssm_user` / `User@SSM1`
-- Web.config: gitignored — อยู่แค่ใน home PC นี้
+- Web.config: gitignored — Discord webhook URL ใส่แล้วในเครื่องนี้
 
 ### Frontend
 - Project: `C:\1_Work_Local\AI_Agent\network-intel-assistant`
-- Branch: `frontend`
-- Port: 3000
-
-### DB mock data
-- ล้างด้วย: `db/MOCK_DATA_GUIDE.md` (TRUNCATE script)
-- Seed ด้วย: `db/mock_data.sql`
+- Branch: `frontend` | Port: 3000
 
 ---
 
 ## ไฟล์สำคัญที่ต้องโหลดหลัง /clear
 
 ```
-DEV.md                                               ← status + Phase Gates
-NEXT.md                                              ← ไฟล์นี้
-C:\1_Work_Local\backend-latest\docs\sessions\SESSION_2026-05-31.md  ← backend session log
-db/MOCK_DATA_GUIDE.md                                ← วิธี clean + seed DB
-docs/sessions/CROSSMACHINE_FIX_2026-05-28.md         ← แก้ Web.config ถ้าเกิดปัญหา
+DEV.md                                    ← status + Phase Gates
+NEXT.md                                   ← ไฟล์นี้
+JAPAN_TRIP_PLAN_2026-06.md               ← แผนก่อน/ระหว่าง/หลังทริปญี่ปุ่น
+C:\1_Work_Local\backend-latest\docs\sessions\F9_SESSION_2026-05-30.md
 ```
 
 ---
