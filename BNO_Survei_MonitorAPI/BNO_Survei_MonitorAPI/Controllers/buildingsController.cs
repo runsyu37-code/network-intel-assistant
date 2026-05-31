@@ -198,6 +198,52 @@ namespace BNO_Survei_MonitorAPI.Controllers
         }
         #endregion
 
+        #region PATCH : buildings/{Building_ID}/coordinates
+        // Body: { "lat": 13.7563, "lng": 100.5018 }
+        // ใช้เพื่อ pin ตำแหน่ง building บน satellite map — แยกออกจาก PUT เพราะ lat/lng เป็น admin-only operation
+        public class CoordinatesRequest
+        {
+            public decimal? lat { get; set; }
+            public decimal? lng { get; set; }
+        }
+
+        [HttpPatch]
+        [Route("api/buildings/{Building_ID}/coordinates")]
+        [RequireRole("admin")]
+        public IHttpActionResult PatchCoordinates(string Building_ID, [FromBody] CoordinatesRequest req)
+        {
+            if (req == null || !req.lat.HasValue || !req.lng.HasValue)
+                return BadRequest("lat and lng are required");
+
+            // ขอบเขต lat/lng จริงของโลก — ป้องกัน garbage data เข้า DB
+            if (req.lat < -90 || req.lat > 90)
+                return BadRequest("lat must be between -90 and 90");
+            if (req.lng < -180 || req.lng > 180)
+                return BadRequest("lng must be between -180 and 180");
+
+            try
+            {
+                using (var con = new SqlConnection(ConnectionDB.ConnectionStringCN))
+                {
+                    con.Open();
+                    using (var cmd = new SqlCommand(@"
+                        UPDATE buildings
+                        SET lat = @lat, lng = @lng, updated_at = SYSUTCDATETIME()
+                        WHERE Building_ID = @Building_ID", con))
+                    {
+                        cmd.Parameters.AddWithValue("@lat", req.lat.Value);
+                        cmd.Parameters.AddWithValue("@lng", req.lng.Value);
+                        cmd.Parameters.AddWithValue("@Building_ID", Building_ID);
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows == 0) return NotFound();
+                    }
+                }
+                return Ok(new { success = true, Building_ID, lat = req.lat, lng = req.lng });
+            }
+            catch (Exception) { return InternalServerError(new Exception("An internal error occurred")); }
+        }
+        #endregion
+
         #region Delete : buildings
         [HttpPost]
         [Route("api/buildings/delete/{Building_ID}")]
