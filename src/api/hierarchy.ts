@@ -59,3 +59,7 @@ export async function getFloorById(id: string): Promise<FloorApi> {
 export async function patchSitePosition(siteId: string, x: number, y: number): Promise<void> {
   await client.patch(`/sites/${siteId}/position`, { x, y })
 }
+
+export async function patchBuildingCoordinates(buildingId: string, lat: number, lng: number): Promise<void> {
+  await client.patch(`/buildings/${buildingId}/coordinates`, { lat, lng })
+}

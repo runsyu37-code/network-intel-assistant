@@ -1,11 +1,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { Building2, Layers } from 'lucide-react'
-import { getBuildings } from '../api/hierarchy'
+import { Building2, Layers, MapPin, X } from 'lucide-react'
+import { getBuildings, patchBuildingCoordinates } from '../api/hierarchy'
+import { useAuthStore } from '../stores/authStore'
+import type { BuildingApi } from '../api/types'
+
 type TileMode = 'osm' | 'satellite'
 
 const TILES: Record<TileMode, { url: string; attribution: string }> = {
@@ -30,11 +33,20 @@ function buildingIcon(alertCount: number): L.DivIcon {
   })
 }
 
+function PlacementHandler({ onPlace }: { onPlace: (lat: number, lng: number) => void }) {
+  useMapEvents({ click(e) { onPlace(e.latlng.lat, e.latlng.lng) } })
+  return null
+}
+
 export default function BuildingMapPage() {
   const navigate        = useNavigate()
+  const qc              = useQueryClient()
+  const isAdmin         = useAuthStore(s => s.isAdmin())
   const [searchParams]  = useSearchParams()
   const [tile, setTile] = useState<TileMode>('satellite')
   const [siteFilter, setSiteFilter] = useState(searchParams.get('site') ?? 'all')
+  const [placing, setPlacing] = useState<BuildingApi | null>(null)
+  const [saving,  setSaving]  = useState(false)
 
   const { data, isPending, isError } = useQuery({
     queryKey: ['buildings-map'],
@@ -46,11 +58,8 @@ export default function BuildingMapPage() {
     [data],
   )
 
-  // ถ้าไม่มีการเลือก site และมีแค่ site เดียว → auto-select
   useEffect(() => {
-    if (siteFilter === 'all' && sites.length === 1) {
-      setSiteFilter(sites[0])
-    }
+    if (siteFilter === 'all' && sites.length === 1) setSiteFilter(sites[0])
   }, [sites, siteFilter])
 
   const filtered = useMemo(
@@ -65,6 +74,18 @@ export default function BuildingMapPage() {
     ? [mapped.reduce((s, b) => s + b.lat!, 0) / mapped.length,
        mapped.reduce((s, b) => s + b.lng!, 0) / mapped.length]
     : [13.7563, 100.5018]
+
+  const handlePlace = async (lat: number, lng: number) => {
+    if (!placing || saving) return
+    setSaving(true)
+    try {
+      await patchBuildingCoordinates(placing.Building_ID, lat, lng)
+      await qc.invalidateQueries({ queryKey: ['buildings-map'] })
+      setPlacing(null)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -93,31 +114,52 @@ export default function BuildingMapPage() {
         </div>
       </div>
 
+      {placing && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 20px',
+          background: 'var(--primary)',
+          color: '#fff',
+          fontSize: 13,
+        }}>
+          <MapPin size={15} />
+          <span>คลิกบนแผนที่เพื่อวางพิกัด <strong>{placing.name}</strong></span>
+          {saving && <span style={{ opacity: 0.75 }}>กำลังบันทึก...</span>}
+          <button
+            onClick={() => setPlacing(null)}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <X size={14} /> ยกเลิก
+          </button>
+        </div>
+      )}
+
       <div className="canvas-wrap" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-        {isPending && (
-          <div className="dl-empty" style={{ padding: 40 }}>กำลังโหลด...</div>
-        )}
-        {isError && (
-          <div className="dl-empty" style={{ padding: 40, color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</div>
-        )}
+        {isPending && <div className="dl-empty" style={{ padding: 40 }}>กำลังโหลด...</div>}
+        {isError  && <div className="dl-empty" style={{ padding: 40, color: 'var(--alert)' }}>โหลดข้อมูลไม่สำเร็จ — กรุณารีเฟรช</div>}
         {!isPending && !isError && (
           <>
             <MapContainer
               center={center}
               zoom={mapped.length > 1 ? 10 : 13}
-              style={{ height: unmapped.length > 0 ? 'calc(100% - 140px)' : '100%', width: '100%' }}
+              style={{
+                height: unmapped.length > 0 ? 'calc(100% - 120px)' : '100%',
+                width: '100%',
+                cursor: placing ? 'crosshair' : undefined,
+              }}
               scrollWheelZoom
             >
               <TileLayer url={TILES[tile].url} attribution={TILES[tile].attribution} />
+              {placing && <PlacementHandler onPlace={handlePlace} />}
               {mapped.map(b => (
-                <Marker key={b.Building_ID} position={[b.lat!, b.lng!]} icon={buildingIcon(b.alert_count)}>
+                <Marker key={b.Building_ID} position={[b.lat!, b.lng!]} icon={buildingIcon(b.alert_count ?? 0)}>
                   <Popup>
                     <div style={{ minWidth: 180 }}>
                       <div style={{ fontWeight: 700, marginBottom: 4 }}>{b.name}</div>
                       <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>Site: {b.Site_ID}</div>
                       <div style={{ fontSize: 12, display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <span>{b.floor_count} floors · {b.camera_count} cameras · {b.nvr_count} NVRs</span>
-                        {b.alert_count > 0 && (
+                        {(b.alert_count ?? 0) > 0 && (
                           <span style={{ color: '#dc2626', fontWeight: 600 }}>⚠ {b.alert_count} active alerts</span>
                         )}
                       </div>
@@ -134,22 +176,33 @@ export default function BuildingMapPage() {
             </MapContainer>
 
             {unmapped.length > 0 && (
-              <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+              <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Building2 size={12} />
                   {unmapped.length} อาคารยังไม่มีพิกัด GPS
+                  {isAdmin && <span style={{ color: 'var(--primary)' }}>— กด Pin เพื่อวางตำแหน่ง</span>}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {unmapped.map(b => (
-                    <button
-                      key={b.Building_ID}
-                      className="btn-ghost"
-                      style={{ fontSize: 12, padding: '4px 12px' }}
-                      onClick={() => navigate(`/dashboard/buildings/${b.Building_ID}`)}
-                    >
-                      {b.name}
-                      {b.alert_count > 0 && <span style={{ color: 'var(--alert)', marginLeft: 6 }}>●</span>}
-                    </button>
+                    <div key={b.Building_ID} style={{ display: 'flex', gap: 4 }}>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 12, padding: '4px 12px' }}
+                        onClick={() => navigate(`/dashboard/buildings/${b.Building_ID}`)}
+                      >
+                        {b.name}
+                        {(b.alert_count ?? 0) > 0 && <span style={{ color: 'var(--alert)', marginLeft: 6 }}>●</span>}
+                      </button>
+                      {isAdmin && (
+                        <button
+                          className={placing?.Building_ID === b.Building_ID ? 'btn-primary' : 'btn-ghost'}
+                          style={{ fontSize: 12, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
+                          onClick={() => setPlacing(placing?.Building_ID === b.Building_ID ? null : b)}
+                        >
+                          <MapPin size={12} /> Pin
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
