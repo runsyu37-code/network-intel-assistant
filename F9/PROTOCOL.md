@@ -52,14 +52,20 @@ Status: OPEN
 
 ---
 
-## SLA — 2-day rule
+## When to mark BLOCKED
+
+While waiting for the other team, ask: **"Is there anything I can do right now that moves the main work forward?"**
+
+1. If yes → do that work first, then check back.
+2. If no — there is nothing left that moves the main work forward → mark `BLOCKED` immediately. Do not fill the time with unrelated tasks. Notify the other team directly and wait for a response before continuing.
+
+**Why:** R17 and R18 sat unanswered for days while work quietly stalled. Marking BLOCKED early makes the blockage visible and prompts the other team to act — instead of both sides assuming the other is handling it.
 
 | Situation | What to do |
 |---|---|
-| Request sent, no reply after **2 working days** | Change `Status: OPEN` → `Status: BLOCKED`, update `DEV.md` Blocked section, follow up directly |
-| You receive a request | Acknowledge within 1 day even if you can't deliver yet — write "noted, ETA X" |
-
-**Why:** R17 and R18 sat unanswered for days and silently blocked the floor plan and building map. The 2-day rule makes a blockage visible before it wastes a week.
+| You send a request | Check back after finishing any work that still moves the main track forward |
+| Nothing moves the main track forward | Mark `Status: BLOCKED` immediately, update `DEV.md`, notify the other team directly |
+| You receive a request | Acknowledge the same day even if you can't deliver yet — write "noted, ETA X" |
 
 ---
 
@@ -86,5 +92,5 @@ planning failure, not a surprise.
 | `OPEN` | Waiting for a response |
 | `IN PROGRESS` | Being worked on |
 | `DONE` | Delivered and confirmed |
-| `BLOCKED` | No response after 2 days — escalate |
+| `BLOCKED` | Nothing left to do that moves the main work forward — escalate now |
 | `DEFERRED` | Agreed to defer to a later phase |
