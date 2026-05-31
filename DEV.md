@@ -5,13 +5,21 @@
 
 ---
 
-## Active This Week (อัปเดตต้นสัปดาห์)
+## Active This Week (อัปเดต 2026-05-31)
 
-**Frontend**
-- (ว่าง — อัปเดตก่อนเริ่มงาน)
+**Frontend (ทำได้เลย)**
+- [x] AuditPage — flat table ทุกกล้อง + counts + export CSV
+- [x] Wire SitesCrudPage GET ไป real API
+- [x] P1 — fix camera icon + status light alignment (`FloorPlanPage.tsx` + `floor.css`)
+- [ ] CRUD mutations — blocked รอ BE endpoints
 
-**Backend**
-- (ว่าง — อัปเดตก่อนเริ่มงาน)
+**Backend (รอทีม BE — ห้ามเริ่ม FE feature ที่ขึ้นต่อ)**
+- [ ] `last_seen` → เพิ่มใน SELECT ของ `GET /api/cameras` **[CRITICAL — audit]**
+- [ ] `lat`/`lng` → ยืนยัน `GET /api/buildings` return + เพิ่ม `PATCH /api/buildings/{id}` **[map markers]**
+- [ ] Rack schema: `u_height`/`u_size` per device, ยืนยัน `max_u`, overlap rejection (409), lock U numbering **[gate rack UI]**
+- [ ] EF Core migrations — หยุด ALTER TABLE มือ
+- [ ] Server-side RBAC ทุก mutating endpoint (POST/PATCH/DELETE)
+- [ ] PingService: concurrent pings, heartbeat, ยืนยัน supervised service, ping by IP (ไม่ใช่ hostname)
 
 ---
 

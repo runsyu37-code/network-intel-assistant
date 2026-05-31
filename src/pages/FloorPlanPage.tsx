@@ -372,8 +372,9 @@ export default function FloorPlanPage() {
                       setSelectedCam(cam)
                     } : undefined}
                   >
-                    <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
-                    <div className="cam-icon" />
+                    <div className="cam-icon">
+                      <div className="fov" style={{ '--rot': `${cam.rot}deg` } as React.CSSProperties} />
+                    </div>
                     <span className="cam-name">{cam.id}</span>
                   </div>
                 </Tooltip>

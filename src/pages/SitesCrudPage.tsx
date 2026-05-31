@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { getSites, getDashboardSummary } from '../api/hierarchy'
+import type { SiteApi, DashboardSummaryDto } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
 
@@ -15,13 +18,24 @@ interface Site {
   note: string
 }
 
-const INIT_SITES: Site[] = [
-  { id: 'hq', name: 'สำนักงานใหญ่', address: 'ถ.พระราม 4, กรุงเทพฯ',        province: 'กรุงเทพฯ',    buildings: 3, cameras: 48, status: 'online',  note: '' },
-  { id: 'sl', name: 'สาขาสีลม',     address: 'ถ.สีลม, กรุงเทพฯ',             province: 'กรุงเทพฯ',    buildings: 2, cameras: 36, status: 'online',  note: '' },
-  { id: 'lp', name: 'สาขาลาดพร้าว', address: 'ถ.ลาดพร้าว, กรุงเทพฯ',        province: 'กรุงเทพฯ',    buildings: 2, cameras: 44, status: 'warning', note: '' },
-  { id: 'bn', name: 'สาขาบางนา',    address: 'ถ.บางนา-ตราด, กรุงเทพฯ',      province: 'กรุงเทพฯ',    buildings: 1, cameras: 20, status: 'online',  note: '' },
-  { id: 'wh', name: 'คลังสินค้า',   address: 'นิคมอุตสาหกรรม, สมุทรปราการ', province: 'สมุทรปราการ', buildings: 1, cameras: 16, status: 'offline', note: '' },
-]
+function toStatus(summary: DashboardSummaryDto | undefined): Status {
+  if (!summary) return 'online'
+  if (summary.camerasOffline > 0) return 'warning'
+  return 'online'
+}
+
+function mapSite(a: SiteApi, summary: DashboardSummaryDto | undefined): Site {
+  return {
+    id:        a.Site_ID,
+    name:      a.name,
+    address:   a.location ?? '',
+    province:  '',
+    buildings: summary?.totalBuildings ?? 0,
+    cameras:   summary?.totalCameras   ?? 0,
+    status:    toStatus(summary),
+    note:      a.code ?? '',
+  }
+}
 
 const BADGE: Record<Status, { cls: string; label: string }> = {
   online:  { cls: 'dl-badge ok',    label: 'Online' },
@@ -36,12 +50,33 @@ const EMPTY_FORM: FormState = { name: '', address: '', province: 'กรุง�
 
 export default function SitesCrudPage() {
   const navigate = useNavigate()
-  const [sites, setSites]           = useState<Site[]>(INIT_SITES)
+  const [sites, setSites]           = useState<Site[]>([])
   const [q, setQ]                   = useState('')
   const [statusFilter, setStatus]   = useState<string>('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Site>(null)
   const [deleteTarget, setDel]      = useState<Site | null>(null)
   const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+
+  const { data: apiSites = [], isLoading: sitesLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: getSites,
+    staleTime: 30_000,
+  })
+
+  const { data: summaryData = [] } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: getDashboardSummary,
+    staleTime: 30_000,
+  })
+
+  const initialized = useRef(false)
+  useEffect(() => {
+    if (initialized.current || sitesLoading) return
+    initialized.current = true
+    const summaryMap: Record<string, DashboardSummaryDto> = {}
+    summaryData.forEach(s => { summaryMap[s.siteId] = s })
+    setSites(apiSites.map(a => mapSite(a, summaryMap[a.Site_ID])))
+  }, [apiSites, summaryData, sitesLoading])
 
   const filtered = sites.filter(s => {
     if (statusFilter !== 'all' && s.status !== statusFilter) return false
@@ -90,6 +125,12 @@ export default function SitesCrudPage() {
 
   const isEditing = modalMode !== null && modalMode !== 'create'
   const modalOpen = modalMode !== null
+
+  if (sitesLoading) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', height: '100%' }}>
+      Loading sites...
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 4 }}>
