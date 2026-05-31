@@ -23,7 +23,7 @@
 ### Phase 1 — Audit-Ready
 - [ ] BE: `last_seen` returned from `GET /api/cameras`
 - [ ] BE: `position_x` / `position_y` returned from `GET /api/cameras` (P5)
-- [ ] BE: topology SQL migration run on SSMS (P6)
+- [x] BE: topology SQL migration run on SSMS (P6) ✅ 2026-05-31
 - [ ] FE: localStorage position crutch deleted (after P5 lands)
 - [ ] FE: Flat Audit View built (table + counts + offline filter)
 - [ ] BOTH: PingService verified — supervised service, always-on VM, ICMP path confirmed
