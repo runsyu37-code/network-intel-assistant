@@ -204,7 +204,7 @@ INSERT INTO alert_logs (device_type, device_id, device_name, brand, ip_address,
     N'SW-B2-01', 2, 'offline', N'Camera offline — ping failed 5 times', 0, NULL),
 ('nvr',   'NVR-B2',N'NVR-B2-01', 'Dahua',    '192.168.40.20',
     N'สำนักงานใหญ่', N'อาคาร B',    N'ชั้น 1',
-    NULL, NULL,    'warning', N'HDD usage 88% — retention at risk',  0, NULL);
+    NULL, NULL,    'hdd_warning', N'HDD usage 88% — retention at risk',  0, NULL);
 GO
 
 -- -----------------------------------------------------------------------------
