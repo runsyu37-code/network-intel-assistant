@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -77,35 +77,29 @@ export default function NVRsPage() {
 
   const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
 
-  const [nvrs, setNvrs]             = useState<NVR[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | NVR>(null)
   const [deleteTarget, setDel]      = useState<NVR | null>(null)
   const [form, setForm]             = useState<FormState>({ nvrId: '', name: '', ip: '', model: '', chTotal: '16', site: '' })
+  const [saving, setSaving]         = useState(false)
 
-  const initialized = useRef(false)
-  useEffect(() => {
-    if (initialized.current) return
-    if (nvrLoading || siteLoading) return
-    initialized.current = true
-    setNvrs(apiNvrs.map(a => mapNvr(a, siteMap)))
-  }, [apiNvrs, nvrLoading, siteLoading, siteMap])
+  const nvrs = useMemo(
+    () => (nvrLoading || siteLoading) ? [] : apiNvrs.map(a => mapNvr(a, siteMap)),
+    [apiNvrs, nvrLoading, siteLoading, siteMap],
+  )
 
   const createMut = useMutation({
     mutationFn: () => createNvr({ NVR_ID: form.nvrId.trim(), device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16, Site_ID: form.site }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
-    onError: () => {},
   })
   const updateMut = useMutation({
     mutationFn: (id: string) => updateNvr(id, { device_name: form.name.trim(), ip_internet: form.ip.trim(), model: form.model.trim(), total_channels: parseInt(form.chTotal) || 16 }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
-    onError: () => {},
   })
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteNvr(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['nvrs'] }),
-    onError: () => {},
   })
 
   const filtered = nvrs.filter(n => {
@@ -121,34 +115,42 @@ export default function NVRsPage() {
   }
 
   function openEdit(n: NVR) {
-    setForm({ nvrId: n.id, name: n.name, ip: n.ip, model: n.model, chTotal: String(n.chTotal), site: n.site })
+    setForm({ nvrId: n.id, name: n.name, ip: n.ip === '—' ? '' : n.ip, model: n.model, chTotal: String(n.chTotal), site: n.site })
     setModalMode(n)
   }
 
   async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
-    const chTotal = parseInt(form.chTotal) || 16
-    if (modalMode === 'create') {
-      if (!form.nvrId.trim()) return
-      const nvr: NVR = { id: form.nvrId.trim(), name: form.name.trim(), ip: form.ip.trim(), ipCctv: '—', model: form.model.trim(), brand: '—', chUsed: 0, chTotal, hddPct: 0, site: form.site, status: 'online' }
-      setNvrs(prev => [...prev, nvr])
+    if (modalMode === 'create' && !form.nvrId.trim()) return
+    setSaving(true)
+    try {
+      if (modalMode === 'create') {
+        await createMut.mutateAsync()
+        message.success('เพิ่ม NVR สำเร็จ')
+      } else if (modalMode && typeof modalMode === 'object') {
+        await updateMut.mutateAsync(modalMode.id)
+        message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
+      }
       setModalMode(null)
-      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${nvr.name} สำเร็จ`) }
-      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
-    } else if (modalMode && typeof modalMode === 'object') {
-      setNvrs(prev => prev.map(n => n.id === modalMode.id ? { ...n, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), chTotal, site: form.site } : n))
-      setModalMode(null)
-      try { await updateMut.mutateAsync(modalMode.id); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
-      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+    } catch {
+      message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
     }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
-    setNvrs(prev => prev.filter(n => n.id !== deleteTarget.id))
-    setDel(null)
-    try { await deleteMut.mutateAsync(deleteTarget.id); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
-    catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+    setSaving(true)
+    try {
+      await deleteMut.mutateAsync(deleteTarget.id)
+      message.success(`ลบ ${deleteTarget.name} สำเร็จ`)
+      setDel(null)
+    } catch {
+      message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -315,7 +317,7 @@ export default function NVRsPage() {
             </div>
             <div className="crud-modal-ft">
               <button className="btn-ghost" onClick={() => setModalMode(null)}>ยกเลิก</button>
-              <button className="btn-primary" onClick={handleSave}>บันทึก</button>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
             </div>
           </div>
         </div>
@@ -334,7 +336,7 @@ export default function NVRsPage() {
             </div>
             <div className="del-modal-ft">
               <button className="btn-ghost" onClick={() => setDel(null)}>ยกเลิก</button>
-              <button className="btn-danger" onClick={handleDelete}>ลบ</button>
+              <button className="btn-danger" onClick={handleDelete} disabled={saving}>{saving ? 'กำลังลบ...' : 'ลบ'}</button>
             </div>
           </div>
         </div>

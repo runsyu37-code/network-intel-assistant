@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { getSites, getDashboardSummary } from '../api/hierarchy'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { App } from 'antd'
+import { getSites, getDashboardSummary, createSite, updateSite, deleteSite } from '../api/hierarchy'
 import type { SiteApi, DashboardSummaryDto } from '../api/types'
 
 type Status = 'online' | 'warning' | 'offline'
@@ -45,17 +46,19 @@ const BADGE: Record<Status, { cls: string; label: string }> = {
 
 const PROVINCES = ['กรุงเทพฯ', 'สมุทรปราการ', 'นนทบุรี', 'ปทุมธานี', 'สมุทรสาคร']
 
-interface FormState { name: string; address: string; province: string; note: string }
-const EMPTY_FORM: FormState = { name: '', address: '', province: 'กรุงเทพฯ', note: '' }
+interface FormState { siteId: string; name: string; address: string; province: string; note: string }
+const EMPTY_FORM: FormState = { siteId: '', name: '', address: '', province: 'กรุงเทพฯ', note: '' }
 
 export default function SitesCrudPage() {
-  const navigate = useNavigate()
-  const [sites, setSites]           = useState<Site[]>([])
+  const navigate       = useNavigate()
+  const { message }    = App.useApp()
+  const queryClient    = useQueryClient()
   const [q, setQ]                   = useState('')
   const [statusFilter, setStatus]   = useState<string>('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Site>(null)
   const [deleteTarget, setDel]      = useState<Site | null>(null)
   const [form, setForm]             = useState<FormState>(EMPTY_FORM)
+  const [saving, setSaving]         = useState(false)
 
   const { data: apiSites = [], isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
@@ -69,14 +72,29 @@ export default function SitesCrudPage() {
     staleTime: 30_000,
   })
 
-  const initialized = useRef(false)
-  useEffect(() => {
-    if (initialized.current || sitesLoading) return
-    initialized.current = true
-    const summaryMap: Record<string, DashboardSummaryDto> = {}
-    summaryData.forEach(s => { summaryMap[s.siteId] = s })
-    setSites(apiSites.map(a => mapSite(a, summaryMap[a.Site_ID])))
-  }, [apiSites, summaryData, sitesLoading])
+  const summaryMap = useMemo(() => {
+    const m: Record<string, DashboardSummaryDto> = {}
+    summaryData.forEach(s => { m[s.siteId] = s })
+    return m
+  }, [summaryData])
+
+  const sites = useMemo(
+    () => sitesLoading ? [] : apiSites.map(a => mapSite(a, summaryMap[a.Site_ID])),
+    [apiSites, sitesLoading, summaryMap],
+  )
+
+  const createMut = useMutation({
+    mutationFn: () => createSite({ Site_ID: form.siteId.trim(), name: form.name.trim(), location: form.address.trim(), description: form.province }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sites'] }),
+  })
+  const updateMut = useMutation({
+    mutationFn: (id: string) => updateSite(id, { Site_ID: id, name: form.name.trim(), location: form.address.trim(), description: form.province }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sites'] }),
+  })
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteSite(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sites'] }),
+  })
 
   const filtered = sites.filter(s => {
     if (statusFilter !== 'all' && s.status !== statusFilter) return false
@@ -91,36 +109,42 @@ export default function SitesCrudPage() {
   }
 
   function openEdit(s: Site) {
-    setForm({ name: s.name, address: s.address, province: s.province, note: s.note })
+    setForm({ siteId: s.id, name: s.name, address: s.address, province: s.province, note: s.note })
     setModalMode(s)
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.name.trim()) return
-    if (modalMode === 'create') {
-      const newSite: Site = {
-        id: `site-${Date.now()}`,
-        name: form.name.trim(),
-        address: form.address.trim(),
-        province: form.province,
-        note: form.note.trim(),
-        buildings: 0, cameras: 0, status: 'online',
+    if (modalMode === 'create' && !form.siteId.trim()) return
+    setSaving(true)
+    try {
+      if (modalMode === 'create') {
+        await createMut.mutateAsync()
+        message.success('เพิ่ม Site สำเร็จ')
+      } else if (modalMode && typeof modalMode === 'object') {
+        await updateMut.mutateAsync(modalMode.id)
+        message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
       }
-      setSites(prev => [...prev, newSite])
-    } else if (modalMode && typeof modalMode === 'object') {
-      setSites(prev => prev.map(s =>
-        s.id === modalMode.id
-          ? { ...s, name: form.name.trim(), address: form.address.trim(), province: form.province, note: form.note.trim() }
-          : s
-      ))
+      setModalMode(null)
+    } catch {
+      message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
     }
-    setModalMode(null)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteTarget) return
-    setSites(prev => prev.filter(s => s.id !== deleteTarget.id))
-    setDel(null)
+    setSaving(true)
+    try {
+      await deleteMut.mutateAsync(deleteTarget.id)
+      message.success(`ลบ ${deleteTarget.name} สำเร็จ`)
+      setDel(null)
+    } catch {
+      message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -223,6 +247,13 @@ export default function SitesCrudPage() {
               </button>
             </div>
             <div className="crud-modal-body">
+              {!isEditing && (
+                <div className="form-group">
+                  <label className="form-label">Site ID <span style={{ color: 'var(--alert)' }}>*</span></label>
+                  <input className="form-ctrl mono" placeholder="e.g. S001"
+                    value={form.siteId} onChange={e => setForm(f => ({ ...f, siteId: e.target.value }))} />
+                </div>
+              )}
               <div className="form-group">
                 <label className="form-label">ชื่อสาขา</label>
                 <input
@@ -263,8 +294,8 @@ export default function SitesCrudPage() {
               </div>
             </div>
             <div className="crud-modal-ft">
-              <button className="btn-ghost" onClick={() => setModalMode(null)}>ยกเลิก</button>
-              <button className="btn-primary" onClick={handleSave}>บันทึก</button>
+              <button className="btn-ghost" onClick={() => setModalMode(null)} disabled={saving}>ยกเลิก</button>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
             </div>
           </div>
         </div>
@@ -282,8 +313,8 @@ export default function SitesCrudPage() {
               </p>
             </div>
             <div className="del-modal-ft">
-              <button className="btn-ghost" onClick={() => setDel(null)}>ยกเลิก</button>
-              <button className="btn-danger" onClick={handleDelete}>ลบ</button>
+              <button className="btn-ghost" onClick={() => setDel(null)} disabled={saving}>ยกเลิก</button>
+              <button className="btn-danger" onClick={handleDelete} disabled={saving}>{saving ? 'กำลังลบ...' : 'ลบ'}</button>
             </div>
           </div>
         </div>

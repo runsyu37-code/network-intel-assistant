@@ -63,3 +63,36 @@ export async function patchSitePosition(siteId: string, x: number, y: number): P
 export async function patchBuildingCoordinates(buildingId: string, lat: number, lng: number): Promise<void> {
   await client.patch(`/buildings/${buildingId}/coordinates`, { lat, lng })
 }
+
+// Sites CRUD
+export async function createSite(body: { Site_ID: string; name: string; code?: string; location?: string; description?: string }): Promise<void> {
+  await client.post('/sites', [body])
+}
+export async function updateSite(id: string, body: { Site_ID: string; name: string; code?: string; location?: string; description?: string }): Promise<void> {
+  await client.post(`/sites/${id}`, body)
+}
+export async function deleteSite(id: string): Promise<void> {
+  await client.post(`/sites/delete/${id}`)
+}
+
+// Buildings CRUD
+export async function createBuilding(body: { Building_ID: string; Site_ID: string; name: string; code?: string; description?: string; note?: string }): Promise<void> {
+  await client.post('/buildings', [body])
+}
+export async function updateBuilding(id: string, body: { Building_ID: string; name: string; code?: string; description?: string; note?: string }): Promise<void> {
+  await client.post(`/buildings/${id}`, body)
+}
+export async function deleteBuilding(id: string): Promise<void> {
+  await client.post(`/buildings/delete/${id}`)
+}
+
+// Floors CRUD
+export async function createFloor(body: { Floor_ID: string; Site_ID: string; Building_ID: string; floor_number: number; name: string; function?: string }): Promise<void> {
+  await client.post('/floors', [body])
+}
+export async function updateFloor(id: string, body: { Floor_ID: string; name: string; floor_number?: number; function?: string }): Promise<void> {
+  await client.post(`/floors/${id}`, body)
+}
+export async function deleteFloor(id: string): Promise<void> {
+  await client.post(`/floors/delete/${id}`)
+}

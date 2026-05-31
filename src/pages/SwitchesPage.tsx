@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -71,35 +71,29 @@ export default function SwitchesPage() {
 
   const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
 
-  const [switches, setSwitches]     = useState<Switch[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Switch>(null)
   const [deleteTarget, setDel]      = useState<Switch | null>(null)
   const [form, setForm]             = useState<FormState>({ swId: '', name: '', ip: '', model: '', ports: '24', site: '', note: '' })
+  const [saving, setSaving]         = useState(false)
 
-  const initialized = useRef(false)
-  useEffect(() => {
-    if (initialized.current) return
-    if (swLoading || siteLoading) return
-    initialized.current = true
-    setSwitches(apiSwitches.map(a => mapSwitch(a, siteMap)))
-  }, [apiSwitches, swLoading, siteLoading, siteMap])
+  const switches = useMemo(
+    () => (swLoading || siteLoading) ? [] : apiSwitches.map(a => mapSwitch(a, siteMap)),
+    [apiSwitches, swLoading, siteLoading, siteMap],
+  )
 
   const createMut = useMutation({
     mutationFn: () => createSwitch({ SW_ID: form.swId.trim(), device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), total_ports: parseInt(form.ports) || 24, Site_ID: form.site }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
-    onError: () => {},
   })
   const updateMut = useMutation({
     mutationFn: (id: string) => updateSwitch(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), total_ports: parseInt(form.ports) || 24 }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
-    onError: () => {},
   })
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteSwitch(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['switches'] }),
-    onError: () => {},
   })
 
   const filtered = switches.filter(s => {
@@ -115,34 +109,42 @@ export default function SwitchesPage() {
   }
 
   function openEdit(s: Switch) {
-    setForm({ swId: s.id, name: s.name, ip: s.ip, model: s.model, ports: String(s.ports), site: s.site, note: s.note })
+    setForm({ swId: s.id, name: s.name, ip: s.ip === '—' ? '' : s.ip, model: s.model, ports: String(s.ports), site: s.site, note: s.note })
     setModalMode(s)
   }
 
   async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
-    const ports = parseInt(form.ports) || 24
-    if (modalMode === 'create') {
-      if (!form.swId.trim()) return
-      const sw: Switch = { id: form.swId.trim(), name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, site: form.site, note: form.note.trim(), status: 'online' }
-      setSwitches(prev => [...prev, sw])
+    if (modalMode === 'create' && !form.swId.trim()) return
+    setSaving(true)
+    try {
+      if (modalMode === 'create') {
+        await createMut.mutateAsync()
+        message.success('เพิ่ม Switch สำเร็จ')
+      } else if (modalMode && typeof modalMode === 'object') {
+        await updateMut.mutateAsync(modalMode.id)
+        message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
+      }
       setModalMode(null)
-      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${sw.name} สำเร็จ`) }
-      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
-    } else if (modalMode && typeof modalMode === 'object') {
-      setSwitches(prev => prev.map(s => s.id === modalMode.id ? { ...s, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), ports, site: form.site, note: form.note.trim() } : s))
-      setModalMode(null)
-      try { await updateMut.mutateAsync(modalMode.id); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
-      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+    } catch {
+      message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
     }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
-    setSwitches(prev => prev.filter(s => s.id !== deleteTarget.id))
-    setDel(null)
-    try { await deleteMut.mutateAsync(deleteTarget.id); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
-    catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
+    setSaving(true)
+    try {
+      await deleteMut.mutateAsync(deleteTarget.id)
+      message.success(`ลบ ${deleteTarget.name} สำเร็จ`)
+      setDel(null)
+    } catch {
+      message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -278,7 +280,7 @@ export default function SwitchesPage() {
             </div>
             <div className="crud-modal-ft">
               <button className="btn-ghost" onClick={() => setModalMode(null)}>ยกเลิก</button>
-              <button className="btn-primary" onClick={handleSave}>บันทึก</button>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
             </div>
           </div>
         </div>
@@ -297,7 +299,7 @@ export default function SwitchesPage() {
             </div>
             <div className="del-modal-ft">
               <button className="btn-ghost" onClick={() => setDel(null)}>ยกเลิก</button>
-              <button className="btn-danger" onClick={handleDelete}>ลบ</button>
+              <button className="btn-danger" onClick={handleDelete} disabled={saving}>{saving ? 'กำลังลบ...' : 'ลบ'}</button>
             </div>
           </div>
         </div>

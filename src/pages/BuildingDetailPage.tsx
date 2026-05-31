@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Form, Input, Modal, Select, Popconfirm } from 'antd'
+import { Form, Input, Modal, Select, Popconfirm, App } from 'antd'
 import { LayoutList, Layers, Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { useQuery } from '@tanstack/react-query'
-import { getBuildingById, getFloors } from '../api/hierarchy'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getBuildingById, getFloors, createFloor, updateFloor, deleteFloor } from '../api/hierarchy'
 
 type Status = 'ok' | 'warn' | 'alert'
 type ViewMode = 'list' | 'cross'
@@ -82,6 +82,8 @@ function BuildingCrossSection({ floors, onFloorClick }: { floors: Floor[]; onFlo
 
 export default function BuildingDetailPage() {
   const navigate       = useNavigate()
+  const { message }    = App.useApp()
+  const queryClient    = useQueryClient()
   const { buildingId } = useParams<{ buildingId: string }>()
   const canEdit        = useAuthStore(s => s.user?.role === 'admin')
   const [view, setView]         = useState<ViewMode>('list')
@@ -163,15 +165,37 @@ export default function BuildingDetailPage() {
     setModalOpen(true)
   }
 
+  const createFloorMut = useMutation({
+    mutationFn: (vals: { floorId: string; floorNum: number; label: string }) =>
+      createFloor({ Floor_ID: vals.floorId, Building_ID: buildingId!, Site_ID: apiBuilding?.Site_ID ?? '', floor_number: vals.floorNum, name: vals.label }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['floors', 'building', buildingId] }),
+  })
+  const updateFloorMut = useMutation({
+    mutationFn: (vals: { id: string; floorNum: number; label: string }) =>
+      updateFloor(vals.id, { Floor_ID: vals.id, name: vals.label, floor_number: vals.floorNum }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['floors', 'building', buildingId] }),
+  })
+  const deleteFloorMut = useMutation({
+    mutationFn: (id: string) => deleteFloor(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['floors', 'building', buildingId] }),
+  })
+
   const handleOk = () => {
-    form.validateFields().then(vals => {
-      if (editFloor) {
-        setFloors(prev => prev.map(f => f.id === editFloor.id ? { ...f, ...vals } : f))
-      } else {
-        const id = `${buildingId}-f${floors.length + 1}-${Date.now()}`
-        setFloors(prev => [...prev, { id, num: vals.num, label: vals.label, status: vals.status ?? 'ok', count: vals.count ?? '0 dev' }])
+    form.validateFields().then(async vals => {
+      const floorNum = parseInt(String(vals.num).replace(/\D/g, '')) || (floors.length + 1)
+      try {
+        if (editFloor) {
+          await updateFloorMut.mutateAsync({ id: editFloor.id, floorNum, label: vals.label })
+          message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
+        } else {
+          if (!vals.floorId?.trim()) return
+          await createFloorMut.mutateAsync({ floorId: vals.floorId.trim(), floorNum, label: vals.label })
+          message.success('เพิ่มชั้นสำเร็จ')
+        }
+        setModalOpen(false)
+      } catch {
+        message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
       }
-      setModalOpen(false)
     })
   }
 
@@ -242,7 +266,14 @@ export default function BuildingDetailPage() {
                         title="Delete this floor?"
                         okText="Delete" okButtonProps={{ danger: true }}
                         cancelText="Cancel"
-                        onConfirm={() => setFloors(prev => prev.filter(x => x.id !== f.id))}
+                        onConfirm={async () => {
+                          try {
+                            await deleteFloorMut.mutateAsync(f.id)
+                            message.success(`ลบ ${f.label} สำเร็จ`)
+                          } catch {
+                            message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+                          }
+                        }}
                       >
                         <button className="tbl-icon-btn" title="Delete">
                           <Trash2 size={13} />
@@ -274,21 +305,23 @@ export default function BuildingDetailPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          {!editFloor && (
+            <Form.Item name="floorId" label="Floor ID" rules={[{ required: true, message: 'กรุณาระบุ Floor ID' }]}>
+              <Input className="mono" placeholder={`e.g. ${buildingId}-f1`} />
+            </Form.Item>
+          )}
           <Form.Item name="num" label="Floor Number" rules={[{ required: true }]}>
             <Input placeholder="e.g. F7" />
           </Form.Item>
           <Form.Item name="label" label="Description" rules={[{ required: true }]}>
             <Input placeholder="e.g. Server Room" />
           </Form.Item>
-          <Form.Item name="status" label="Status" initialValue="ok" rules={[{ required: true }]}>
+          <Form.Item name="status" label="Status" initialValue="ok">
             <Select options={[
               { value: 'ok',    label: 'Online'  },
               { value: 'warn',  label: 'Warning' },
               { value: 'alert', label: 'Offline' },
             ]} />
-          </Form.Item>
-          <Form.Item name="count" label="Device Count" initialValue="0 dev">
-            <Input placeholder="e.g. 5 dev" />
           </Form.Item>
         </Form>
       </Modal>

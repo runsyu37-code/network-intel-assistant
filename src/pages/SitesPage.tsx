@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Form, Input, InputNumber, Modal, Select, Popconfirm } from 'antd'
+import { Form, Input, Modal, Popconfirm, App } from 'antd'
 import { Plus, Pencil, Trash2, Map, LayoutGrid, Globe } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { useQuery } from '@tanstack/react-query'
-import { getHierarchyTree } from '../api/hierarchy'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getHierarchyTree, createBuilding, updateBuilding, deleteBuilding } from '../api/hierarchy'
 import type { BuildingTreeDto, FloorTreeDto } from '../api/types'
 
 type Status = 'ok' | 'warn' | 'alert'
@@ -282,8 +282,10 @@ function BuildingCard({ building, canEdit, onViewBuilding, onViewPlan, onEdit, o
 }
 
 export default function SitesPage() {
-  const navigate   = useNavigate()
-  const { siteId } = useParams<{ siteId: string }>()
+  const navigate       = useNavigate()
+  const { message }    = App.useApp()
+  const queryClient    = useQueryClient()
+  const { siteId }     = useParams<{ siteId: string }>()
   const canEdit    = useAuthStore(s => s.canEdit())
 
   const [view, setView]             = useState<ViewMode>('map')
@@ -311,14 +313,36 @@ export default function SitesPage() {
     form.setFieldsValue({ title: b.title, status: b.status, cameras: b.cameras, nvrs: b.nvrs })
     setModalOpen(true)
   }
+  const createBldgMut = useMutation({
+    mutationFn: (vals: { buildingId: string; title: string }) =>
+      createBuilding({ Building_ID: vals.buildingId, Site_ID: siteId!, name: vals.title }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['hierarchy'] }),
+  })
+  const updateBldgMut = useMutation({
+    mutationFn: (vals: { id: string; title: string }) =>
+      updateBuilding(vals.id, { Building_ID: vals.id, name: vals.title }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['hierarchy'] }),
+  })
+  const deleteBldgMut = useMutation({
+    mutationFn: (id: string) => deleteBuilding(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['hierarchy'] }),
+  })
+
   const handleOk = () => {
-    form.validateFields().then(vals => {
-      if (editTarget) {
-        setBuildings(prev => prev.map(b => b.id === editTarget.id ? { ...b, ...vals } : b))
-      } else {
-        setBuildings(prev => [...prev, { id: `bldg-${Date.now()}`, floorList: [], cameras: vals.cameras ?? 0, nvrs: vals.nvrs ?? 0, title: vals.title, status: vals.status }])
+    form.validateFields().then(async vals => {
+      try {
+        if (editTarget) {
+          await updateBldgMut.mutateAsync({ id: editTarget.id, title: vals.title })
+          message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
+        } else {
+          if (!vals.buildingId?.trim()) return
+          await createBldgMut.mutateAsync({ buildingId: vals.buildingId.trim(), title: vals.title })
+          message.success('เพิ่มอาคารสำเร็จ')
+        }
+        setModalOpen(false)
+      } catch {
+        message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
       }
-      setModalOpen(false)
     })
   }
 
@@ -374,7 +398,14 @@ export default function SitesPage() {
                 onViewBuilding={() => navigate(`/dashboard/buildings/${b.id}`)}
                 onViewPlan={floorId => navigate(`/dashboard/floors/${floorId}`)}
                 onEdit={() => openEdit(b)}
-                onDelete={() => setBuildings(prev => prev.filter(x => x.id !== b.id))}
+                onDelete={async () => {
+                  try {
+                    await deleteBldgMut.mutateAsync(b.id)
+                    message.success(`ลบ ${b.title} สำเร็จ`)
+                  } catch {
+                    message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+                  }
+                }}
               />
             ))}
           </div>
@@ -387,17 +418,13 @@ export default function SitesPage() {
         okText={editTarget ? 'Save' : 'Add'} destroyOnClose
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+          {!editTarget && (
+            <Form.Item name="buildingId" label="Building ID" rules={[{ required: true, message: 'กรุณาระบุ Building ID' }]}>
+              <Input className="mono" placeholder="e.g. B002" />
+            </Form.Item>
+          )}
           <Form.Item name="title" label="Building Name" rules={[{ required: true }]}>
             <Input placeholder="e.g. อาคาร D" />
-          </Form.Item>
-          <Form.Item name="status" label="Status" initialValue="ok" rules={[{ required: true }]}>
-            <Select options={[{ value: 'ok', label: 'Online' }, { value: 'warn', label: 'Warning' }, { value: 'alert', label: 'Offline' }]} />
-          </Form.Item>
-          <Form.Item name="cameras" label="Camera Count" initialValue={0}>
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="nvrs" label="NVR Count" initialValue={0}>
-            <InputNumber min={0} style={{ width: '100%' }} />
           </Form.Item>
         </Form>
       </Modal>

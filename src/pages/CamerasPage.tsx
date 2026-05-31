@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, Pencil, Trash2, AlertTriangle, X } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -77,35 +77,29 @@ export default function CamerasPage() {
 
   const siteNames = useMemo(() => apiSites.map((s: SiteApi) => s.name), [apiSites])
 
-  const [cameras, setCameras]       = useState<Camera[]>([])
   const [q, setQ]                   = useState('')
   const [siteFilter, setSiteFilter] = useState('all')
   const [modalMode, setModalMode]   = useState<null | 'create' | Camera>(null)
   const [deleteTarget, setDel]      = useState<Camera | null>(null)
   const [form, setForm]             = useState<FormState>({ name: '', ip: '', model: '', location: '', nvr: '', site: '' })
+  const [saving, setSaving]         = useState(false)
 
-  const initialized = useRef(false)
-  useEffect(() => {
-    if (initialized.current) return
-    if (camLoading || siteLoading) return
-    initialized.current = true
-    setCameras(apiCameras.map(a => mapCamera(a, siteMap)))
-  }, [apiCameras, camLoading, siteLoading, siteMap])
+  const cameras = useMemo(
+    () => (camLoading || siteLoading) ? [] : apiCameras.map(a => mapCamera(a, siteMap)),
+    [apiCameras, camLoading, siteLoading, siteMap],
+  )
 
   const createMut = useMutation({
-    mutationFn: () => createCamera({ device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr, Site_ID: form.site }),
+    mutationFn: () => createCamera({ device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr || undefined, Site_ID: form.site }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError: () => {},
   })
   const updateMut = useMutation({
-    mutationFn: (id: number) => updateCamera(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr }),
+    mutationFn: (id: number) => updateCamera(id, { device_name: form.name.trim(), ip_address: form.ip.trim(), model: form.model.trim(), install_location: form.location.trim(), NVR_ID: form.nvr || undefined }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError: () => {},
   })
   const deleteMut = useMutation({
     mutationFn: (id: number) => deleteCamera(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cameras'] }),
-    onError: () => {},
   })
 
   const filtered = cameras.filter(c => {
@@ -125,38 +119,41 @@ export default function CamerasPage() {
   }
 
   function openEdit(c: Camera) {
-    setForm({ name: c.name, ip: c.ip, model: c.model, location: c.location, nvr: c.nvr, site: c.site })
+    setForm({ name: c.name, ip: c.ip === '—' ? '' : c.ip, model: c.model, location: c.location, nvr: c.nvr === '—' ? '' : c.nvr, site: c.site })
     setModalMode(c)
   }
 
   async function handleSave() {
     if (!form.name.trim() || !form.ip.trim()) return
-    if (modalMode === 'create') {
-      const cam: Camera = { id: `cam-${Date.now()}`, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site, status: 'online', serialNo: '—', macAddress: '—', nvrChannel: null }
-      setCameras(prev => [...prev, cam])
+    setSaving(true)
+    try {
+      if (modalMode === 'create') {
+        await createMut.mutateAsync()
+        message.success(`เพิ่มกล้องสำเร็จ`)
+      } else if (modalMode && typeof modalMode === 'object') {
+        await updateMut.mutateAsync(parseInt(modalMode.id))
+        message.success('บันทึกการเปลี่ยนแปลงสำเร็จ')
+      }
       setModalMode(null)
-      try { await createMut.mutateAsync(); message.success(`เพิ่ม ${cam.name} สำเร็จ`) }
-      catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
-    } else if (modalMode && typeof modalMode === 'object') {
-      setCameras(prev => prev.map(c => c.id === modalMode.id ? { ...c, name: form.name.trim(), ip: form.ip.trim(), model: form.model.trim(), location: form.location.trim(), nvr: form.nvr, site: form.site } : c))
-      setModalMode(null)
-      const numId = parseInt(modalMode.id)
-      if (!isNaN(numId)) {
-        try { await updateMut.mutateAsync(numId); message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
-        catch { message.warning('บันทึก offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
-      } else { message.success('บันทึกการเปลี่ยนแปลงสำเร็จ') }
+    } catch {
+      message.error('บันทึกไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
     }
   }
 
   async function handleDelete() {
     if (!deleteTarget) return
-    setCameras(prev => prev.filter(c => c.id !== deleteTarget.id))
-    setDel(null)
-    const numId = parseInt(deleteTarget.id)
-    if (!isNaN(numId)) {
-      try { await deleteMut.mutateAsync(numId); message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
-      catch { message.warning('ลบ offline — ข้อมูลจะซิงค์เมื่อ server พร้อม') }
-    } else { message.success(`ลบ ${deleteTarget.name} สำเร็จ`) }
+    setSaving(true)
+    try {
+      await deleteMut.mutateAsync(parseInt(deleteTarget.id))
+      message.success(`ลบ ${deleteTarget.name} สำเร็จ`)
+      setDel(null)
+    } catch {
+      message.error('ลบไม่สำเร็จ — กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const isEditing = modalMode !== null && modalMode !== 'create'
@@ -300,8 +297,8 @@ export default function CamerasPage() {
               </div>
             </div>
             <div className="crud-modal-ft">
-              <button className="btn-ghost" onClick={() => setModalMode(null)}>ยกเลิก</button>
-              <button className="btn-primary" onClick={handleSave}>บันทึก</button>
+              <button className="btn-ghost" onClick={() => setModalMode(null)} disabled={saving}>ยกเลิก</button>
+              <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึก'}</button>
             </div>
           </div>
         </div>
@@ -319,8 +316,8 @@ export default function CamerasPage() {
               </p>
             </div>
             <div className="del-modal-ft">
-              <button className="btn-ghost" onClick={() => setDel(null)}>ยกเลิก</button>
-              <button className="btn-danger" onClick={handleDelete}>ลบ</button>
+              <button className="btn-ghost" onClick={() => setDel(null)} disabled={saving}>ยกเลิก</button>
+              <button className="btn-danger" onClick={handleDelete} disabled={saving}>{saving ? 'กำลังลบ...' : 'ลบ'}</button>
             </div>
           </div>
         </div>
