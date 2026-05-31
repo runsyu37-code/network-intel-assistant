@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
@@ -31,9 +31,10 @@ function buildingIcon(alertCount: number): L.DivIcon {
 }
 
 export default function BuildingMapPage() {
-  const navigate   = useNavigate()
-  const [tile, setTile]           = useState<TileMode>('osm')
-  const [siteFilter, setSiteFilter] = useState('all')
+  const navigate        = useNavigate()
+  const [searchParams]  = useSearchParams()
+  const [tile, setTile] = useState<TileMode>('satellite')
+  const [siteFilter, setSiteFilter] = useState(searchParams.get('site') ?? 'all')
 
   const { data, isPending, isError } = useQuery({
     queryKey: ['buildings-map'],
@@ -44,6 +45,13 @@ export default function BuildingMapPage() {
     () => [...new Set((data ?? []).map(b => b.Site_ID))].sort(),
     [data],
   )
+
+  // ถ้าไม่มีการเลือก site และมีแค่ site เดียว → auto-select
+  useEffect(() => {
+    if (siteFilter === 'all' && sites.length === 1) {
+      setSiteFilter(sites[0])
+    }
+  }, [sites, siteFilter])
 
   const filtered = useMemo(
     () => (data ?? []).filter(b => siteFilter === 'all' || b.Site_ID === siteFilter),
@@ -80,7 +88,7 @@ export default function BuildingMapPage() {
             onClick={() => setTile(t => t === 'osm' ? 'satellite' : 'osm')}
           >
             <Layers size={14} />
-            {tile === 'osm' ? 'Satellite' : 'Street Map'}
+            {tile === 'satellite' ? 'Street Map' : 'Satellite'}
           </button>
         </div>
       </div>

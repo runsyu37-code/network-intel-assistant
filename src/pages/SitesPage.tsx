@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Input, InputNumber, Modal, Select, Popconfirm } from 'antd'
-import { Plus, Pencil, Trash2, Map, LayoutGrid } from 'lucide-react'
+import { Plus, Pencil, Trash2, Map, LayoutGrid, Globe } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useQuery } from '@tanstack/react-query'
 import { getHierarchyTree } from '../api/hierarchy'
@@ -348,6 +348,13 @@ export default function SitesPage() {
               <LayoutGrid size={13} /> Grid
             </button>
           </div>
+          <button
+            className="btn-ghost"
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => navigate(`/dashboard/map?site=${siteId}`)}
+          >
+            <Globe size={14} /> Satellite
+          </button>
           {canEdit && (
             <button className="btn-primary" onClick={openAdd}>
               <Plus size={14} /> Add Building
