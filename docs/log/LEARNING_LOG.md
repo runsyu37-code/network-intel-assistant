@@ -252,6 +252,44 @@ This is a **living log**, append-only (no deletes). It has three sections:
 
 ---
 
+### RETRO-002 — Surveillance Monitoring web app shipped (Phase 1 closed)
+
+- **Date/time (ICT):** 2026-05-31 (evening)
+- **Milestone:** The Surveillance Monitoring web app (SSM — Surveillance Smart-Monitor) reached demo-ready state: 13 routes, all pages wired to the real C# API, JWT login + RBAC (admin/user), React Flow topology with positions persisted to the API, building/floor/rack/device hierarchy drill-down, camera/NVR/switch list + detail pages, and per-floor camera positioning. Demo was delivered on/around 2026-05-30 — roughly **2 months ahead** of the original ~late-July deadline. This formally closes Phase 1 of the roadmap.
+- **Time spent (rough):** ~5–6 weeks of internship project work (late April → 31 May 2026), across many sessions, mostly on the work notebook with Claude Code (Sonnet 4.6) as builder. Sanitizer sub-project (~3–4 hrs, home laptop) ran in parallel earlier.
+
+- **What went well:**
+  1. **Shipped early and complete.** The web app itself solved the data-collection pain point — the hierarchy UI + DB-backed inventory replaced the slow manual diagramming the original roadmap was panicking about. The thing that was "the bottleneck" on 2026-05-17 was gone by 2026-05-31.
+  2. **Real API end-to-end, no mock data.** Every page is wired to `localhost:50680` via React Query + Axios. Login uses real JWT credentials with role-based access (Users page is admin-only). This is a genuine full-stack deliverable, not a prototype.
+  3. **Git went from zero to daily fluency.** Ran now branches (`frontend`/`backend`/`master`), commits with Conventional Commits, pushes, and runs a PR workflow — the exact skill gap flagged as "Beginner — don't know git yet" in ABOUT_ME on 2026-05-17 is closed.
+
+- **What didn't go well:**
+  1. **The roadmap premise drifted silently.** The 2026-05-17 ROADMAP assumed the web app was stuck and that AI agents were needed to unblock it. Reality diverged weeks ago, but no one updated the plan until now — so the "north star" pointed at a problem that no longer existed.
+  2. **Loose ends shipped with the demo.** Three items are still open: SQL migration (`ALTER TABLE sites ADD topology_x/y`) not yet run on SSMS, `GET /api/cameras` doesn't return `position_x/y` (forced a localStorage fallback hack), and buildings have `lat/lng = null` so the Building Map is empty. The demo works only because of fallbacks papering over these gaps.
+  3. **Sanitizer Phase B never happened.** RETRO-001's single top action item — run `sanitize.py` on real switch data on the work machine — was never executed. It got crowded out by web-app work and is still outstanding.
+
+- **What I'd do differently next time:**
+  1. **Re-validate the roadmap's core premise at every milestone, not just at the end.** A 2-minute "is this still true?" check on the deadline/bottleneck assumptions would have caught the drift a month early.
+  2. **Track backend dependencies as explicit blockers, not footnotes.** The `position_x/y` and `lat/lng` gaps should have been filed as named blockers (F9 R18) the day they were discovered, not discovered as "open items" at demo time.
+  3. **Protect carried-over action items.** RETRO-001's Phase B item should have been put on a calendar / checklist so it didn't silently get dropped when a bigger task arrived.
+
+- **Knowledge gained:**
+  - Full-stack wiring: React 18 + Vite + TypeScript front-end against an ASP.NET Core (.NET 10) API, proxied via Vite, with React Query for server state and Zustand for auth/theme.
+  - RBAC in a SPA: JWT in an auth store, role-gated routes and UI (admin-only Users page, admin-only drag-to-sort).
+  - React Flow v11 for an interactive topology, including persisting node positions back to the API via `PATCH /api/sites/{id}/position` with a localStorage fallback.
+  - Practical git/PR workflow on a multi-branch repo (frontend/backend/master), Conventional Commits, ultra code review with zero bugs found.
+  - Front-end ↔ back-end coordination protocol (the `F9/` reply-log folder) for tracking cross-team API requests.
+
+- **Portfolio value:**
+  - A complete, demo-ready full-stack network-operations web app — the single strongest portfolio piece so far, far bigger than the sanitizer. Needs a sanitized public README, a 3–5 min demo video, and a case study to be portfolio-ready.
+  - Demonstrates real network-engineering domain knowledge (CCTV / switch / NVR / rack / floor topology) combined with modern web dev — exactly the "networking + AI/dev" combination the portfolio is meant to show.
+  - Clean multi-branch git history + the F9 coordination log show professional engineering discipline.
+
+- **Top 1 action item for the next milestone:**
+  Turn the web app into a real portfolio artifact: run the 3 outstanding fixes to clear the demo of fallbacks (SQL migration, backend `position_x/y`, building `lat/lng`), then produce a sanitized public README + a 3–5 min demo video + a short case study. This converts ~6 weeks of work into something showable to employers and scholarship committees — which the current private, work-only codebase is not.
+
+---
+
 ## Section 4 — Other "after-task" artifacts (ideas to create later)
 
 When a project or sub-agent is finished, these additional .md files are worth creating once. They are NOT continuous logs — each is written once per task.
