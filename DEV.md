@@ -5,6 +5,51 @@
 
 ---
 
+## Active This Week (อัปเดตต้นสัปดาห์)
+
+**Frontend**
+- (ว่าง — อัปเดตก่อนเริ่มงาน)
+
+**Backend**
+- (ว่าง — อัปเดตก่อนเริ่มงาน)
+
+---
+
+## Phase Gates — เช็คก่อนเริ่ม feature ใหม่ทุกครั้ง
+
+> ❌ = ยังไม่ผ่าน — ห้ามเริ่ม feature ที่ขึ้นอยู่กับ gate นี้
+> ✅ = ผ่านแล้ว — เริ่มได้
+
+### Phase 1 — Audit-Ready
+- [ ] BE: `last_seen` returned from `GET /api/cameras`
+- [ ] BE: `position_x` / `position_y` returned from `GET /api/cameras` (P5)
+- [ ] BE: topology SQL migration run on SSMS (P6)
+- [ ] FE: localStorage position crutch deleted (after P5 lands)
+- [ ] FE: Flat Audit View built (table + counts + offline filter)
+- [ ] BOTH: PingService verified — supervised service, always-on VM, ICMP path confirmed
+
+### Phase 2.1 — Device CRUD
+- [ ] BOTH: API contract signed for each mutation endpoint before coding
+  (`F9/contracts/POST_api-cameras.md` etc.)
+
+### Phase 2.2 — Rack U-Position *(do NOT start until all 4 gates below are ✅)*
+- [ ] BE: `u_height` / `u_size` per device returned from device GET
+- [ ] BE: rack `max_u` confirmed + returned
+- [ ] BE: server-side overlap rejection (409 on overlapping U range)
+- [ ] BOTH: U numbering convention locked in writing (U1 at bottom / top-down)
+
+### Phase 2.3 — Building/Site CRUD + Coordinates
+- [ ] BE: `lat` / `lng` writable via API
+
+### Phase 2.4 — Satellite Map *(do NOT start until gate below is ✅)*
+- [ ] Phase 2.3 complete (coordinate-entry UI exists — no more hand-seeding SQL)
+
+### Phase 3 — Alert Hardware Test
+- [ ] BOTH: baseline test done (camera connected, pings succeed, FE green, no Discord noise)
+- [ ] BOTH: controlled failure test done (unplug → FE red → Discord fires once)
+
+---
+
 ## สถานะ ณ 2026-05-31 (ล่าสุด)
 
 **พร้อม demo เต็มรูปแบบ — Login + ทุกหน้าใช้งานได้กับ real backend**
