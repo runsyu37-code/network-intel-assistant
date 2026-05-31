@@ -43,12 +43,7 @@ export default function LoginPage() {
           setError(err.response.data?.Message || 'Login failed. Please try again.')
         }
       } else {
-        setAuth(
-          { id: 1, username: values.username, displayName: values.username, role: 'admin' },
-          'demo-token',
-        )
-        navigate('/dashboard')
-        return
+        setError('Cannot connect to server. Please check your connection and try again.')
       }
     } finally {
       setLoading(false)
