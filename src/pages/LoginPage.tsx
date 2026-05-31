@@ -20,7 +20,6 @@ export default function LoginPage() {
 
   const onFinish = async (values: LoginValues) => {
     setLoading(true)
-    setError(null)
     try {
       const res = await login(values.username, values.password)
       const { id, username } = extractJwtUser(res.token)
